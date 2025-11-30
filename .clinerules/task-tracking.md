@@ -56,24 +56,13 @@ Update the `tasks.md` file when:
 
 ### Integration with Git Workflow
 
-Since commits are mandatory after modifications:
-1. Update `tasks.md` status for work completed
+After completing a reasonable chunk of successful progress (not necessarily after each individual task):
+1. Update `tasks.md` status for all work completed in that chunk
 2. Stage the updated `tasks.md` along with implementation files
-3. Commit with message mentioning task progress
+3. Follow the commit standards defined in `.clinerules/git.md`
+4. Include task progress updates in your commit message
 
-Example:
-```bash
-git add src/feature.ts specs/1-feature/tasks.md
-git commit -m "[Cline] Implement feature X: Complete task FR1.1
-
-- Implemented feature.ts with core functionality
-- Updated tasks.md to mark FR1.1 as complete
-- Added error handling as discovered during implementation
-
----
-
-{human_input}"
-```
+**Note:** You don't need to commit after every single task completion. Commit when you've made meaningful progress worth preserving - this might include several completed tasks or one significant milestone.
 
 ### Task File Location Patterns
 
