@@ -15,7 +15,7 @@ If you are working from a `tasks.md` file (or any task tracking document referen
 ### Update Triggers
 
 Update the `tasks.md` file when:
-1. **Completing a task** - Mark as complete `[x]` with timestamp
+1. **Completing a task** - Mark as complete `[x]`
 2. **Starting a task** - Add "In Progress" indicator if needed
 3. **Discovering blockers** - Add notes about what's blocking progress
 4. **Scope changes** - Update task description to match reality
@@ -25,11 +25,11 @@ Update the `tasks.md` file when:
 ### Update Format
 
 ```markdown
-- [x] Task description (Completed: YYYY-MM-DD HH:MM)
+- [x] Task description
   - Implementation notes if relevant
   - Any decisions made or issues encountered
 
-- [ ] Task in progress (Started: YYYY-MM-DD HH:MM)
+- [ ] Task in progress
   - Current status or blocker notes
 
 - [ ] Future task
@@ -92,7 +92,3 @@ This rule supports:
 - Task notes should provide context for future work
 - Task status should accurately reflect current implementation state
 - Task files should be committed alongside implementation changes
-
-## Summary
-
-**If there's a `tasks.md` file guiding your work, treat it as a living document that must stay synchronized with code changes. Update it continuously, not retroactively.**
