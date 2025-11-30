@@ -1,10 +1,10 @@
 {
   "id": "multi-git",
-  "name": "Multi-Git",
+  "name": "Multi Git",
   "version": "0.1.0",
   "minAppVersion": "0.15.0",
   "description": "Manage multiple git repositories from within Obsidian",
-  "author": "",
-  "authorUrl": "",
+  "author": "Zach Mueller",
+  "authorUrl": "https://notes.zach.nz",
   "isDesktopOnly": true
 }
