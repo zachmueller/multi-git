@@ -18,6 +18,15 @@
 ### Purpose
 Enable efficient management of multiple git repositories within an Obsidian vault through automated syncing and keyboard-driven operations. This plugin addresses the challenge of maintaining multiple connected repositories (e.g., submodules, related projects, or separate content repositories) that users need to keep in sync while working in Obsidian.
 
+## Clarifications
+
+### Session 2025-01-12
+- Q: How should repository paths be stored in the configuration? → A: Absolute paths only - Store full file system paths to support symlink-based workflows where repositories exist elsewhere on the system and configurations are device-specific
+- Q: When remote changes are detected during automated fetching, how should users be notified? → A: Per-repository notifications only when remote changes exist requiring user action; no notifications for successful fetches without changes
+- Q: When the user triggers the push hotkey, how should the plugin determine which repository to commit/push to? → A: Always prompt - Show repository picker dialog requiring explicit selection each time
+- Q: Where should repository status information be displayed within Obsidian? → A: Dedicated side panel - Add panel icon in left/right ribbon that opens full status view
+- Q: How should error messages and failure notifications be presented to users when git operations fail? → A: Context-dependent - Critical errors use modals; minor errors in status panel; background failures as notifications
+
 ### Success Criteria
 - [ ] Users can configure and monitor multiple git repositories from within Obsidian without leaving the editor
 - [ ] Remote changes are automatically fetched at configurable intervals without manual intervention
@@ -29,54 +38,66 @@ Enable efficient management of multiple git repositories within an Obsidian vaul
 ### Functional Requirements
 
 #### FR-1: Repository Configuration
-- **Description:** Users must be able to configure multiple git repositories to be managed by the plugin
+- **Description:** Users must be able to configure multiple git repositories to be managed by the plugin using absolute file system paths
 - **Priority:** High
 - **Acceptance Criteria:**
-  - [ ] Users can add new repositories by specifying their file system path
+  - [ ] Users can add new repositories by specifying their absolute file system path
+  - [ ] Repository paths are stored as absolute paths to support device-specific configurations
   - [ ] Users can remove repositories from management
-  - [ ] Users can view a list of all configured repositories
+  - [ ] Users can view a list of all configured repositories with their full paths
   - [ ] Repository configurations persist across Obsidian restarts
   - [ ] Users can enable/disable management for specific repositories without removing them
+  - [ ] Path validation confirms repository exists at absolute location and is a valid git repository
 
 #### FR-2: Automated Remote Fetch
-- **Description:** The plugin must automatically fetch remote changes for all configured repositories at regular intervals
+- **Description:** The plugin must automatically fetch remote changes for all configured repositories at regular intervals, notifying users only when actionable changes are detected
 - **Priority:** High
 - **Acceptance Criteria:**
   - [ ] Fetch operations run automatically at user-configurable intervals (default: 5 minutes)
   - [ ] Users can see the last fetch time for each repository
   - [ ] Users can manually trigger an immediate fetch for all or specific repositories
   - [ ] Fetch operations do not interrupt active user workflows
-  - [ ] Users receive notification if remote changes are available
+  - [ ] Users receive per-repository notification only when remote changes are available requiring action
+  - [ ] No notifications are displayed for successful fetches that find no remote changes
+  - [ ] Notification clearly identifies which repository has remote changes
 
 #### FR-3: Hotkey-Driven Push Operations
 - **Description:** Users must be able to commit and push changes using keyboard shortcuts without leaving Obsidian
 - **Priority:** High
 - **Acceptance Criteria:**
   - [ ] Users can assign custom hotkeys for push operations
-  - [ ] Hotkey initiates commit dialog with pre-filled suggested commit message
+  - [ ] Hotkey presents repository picker dialog requiring explicit selection
+  - [ ] After repository selection, commit dialog appears with pre-filled suggested commit message
   - [ ] Users can edit commit message before confirming push
   - [ ] Push operation provides immediate feedback on success or failure
-  - [ ] Users can push to the repository associated with the currently active file
+  - [ ] Repository picker only shows enabled repositories with uncommitted changes
 
 #### FR-4: Repository Status Display
-- **Description:** Users must be able to view the current state of all managed repositories
+- **Description:** Users must be able to view the current state of all managed repositories in a dedicated side panel
 - **Priority:** Medium
 - **Acceptance Criteria:**
+  - [ ] Plugin adds ribbon icon that toggles dedicated status panel view
+  - [ ] Status panel displays list of all configured repositories
   - [ ] Users can see which repositories have uncommitted changes
   - [ ] Users can see which repositories have unpushed commits
   - [ ] Users can see which repositories have remote changes available
   - [ ] Status information updates in real-time or within 30 seconds of changes
-  - [ ] Users can view basic git information (current branch, last commit message)
+  - [ ] Users can view basic git information per repository (current branch, last commit message)
+  - [ ] Panel supports manual refresh action for all repositories
 
 #### FR-5: Error Handling and Recovery
-- **Description:** The plugin must gracefully handle git operation failures and provide clear feedback
+- **Description:** The plugin must gracefully handle git operation failures and provide clear feedback using context-appropriate presentation methods
 - **Priority:** High
 - **Acceptance Criteria:**
   - [ ] Users receive clear, actionable error messages when operations fail
+  - [ ] Critical errors (authentication failures, merge conflicts) display as modal dialogs requiring acknowledgment
+  - [ ] Background fetch failures show as dismissible notifications
+  - [ ] Minor errors and warnings display inline in status panel without interrupting workflow
   - [ ] Failed fetch operations do not prevent subsequent attempts
-  - [ ] Users can retry failed operations without restarting Obsidian
-  - [ ] Merge conflicts are detected and reported with guidance for resolution
-  - [ ] Authentication failures provide clear instructions for resolution
+  - [ ] Users can retry failed operations from status panel or error dialogs without restarting Obsidian
+  - [ ] Merge conflicts are detected and reported in modal dialog with guidance for manual resolution
+  - [ ] Authentication failures provide clear instructions in modal for configuring credentials
+  - [ ] All error presentations include repository name and specific failure reason
 
 ### Non-Functional Requirements
 
@@ -188,9 +209,10 @@ The plugin will interact with git through command-line interface calls, monitori
 ### Key Entities
 
 #### Repository Configuration
-- **Attributes:** path (string), enabled (boolean), last_fetch (timestamp), fetch_interval (number), display_name (string)
-- **Validation:** Path must be valid git repository; fetch_interval must be positive integer
+- **Attributes:** path (absolute string), enabled (boolean), last_fetch (timestamp), fetch_interval (number), display_name (string)
+- **Validation:** Path must be absolute file system path to valid git repository; fetch_interval must be positive integer
 - **State:** active, disabled, error, syncing
+- **Notes:** Absolute paths enable device-specific configurations for symlink-based workflows where repository locations vary across synced devices
 
 #### Repository Status
 - **Attributes:** has_changes (boolean), unpushed_commits (number), remote_changes (boolean), current_branch (string), last_commit (string)
