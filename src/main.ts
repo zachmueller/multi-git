@@ -1,22 +1,26 @@
 import { Plugin } from 'obsidian';
+import { MultiGitSettings, DEFAULT_SETTINGS } from './settings/data';
 
 /**
  * Multi-Git Plugin for Obsidian
  * Manages multiple git repositories from within Obsidian
  */
 export default class MultiGitPlugin extends Plugin {
+	settings!: MultiGitSettings;
+
 	/**
 	 * Called when the plugin is loaded
 	 * Initializes settings, services, and UI components
 	 */
 	async onload() {
 		console.log('Loading Multi-Git plugin');
-		
-		// Plugin initialization will be implemented here
-		// - Load settings
-		// - Initialize services
-		// - Register commands
-		// - Add settings tab
+
+		// Load settings from data.json
+		await this.loadSettings();
+
+		// TODO: Initialize services
+		// TODO: Register commands
+		// TODO: Add settings tab
 	}
 
 	/**
@@ -25,9 +29,23 @@ export default class MultiGitPlugin extends Plugin {
 	 */
 	onunload() {
 		console.log('Unloading Multi-Git plugin');
-		
-		// Cleanup will be implemented here
-		// - Save any pending state
-		// - Cleanup resources
+
+		// TODO: Cleanup resources
+	}
+
+	/**
+	 * Load plugin settings from data.json
+	 * Merges saved settings with defaults to handle new fields
+	 */
+	async loadSettings() {
+		const savedData = await this.loadData();
+		this.settings = Object.assign({}, DEFAULT_SETTINGS, savedData);
+	}
+
+	/**
+	 * Save plugin settings to data.json
+	 */
+	async saveSettings() {
+		await this.saveData(this.settings);
 	}
 }
