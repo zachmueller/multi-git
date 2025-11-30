@@ -125,14 +125,21 @@ export class MultiGitSettingTab extends PluginSettingTab {
         }
 
         // Toggle button
-        setting.addButton(button => button
-            .setButtonText(repo.enabled ? 'Disable' : 'Enable')
-            .setClass(repo.enabled ? 'mod-warning' : '')
-            .onClick(async () => {
-                await this.handleToggleRepository(repo.id);
-            })
-            .setTooltip(repo.enabled ? 'Disable this repository' : 'Enable this repository')
-        );
+        setting.addButton(button => {
+            button
+                .setButtonText(repo.enabled ? 'Disable' : 'Enable')
+                .onClick(async () => {
+                    await this.handleToggleRepository(repo.id);
+                })
+                .setTooltip(repo.enabled ? 'Disable this repository' : 'Enable this repository');
+
+            // Only set class when there's a class to set (avoid empty string error)
+            if (repo.enabled) {
+                button.setClass('mod-warning');
+            }
+
+            return button;
+        });
 
         // Remove button
         setting.addButton(button => button
