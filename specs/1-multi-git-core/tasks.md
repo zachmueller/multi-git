@@ -4,7 +4,7 @@
 **Implementation Plan:** [plan-fr1.md](./plan-fr1.md)
 **Specification:** [spec.md](./spec.md)
 **Status:** In Progress
-**Last Updated:** 2025-01-12 10:40 NZDT
+**Last Updated:** 2025-01-12 11:26 NZDT
 **Progress:** Phase 0, 1, 2 & 3 Complete (15/31 tasks, 48%)
 
 ## Task Summary
@@ -122,8 +122,8 @@ interface MultiGitSettings {
 ### ARCH-002: Implement Plugin Lifecycle ✅
 **Description:** Set up plugin initialization, settings loading, and cleanup
 **Files:** `src/main.ts`
-**Dependencies:** ARCH-001
-**Status:** ✅ Complete
+**Dependencies:** ARCH-001, GIT-001, REPO-001
+**Status:** ✅ Complete (Manually validated 2025-01-12)
 **Acceptance Criteria:**
 - [x] Plugin class properly extends Obsidian Plugin
 - [x] onload() initializes settings and services
@@ -131,12 +131,44 @@ interface MultiGitSettings {
 - [x] loadSettings() reads from data.json
 - [x] saveSettings() persists to data.json
 - [x] Plugin loads without errors in Obsidian
+- [x] Services (GitCommandService, RepositoryConfigService) properly instantiated
+- [x] Services accessible from plugin instance
+- [x] All service methods functional via console testing
+
+**Manual Testing Performed (2025-01-12):**
+- Plugin loads successfully in Obsidian without errors
+- Plugin appears in Community Plugins list
+- Plugin instance accessible via developer console: `app.plugins.plugins['multi-git']`
+- RepositoryConfigService.addRepository() works with valid git repositories
+- RepositoryConfigService.getRepositories() returns correct data
+- RepositoryConfigService.toggleRepository() changes enabled state
+- RepositoryConfigService.removeRepository() removes repositories
+- Settings persistence validated (data.json created and updated)
+- Error handling validated (invalid paths rejected with proper errors)
 
 **Commands:**
 ```bash
 npm run build
 # Symlink to Obsidian vault for testing
 ln -s $(pwd) ~/.obsidian/plugins/multi-git
+```
+
+**Console Testing Examples:**
+```javascript
+// Access plugin instance
+const plugin = app.plugins.plugins['multi-git'];
+
+// Test adding repository
+await plugin.repositoryConfigService.addRepository('/path/to/git/repo');
+
+// Test querying repositories
+plugin.repositoryConfigService.getRepositories();
+
+// Test toggle
+await plugin.repositoryConfigService.toggleRepository('repo-id');
+
+// Test remove
+await plugin.repositoryConfigService.removeRepository('repo-id');
 ```
 
 ### DATA-001 [P]: Create Validation Utilities 🟢 ✅
@@ -642,8 +674,9 @@ INT-001 → INT-002 → INT-003 → PERF-001 → DOC-001 → VAL-001 → VAL-002
 
 **Phase 1:** Data model and architecture established ✅
 - [x] All interfaces defined and documented
-- [x] Plugin lifecycle working
+- [x] Plugin lifecycle working with services initialized
 - [x] Settings persistence functional
+- [x] Backend services accessible and operational in Obsidian
 
 **Phase 2:** Git integration operational ✅
 - [x] Can detect valid git repositories
@@ -651,9 +684,11 @@ INT-001 → INT-002 → INT-003 → PERF-001 → DOC-001 → VAL-001 → VAL-002
 - [x] All git tests passing
 
 **Phase 3:** Repository management functional ✅
-- [x] Can add/remove/toggle repositories
-- [x] Validation prevents errors
-- [x] All service tests passing
+- [x] Can add/remove/toggle repositories via service methods
+- [x] Validation prevents errors (tested with invalid paths)
+- [x] All service tests passing (Jest unit tests)
+- [x] Services operational in live Obsidian environment (console validated)
+- [x] Settings persistence working across plugin operations
 
 **Phase 4:** User interface complete
 - [ ] Settings UI fully functional
