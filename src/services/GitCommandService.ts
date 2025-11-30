@@ -113,7 +113,6 @@ export class GitCommandService {
             // Type-safe error handling
             if (this.isExecError(error)) {
                 const stderr = error.stderr?.toString() || '';
-                const stdout = error.stdout?.toString() || '';
 
                 // Check if error indicates not a git repository
                 if (stderr.includes('not a git repository') || stderr.includes('not found')) {
