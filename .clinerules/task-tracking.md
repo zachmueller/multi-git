@@ -29,11 +29,16 @@ Update the `tasks.md` file when:
   - Implementation notes if relevant
   - Any decisions made or issues encountered
 
-- [ ] Task in progress
+- [ ] 🔄 Task in progress
   - Current status or blocker notes
 
-- [ ] Future task
+- [ ] Future task (not yet started)
 ```
+
+**Status Indicators:**
+- `[x]` = Complete
+- `[ ] 🔄` = In Progress (actively working on)
+- `[ ]` = Not Yet Started (no emoji)
 
 ### When to Update
 
