@@ -12,6 +12,20 @@
 **Estimated Complexity:** Medium
 **Parallel Execution Opportunities:** 8 task groups
 
+## Testing Strategy
+
+**Testing Method Indicators:**
+- 🟢 **VSCode Testable** - Full Jest/unit testing in VSCode/terminal without Obsidian
+- 🟡 **Partial VSCode** - Core logic testable in VSCode with mocks; full integration needs Obsidian
+- 🔴 **Obsidian Required** - Must test manually in Obsidian UI/environment
+
+**Testing Distribution:**
+- Pure logic & utilities: 🟢 VSCode (DATA-001, DATA-002, GIT-002)
+- Services with mocks: 🟡 Partial (REPO-006)
+- UI components: 🔴 Obsidian (all UI tasks)
+- Integration tests: 🔴 Obsidian (INT-001, INT-003, PERF-001)
+- Cross-platform: 🟡 Mixed (INT-002 - logic in VSCode, behavior in Obsidian)
+
 ## Phase 0: Setup & Environment
 
 ### ENV-001: Initialize Plugin Project
@@ -118,9 +132,10 @@ npm run build
 ln -s $(pwd) ~/.obsidian/plugins/multi-git
 ```
 
-### DATA-001 [P]: Create Validation Utilities
+### DATA-001 [P]: Create Validation Utilities 🟢
 **Description:** Implement path validation and git repository detection utilities
-**Files:** `src/utils/validation.ts`
+**Testing:** 🟢 **VSCode Testable** - Pure Node.js functions, no Obsidian dependencies
+**Files:** `src/utils/validation.ts`, `test/utils/validation.test.ts`
 **Dependencies:** ARCH-001
 **Acceptance Criteria:**
 - [ ] validateAbsolutePath() checks for absolute paths
@@ -130,9 +145,10 @@ ln -s $(pwd) ~/.obsidian/plugins/multi-git
 - [ ] Secure against path traversal attacks
 - [ ] All validation functions have unit tests
 
-### DATA-002 [P]: Define Error Classes
+### DATA-002 [P]: Define Error Classes 🟢
 **Description:** Create custom error types for repository operations
-**Files:** `src/utils/errors.ts`
+**Testing:** 🟢 **VSCode Testable** - Pure TypeScript classes, no Obsidian dependencies
+**Files:** `src/utils/errors.ts`, `test/utils/errors.test.ts`
 **Dependencies:** None
 **Acceptance Criteria:**
 - [ ] RepositoryConfigError base class
@@ -171,8 +187,9 @@ class GitCommandService {
 }
 ```
 
-### GIT-002 [P]: Unit Tests for Git Service
+### GIT-002 [P]: Unit Tests for Git Service 🟢
 **Description:** Create comprehensive tests for git command execution
+**Testing:** 🟢 **VSCode Testable** - Uses Node.js child_process, can test with real/mock git commands
 **Files:** `test/services/GitCommandService.test.ts`
 **Dependencies:** GIT-001
 **Acceptance Criteria:**
@@ -251,8 +268,9 @@ npm run test -- GitCommandService.test.ts
 - [ ] Results are immutable (defensive copies)
 - [ ] Efficient O(1) or O(n) performance
 
-### REPO-006: Repository Service Unit Tests
+### REPO-006: Repository Service Unit Tests 🟡
 **Description:** Create comprehensive test suite for repository service
+**Testing:** 🟡 **Partial VSCode** - Business logic testable with mocked Plugin instance; full persistence testing needs Obsidian
 **Files:** `test/services/RepositoryConfigService.test.ts`
 **Dependencies:** REPO-002, REPO-003, REPO-004, REPO-005
 **Acceptance Criteria:**
@@ -274,8 +292,9 @@ npm run test -- RepositoryConfigService.test.ts --coverage
 
 ## Phase 4: Settings User Interface
 
-### UI-001: Create Settings Tab Structure
+### UI-001: Create Settings Tab Structure 🔴
 **Description:** Implement basic settings tab extending Obsidian's PluginSettingTab
+**Testing:** 🔴 **Obsidian Required** - UI components require Obsidian environment for rendering and testing
 **Files:** `src/settings/SettingTab.ts`
 **Dependencies:** ARCH-002, REPO-001
 **Acceptance Criteria:**
@@ -286,8 +305,9 @@ npm run test -- RepositoryConfigService.test.ts --coverage
 - [ ] Tab registered in main plugin onload()
 - [ ] Settings tab visible in Obsidian settings
 
-### UI-002: Implement Repository List Display
+### UI-002: Implement Repository List Display 🔴
 **Description:** Create UI to display list of configured repositories
+**Testing:** 🔴 **Obsidian Required** - Must test rendering and display in Obsidian settings
 **Files:** `src/settings/SettingTab.ts`
 **Dependencies:** UI-001
 **Acceptance Criteria:**
@@ -299,8 +319,9 @@ npm run test -- RepositoryConfigService.test.ts --coverage
 - [ ] Repository count displayed
 - [ ] List updates when repositories change
 
-### UI-003: Add Repository Controls
+### UI-003: Add Repository Controls 🔴
 **Description:** Implement add, remove, and toggle controls per repository
+**Testing:** 🔴 **Obsidian Required** - Button interactions and UI updates need Obsidian environment
 **Files:** `src/settings/SettingTab.ts`
 **Dependencies:** UI-002, REPO-002, REPO-003, REPO-004
 **Acceptance Criteria:**
@@ -312,8 +333,9 @@ npm run test -- RepositoryConfigService.test.ts --coverage
 - [ ] UI updates after actions complete
 - [ ] Keyboard navigation supported
 
-### UI-004: Implement Add Repository Dialog
+### UI-004: Implement Add Repository Dialog 🔴
 **Description:** Create modal dialog for adding new repositories
+**Testing:** 🔴 **Obsidian Required** - Modal dialogs and file picker require Obsidian UI
 **Files:** `src/settings/SettingTab.ts`
 **Dependencies:** UI-003
 **Acceptance Criteria:**
@@ -327,8 +349,9 @@ npm run test -- RepositoryConfigService.test.ts --coverage
 - [ ] Success closes dialog and updates list
 - [ ] Handles errors from service layer
 
-### UI-005 [P]: Add Repository Item Actions
+### UI-005 [P]: Add Repository Item Actions 🔴
 **Description:** Implement inline actions for each repository item
+**Testing:** 🔴 **Obsidian Required** - Confirmation modals and notices need Obsidian environment
 **Files:** `src/settings/SettingTab.ts`
 **Dependencies:** UI-003
 **Acceptance Criteria:**
@@ -340,8 +363,9 @@ npm run test -- RepositoryConfigService.test.ts --coverage
 - [ ] Success/error feedback as notices
 - [ ] Actions disabled during processing
 
-### UI-006 [P]: Polish Settings UI
+### UI-006 [P]: Polish Settings UI 🔴
 **Description:** Add visual polish and improved UX to settings
+**Testing:** 🔴 **Obsidian Required** - Visual polish and UX testing requires Obsidian
 **Files:** `src/settings/SettingTab.ts`, `styles.css`
 **Dependencies:** UI-004, UI-005
 **Acceptance Criteria:**
@@ -355,8 +379,9 @@ npm run test -- RepositoryConfigService.test.ts --coverage
 
 ## Phase 5: Integration & Quality
 
-### INT-001: End-to-End Integration Testing
+### INT-001: End-to-End Integration Testing 🔴
 **Description:** Test complete workflows in real Obsidian environment
+**Testing:** 🔴 **Obsidian Required** - Full workflow testing requires Obsidian plugin environment
 **Files:** `test/integration/repository-workflow.test.ts`
 **Dependencies:** UI-006, REPO-006
 **Acceptance Criteria:**
@@ -369,8 +394,9 @@ npm run test -- RepositoryConfigService.test.ts --coverage
 - [ ] Test UI updates correctly after operations
 - [ ] All workflows complete successfully
 
-### INT-002 [P]: Cross-Platform Path Testing
+### INT-002 [P]: Cross-Platform Path Testing 🟡
 **Description:** Validate path handling across operating systems
+**Testing:** 🟡 **Mixed** - Path validation logic testable in VSCode; full plugin behavior needs Obsidian on each platform
 **Files:** `test/integration/cross-platform.test.ts`
 **Dependencies:** GIT-002
 **Acceptance Criteria:**
@@ -384,8 +410,9 @@ npm run test -- RepositoryConfigService.test.ts --coverage
 
 **Note:** Requires testing on actual platforms, not just unit tests
 
-### INT-003 [P]: Error Handling Validation
+### INT-003 [P]: Error Handling Validation 🔴
 **Description:** Verify error handling and recovery scenarios
+**Testing:** 🔴 **Obsidian Required** - Error UI presentation (modals, notices) requires Obsidian environment
 **Files:** `test/integration/error-scenarios.test.ts`
 **Dependencies:** UI-005
 **Acceptance Criteria:**
@@ -398,8 +425,9 @@ npm run test -- RepositoryConfigService.test.ts --coverage
 - [ ] All errors display user-friendly messages
 - [ ] User can recover from all error states
 
-### PERF-001: Performance Validation
+### PERF-001: Performance Validation 🔴
 **Description:** Validate performance requirements are met
+**Testing:** 🔴 **Obsidian Required** - Plugin load time and memory profiling need Obsidian environment
 **Files:** `test/performance/benchmarks.test.ts`
 **Dependencies:** INT-001
 **Acceptance Criteria:**
@@ -681,6 +709,118 @@ Build UI incrementally:
 - All operations complete in under 3 seconds
 - No confusing error messages
 - Settings UI intuitive without documentation
+
+### Testing Implementation Guide
+
+**🟢 VSCode Testable Tasks (Run `npm test`):**
+
+These can be fully developed and tested using Jest in VSCode/terminal:
+
+1. **DATA-001: Validation Utilities**
+   - Write unit tests for path validation functions
+   - Test with various path formats (Unix, Windows)
+   - Mock filesystem operations if needed
+   - Can achieve 100% coverage without Obsidian
+
+2. **DATA-002: Error Classes**
+   - Test error instantiation and properties
+   - Test error codes and messages
+   - Verify inheritance hierarchy
+   - Pure TypeScript, no external dependencies
+
+3. **GIT-002: Git Command Service**
+   - Test git commands with real git repositories
+   - Can create temporary test repos for validation
+   - Mock child_process for specific test scenarios
+   - Test cross-platform command generation
+
+**🟡 Partial VSCode Testing (Mock Required):**
+
+These require mocking Obsidian APIs but core logic is testable:
+
+1. **REPO-006: Repository Service**
+   - Mock the Plugin instance for testing
+   - Create mock loadData/saveData methods
+   - Test business logic without Obsidian runtime
+   - Example mock setup:
+   ```typescript
+   const mockPlugin = {
+     loadData: jest.fn().mockResolvedValue(mockSettings),
+     saveData: jest.fn().mockResolvedValue(undefined)
+   };
+   ```
+   - ~80% of functionality testable in VSCode
+   - Actual persistence requires Obsidian
+
+2. **INT-002: Cross-Platform Paths**
+   - Path validation logic: VSCode
+   - Path normalization: VSCode
+   - Plugin behavior: Obsidian on each platform
+
+**🔴 Obsidian Required (Manual Testing):**
+
+These require running plugin in Obsidian:
+
+1. **All UI Tasks (UI-001 through UI-006)**
+   - Load plugin in Obsidian
+   - Navigate to Settings → Plugin Settings
+   - Manually test each interaction
+   - Verify visual appearance and responsiveness
+   - Test with different window sizes
+
+2. **INT-001: End-to-End Workflows**
+   - Test complete user scenarios
+   - Verify settings persistence across restarts
+   - Test error states and recovery
+
+3. **INT-003: Error Handling**
+   - Trigger error scenarios in Obsidian
+   - Verify modal dialogs appear correctly
+   - Test notices and error messages
+   - Confirm user can recover from errors
+
+4. **PERF-001: Performance**
+   - Profile plugin load time in Obsidian
+   - Use Obsidian dev tools for memory profiling
+   - Measure UI render times
+   - Test with multiple repositories
+
+**Testing Workflow Recommendation:**
+
+1. **Development Phase (VSCode):**
+   - Write failing unit tests first (TDD)
+   - Implement feature to pass tests
+   - Run `npm test` after each change
+   - Maintain high test coverage for business logic
+
+2. **Integration Phase (Obsidian):**
+   - Build plugin: `npm run build`
+   - Load in Obsidian (via symlink or hot reload)
+   - Manual testing of UI and workflows
+   - Document any issues found
+
+3. **Quality Assurance:**
+   - Run full test suite: `npm test --coverage`
+   - Verify coverage meets targets (80%+)
+   - Manual testing in Obsidian for all UI scenarios
+   - Cross-platform testing on actual systems
+
+**Mocking Strategy for Partial Tests:**
+
+For REPO-006, create test helpers:
+```typescript
+// test/helpers/mockPlugin.ts
+export function createMockPlugin(settings = {}) {
+  return {
+    loadData: jest.fn().mockResolvedValue(settings),
+    saveData: jest.fn().mockResolvedValue(undefined),
+    addSettingTab: jest.fn(),
+    // Add other Plugin methods as needed
+  };
+}
+```
+
+This enables testing ~70% of codebase in VSCode, with remaining 30% validated manually in Obsidian.
 
 ---
 
