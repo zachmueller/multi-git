@@ -1,0 +1,31 @@
+{
+  "name": "multi-git",
+  "version": "0.1.0",
+  "description": "Obsidian plugin for managing multiple git repositories",
+  "main": "main.js",
+  "scripts": {
+    "dev": "node esbuild.config.mjs",
+    "build": "tsc -noEmit -skipLibCheck && node esbuild.config.mjs production",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage",
+    "lint": "eslint src --ext .ts",
+    "lint:fix": "eslint src --ext .ts --fix",
+    "type-check": "tsc --noEmit"
+  },
+  "keywords": ["obsidian", "obsidian-plugin", "git", "multi-git"],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@types/jest": "^29.5.14",
+    "@types/node": "^22.10.2",
+    "@typescript-eslint/eslint-plugin": "^8.48.0",
+    "@typescript-eslint/parser": "^8.48.0",
+    "esbuild": "^0.27.0",
+    "eslint": "^9.39.1",
+    "jest": "^30.2.0",
+    "obsidian": "^1.10.3",
+    "ts-jest": "^30.2.0",
+    "typescript": "^5.9.3"
+  }
+}

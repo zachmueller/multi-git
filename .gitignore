@@ -1,0 +1,31 @@
+# Node modules
+node_modules/
+
+# Build outputs
+main.js
+main.js.map
+*.js.map
+dist/
+
+# Dependencies
+package-lock.json
+yarn.lock
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Test coverage
+coverage/
+
+# Environment
+.env
+.env.local
+
+# Temporary files
+*.log
+*.tmp
