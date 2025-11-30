@@ -1,0 +1,133 @@
+/* Multi-Git Plugin Styles */
+
+/* Header section */
+.multi-git-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1em;
+}
+
+.multi-git-header-title {
+    flex: 1;
+}
+
+.multi-git-header h3 {
+    margin: 0;
+}
+
+/* Empty state */
+.multi-git-empty-state {
+    padding: 2em;
+    text-align: center;
+    background: var(--background-secondary);
+    border-radius: 8px;
+    margin-top: 1em;
+}
+
+/* Repository list */
+.multi-git-repository-list {
+    margin-top: 1em;
+}
+
+.multi-git-repository-item {
+    border-left: 3px solid var(--background-modifier-border);
+    padding-left: 1em;
+    margin-bottom: 1em;
+}
+
+/* Repository name with status indicator */
+.multi-git-repo-name {
+    font-weight: 600;
+    font-size: 1.1em;
+    margin-bottom: 0.3em;
+}
+
+.multi-git-status-enabled {
+    color: var(--color-green);
+    font-size: 0.8em;
+}
+
+.multi-git-status-disabled {
+    color: var(--text-muted);
+    font-size: 0.8em;
+}
+
+.multi-git-name-text {
+    margin-left: 0.3em;
+}
+
+/* Repository path */
+.multi-git-repo-path {
+    font-family: var(--font-monospace);
+    font-size: 0.9em;
+    color: var(--text-muted);
+    margin-bottom: 0.3em;
+    word-break: break-all;
+}
+
+/* Repository metadata */
+.multi-git-repo-meta {
+    font-size: 0.85em;
+    color: var(--text-faint);
+    margin-top: 0.5em;
+}
+
+/* Error messages in modals */
+.multi-git-error-message {
+    padding: 0.75em;
+    background: var(--background-modifier-error);
+    border-radius: 4px;
+    margin-bottom: 1em;
+}
+
+/* Modal button container */
+.modal-button-container {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.5em;
+    margin-top: 1.5em;
+    padding-top: 1em;
+    border-top: 1px solid var(--background-modifier-border);
+}
+
+/* Ensure buttons have proper spacing */
+.setting-item button {
+    margin-left: 0.5em;
+}
+
+/* Responsive adjustments */
+@media (max-width: 600px) {
+    .multi-git-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1em;
+    }
+
+    .modal-button-container {
+        flex-direction: column-reverse;
+    }
+
+    .modal-button-container button {
+        width: 100%;
+    }
+}
+
+/* Accessibility improvements */
+.multi-git-status-enabled:focus,
+.multi-git-status-disabled:focus {
+    outline: 2px solid var(--text-accent);
+    outline-offset: 2px;
+}
+
+/* Hover states */
+.multi-git-repository-item:hover {
+    background: var(--background-secondary-alt);
+    border-left-color: var(--interactive-accent);
+}
+
+/* Loading states */
+button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}

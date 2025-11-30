@@ -2,6 +2,7 @@ import { Plugin } from 'obsidian';
 import { MultiGitSettings, DEFAULT_SETTINGS } from './settings/data';
 import { RepositoryConfigService } from './services/RepositoryConfigService';
 import { GitCommandService } from './services/GitCommandService';
+import { MultiGitSettingTab } from './settings/SettingTab';
 
 /**
  * Multi-Git Plugin for Obsidian
@@ -26,8 +27,10 @@ export default class MultiGitPlugin extends Plugin {
 		this.gitCommandService = new GitCommandService();
 		this.repositoryConfigService = new RepositoryConfigService(this);
 
+		// Register settings tab
+		this.addSettingTab(new MultiGitSettingTab(this.app, this));
+
 		// TODO: Register commands
-		// TODO: Add settings tab
 	}
 
 	/**
