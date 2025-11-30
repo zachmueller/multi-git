@@ -22,6 +22,9 @@ module.exports = {
 	moduleNameMapper: {
 		'^obsidian$': '<rootDir>/test/__mocks__/obsidian.ts',
 	},
+	transformIgnorePatterns: [
+		'node_modules/(?!(uuid)/)',
+	],
 	globals: {
 		'ts-jest': {
 			isolatedModules: true,
