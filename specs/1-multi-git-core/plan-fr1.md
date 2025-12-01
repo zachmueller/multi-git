@@ -1,10 +1,13 @@
 # Implementation Plan: Repository Configuration (FR-1)
 
 **Created:** 2025-01-12
+**Completed:** 2025-01-12
 **Specification:** [spec.md](./spec.md)
-**Status:** Planning
+**Status:** ✅ Complete - Released as v0.1.0
 **Feature:** Multi-Git Core for Obsidian
 **Requirement:** FR-1: Repository Configuration
+**Tasks:** [completed/tasks-fr1.md](./completed/tasks-fr1.md)
+**Validation:** [validation-report.md](./validation-report.md)
 
 ## Technical Context
 
