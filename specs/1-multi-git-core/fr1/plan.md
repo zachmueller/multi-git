@@ -2,13 +2,13 @@
 
 **Created:** 2025-01-12
 **Completed:** 2025-01-12
-**Specification:** [spec.md](./spec.md)
+**Specification:** [../spec.md](../spec.md)
 **Status:** ✅ Complete - Released as v0.1.0
 **Feature:** Multi-Git Core for Obsidian
 **Requirement:** FR-1: Repository Configuration
-**Tasks:** [completed/fr1/tasks.md](./completed/fr1/tasks.md)
-**Validation:** [completed/fr1/validation-report.md](./completed/fr1/validation-report.md)
-**Testing:** [completed/fr1/manual-testing-checklist.md](./completed/fr1/manual-testing-checklist.md)
+**Tasks:** [tasks.md](./tasks.md)
+**Validation:** [validation-report.md](./validation-report.md)
+**Testing:** [manual-testing-checklist.md](./manual-testing-checklist.md)
 
 ## Technical Context
 
@@ -80,7 +80,7 @@
 #### Principle 1: Specification-First Development
 - **Requirement:** All features must begin with clear specification before implementation
 - **Plan Alignment:** This plan implements FR-1 from approved specification
-- **Validation:** Spec exists at `specs/1-multi-git-core/spec.md` with complete acceptance criteria
+- **Validation:** Spec exists at `../spec.md` with complete acceptance criteria
 
 #### Principle 2: Iterative Simplicity
 - **Requirement:** Start with minimal viable implementation
@@ -408,7 +408,7 @@ multi-git/
 3. Enable plugin in Obsidian settings
 4. Hot reload on code changes
 
-See `quickstart.md` for complete setup instructions.
+See `../quickstart.md` for complete setup instructions.
 
 ## Implementation Readiness Validation
 

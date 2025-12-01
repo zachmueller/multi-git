@@ -1,7 +1,7 @@
 # Implementation Plan: Automated Remote Fetch (FR-2)
 
 **Created:** 2025-01-12
-**Specification:** [spec.md](./spec.md)
+**Specification:** [../spec.md](../spec.md)
 **Status:** Planning
 **Feature:** Multi-Git Core for Obsidian
 **Requirement:** FR-2: Automated Remote Fetch
@@ -98,7 +98,7 @@
 #### Principle 1: Specification-First Development
 - **Requirement:** All features must begin with clear specification before implementation
 - **Plan Alignment:** This plan implements FR-2 from approved specification in spec.md
-- **Validation:** Spec section FR-2 defines all acceptance criteria for automated fetching
+- **Validation:** Spec section FR-2 at `../spec.md` defines all acceptance criteria for automated fetching
 
 #### Principle 2: Iterative Simplicity
 - **Requirement:** Start with minimal viable implementation
@@ -502,7 +502,7 @@ mockCheckRemoteChanges = jest.fn().mockResolvedValue({
 4. Notification triggering logic
 5. Concurrent fetch handling
 
-See `quickstart.md` for complete testing setup.
+See `../quickstart.md` for complete testing setup.
 
 ## Implementation Readiness Validation
 
