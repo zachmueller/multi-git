@@ -300,35 +300,27 @@ export class RepositoryConfigService {
      * @returns Migrated settings object
      */
     migrateSettings(settings: MultiGitSettings): MultiGitSettings {
-        let needsSave = false;
-
         // Migrate global settings if missing
         if (settings.globalFetchInterval === undefined) {
             settings.globalFetchInterval = 300000; // 5 minutes default
-            needsSave = true;
         }
         if (settings.fetchOnStartup === undefined) {
             settings.fetchOnStartup = true;
-            needsSave = true;
         }
         if (settings.notifyOnRemoteChanges === undefined) {
             settings.notifyOnRemoteChanges = true;
-            needsSave = true;
         }
 
         // Migrate repository configurations
         for (const repo of settings.repositories) {
             if (repo.fetchInterval === undefined) {
                 repo.fetchInterval = settings.globalFetchInterval;
-                needsSave = true;
             }
             if (repo.lastFetchStatus === undefined) {
                 repo.lastFetchStatus = 'idle';
-                needsSave = true;
             }
             if (repo.remoteChanges === undefined) {
                 repo.remoteChanges = false;
-                needsSave = true;
             }
         }
 

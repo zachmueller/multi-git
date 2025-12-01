@@ -3,7 +3,7 @@
  * Manages automated periodic fetch operations for repositories
  */
 
-import { GitCommandService, RemoteChangeStatus } from './GitCommandService';
+import { GitCommandService } from './GitCommandService';
 import { RepositoryConfigService } from './RepositoryConfigService';
 import { FetchError } from '../utils/errors';
 import { NotificationService } from './NotificationService';
@@ -84,7 +84,7 @@ export class FetchSchedulerService {
      */
     stopAll(): void {
         // Clear all intervals to prevent memory leaks
-        for (const [repoId, intervalHandle] of this.intervals.entries()) {
+        for (const [_repoId, intervalHandle] of this.intervals.entries()) {
             clearInterval(intervalHandle);
         }
 
