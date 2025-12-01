@@ -35,16 +35,16 @@
 
 ## Phase 1: Git Fetch Operations (Foundation)
 
-### FETCH-001: Extend GitCommandService with fetch operation
+### FETCH-001: Extend GitCommandService with fetch operation ✅
 **Description:** Implement git fetch functionality using `git fetch --all --tags --prune`
 **Files:** `src/services/GitCommandService.ts`
 **Dependencies:** FR-1 GitCommandService implementation
 **Acceptance Criteria:**
-- [ ] `fetchRepository()` method executes `git fetch --all --tags --prune`
-- [ ] Timeout handling implemented (30 second default)
-- [ ] Git command output captured for error detection
-- [ ] Returns boolean success indicator
-- [ ] Async operation does not block UI
+- [x] `fetchRepository()` method executes `git fetch --all --tags --prune`
+- [x] Timeout handling implemented (30 second default)
+- [x] Git command output captured for error detection
+- [x] Returns boolean success indicator
+- [x] Async operation does not block UI
 
 **Commands:**
 ```bash
@@ -55,87 +55,87 @@ cd /path/to/test/repo && git fetch --all --tags --prune
 npm test -- GitCommandService
 ```
 
-### FETCH-002: Implement current branch detection
+### FETCH-002: Implement current branch detection ✅
 **Description:** Add method to get current branch name using `git rev-parse`
 **Files:** `src/services/GitCommandService.ts`
 **Dependencies:** FETCH-001
 **Acceptance Criteria:**
-- [ ] `getCurrentBranch()` method returns current branch name
-- [ ] Uses `git rev-parse --abbrev-ref HEAD`
-- [ ] Returns null for detached HEAD state
-- [ ] Handles errors gracefully
-- [ ] Unit tests cover normal and edge cases
+- [x] `getCurrentBranch()` method returns current branch name
+- [x] Uses `git rev-parse --abbrev-ref HEAD`
+- [x] Returns null for detached HEAD state
+- [x] Handles errors gracefully
+- [x] Unit tests cover normal and edge cases
 
-### FETCH-003: Implement tracking branch detection
+### FETCH-003: Implement tracking branch detection ✅
 **Description:** Add method to get remote tracking branch for a local branch
 **Files:** `src/services/GitCommandService.ts`
 **Dependencies:** FETCH-002
 **Acceptance Criteria:**
-- [ ] `getTrackingBranch()` method returns remote tracking branch
-- [ ] Uses `git rev-parse --abbrev-ref @{u}`
-- [ ] Returns null when no tracking branch configured
-- [ ] Handles branch parameter correctly
-- [ ] Unit tests cover all scenarios
+- [x] `getTrackingBranch()` method returns remote tracking branch
+- [x] Uses `git rev-parse --abbrev-ref @{u}`
+- [x] Returns null when no tracking branch configured
+- [x] Handles branch parameter correctly
+- [x] Unit tests cover all scenarios
 
-### FETCH-004: Implement commit comparison logic
+### FETCH-004: Implement commit comparison logic ✅
 **Description:** Add method to count commits between local and remote branches
 **Files:** `src/services/GitCommandService.ts`
 **Dependencies:** FETCH-003
 **Acceptance Criteria:**
-- [ ] `compareWithRemote()` method counts commits ahead/behind
-- [ ] Uses `git rev-list --count` for accuracy
-- [ ] Returns object with `ahead` and `behind` numbers
-- [ ] Handles force-push scenarios correctly
-- [ ] Unit tests validate commit counting accuracy
+- [x] `compareWithRemote()` method counts commits ahead/behind
+- [x] Uses `git rev-list --count` for accuracy
+- [x] Returns object with `ahead` and `behind` numbers
+- [x] Handles force-push scenarios correctly
+- [x] Unit tests validate commit counting accuracy
 
-### FETCH-005 [P]: Implement remote change detection
+### FETCH-005 [P]: Implement remote change detection ✅
 **Description:** Combine branch detection and comparison into unified change detection
 **Files:** `src/services/GitCommandService.ts`
 **Dependencies:** FETCH-004
 **Acceptance Criteria:**
-- [ ] `checkRemoteChanges()` method returns RemoteChangeStatus
-- [ ] Combines getCurrentBranch, getTrackingBranch, and compareWithRemote
-- [ ] Returns hasChanges flag indicating actionable remote changes
-- [ ] Handles edge cases (detached HEAD, no tracking branch)
-- [ ] Unit tests cover all branch scenarios
+- [x] `checkRemoteChanges()` method returns RemoteChangeStatus
+- [x] Combines getCurrentBranch, getTrackingBranch, and compareWithRemote
+- [x] Returns hasChanges flag indicating actionable remote changes
+- [x] Handles edge cases (detached HEAD, no tracking branch)
+- [x] Unit tests cover all branch scenarios
 
 **Parallel Note:** Can be implemented alongside FETCH-006 once FETCH-004 is complete.
 
-### FETCH-006 [P]: Define FetchError class and error codes
+### FETCH-006 [P]: Define FetchError class and error codes ✅
 **Description:** Create error handling classes for git fetch failures
 **Files:** `src/utils/errors.ts`
 **Dependencies:** FETCH-004
 **Acceptance Criteria:**
-- [ ] FetchError class extends base Error
-- [ ] Includes repoPath, code, and originalError fields
-- [ ] FetchErrorCode enum defines NETWORK_ERROR, AUTH_ERROR, TIMEOUT, REPO_ERROR, UNKNOWN
-- [ ] Error messages are clear and actionable
-- [ ] Unit tests validate error construction
+- [x] FetchError class extends base Error
+- [x] Includes repoPath, code, and originalError fields
+- [x] FetchErrorCode enum defines NETWORK_ERROR, AUTH_ERROR, TIMEOUT, REPO_ERROR, UNKNOWN
+- [x] Error messages are clear and actionable
+- [x] Unit tests validate error construction
 
 **Parallel Note:** Can be implemented alongside FETCH-005 since it's independent error handling.
 
-### FETCH-007: Implement git command error categorization
+### FETCH-007: Implement git command error categorization ✅
 **Description:** Add logic to parse git output and categorize failures into error codes
 **Files:** `src/services/GitCommandService.ts`
 **Dependencies:** FETCH-005, FETCH-006
 **Acceptance Criteria:**
-- [ ] Parse git stderr output to identify error types
-- [ ] Map git errors to FetchErrorCode categories
-- [ ] Throw FetchError with appropriate code
-- [ ] Handle timeout errors specifically
-- [ ] Unit tests cover all error scenarios (network, auth, timeout, unknown)
+- [x] Parse git stderr output to identify error types
+- [x] Map git errors to FetchErrorCode categories
+- [x] Throw FetchError with appropriate code
+- [x] Handle timeout errors specifically
+- [x] Unit tests cover all error scenarios (network, auth, timeout, unknown)
 
-### FETCH-008: Unit tests for git fetch operations
+### FETCH-008: Unit tests for git fetch operations ✅
 **Description:** Comprehensive test suite for all git fetch functionality
 **Files:** `test/services/GitCommandService.test.ts`
 **Dependencies:** FETCH-007
 **Acceptance Criteria:**
-- [ ] Test successful fetch operation
-- [ ] Test change detection accuracy (ahead, behind, both, neither)
-- [ ] Test error scenarios (network failure, auth failure, timeout)
-- [ ] Test edge cases (no tracking branch, detached HEAD, force push)
-- [ ] Test all public methods in GitCommandService
-- [ ] All tests passing with good coverage
+- [x] Test successful fetch operation
+- [x] Test change detection accuracy (ahead, behind, both, neither)
+- [x] Test error scenarios (network failure, auth failure, timeout)
+- [x] Test edge cases (no tracking branch, detached HEAD, force push)
+- [x] Test all public methods in GitCommandService
+- [x] All tests passing with good coverage
 
 ## Phase 2: Fetch Scheduler Service
 
