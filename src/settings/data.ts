@@ -4,6 +4,11 @@
  */
 
 /**
+ * Fetch status for a repository
+ */
+export type FetchStatus = 'idle' | 'fetching' | 'success' | 'error';
+
+/**
  * Configuration for a single git repository
  */
 export interface RepositoryConfig {
@@ -24,6 +29,24 @@ export interface RepositoryConfig {
 
     /** Timestamp of last successful validation (Unix timestamp in milliseconds) */
     lastValidated?: number;
+
+    /** Fetch interval in milliseconds (defaults to global setting) */
+    fetchInterval: number;
+
+    /** Timestamp of last fetch attempt (Unix timestamp in milliseconds) */
+    lastFetchTime?: number;
+
+    /** Status of the last fetch operation */
+    lastFetchStatus: FetchStatus;
+
+    /** Error message from last fetch failure */
+    lastFetchError?: string;
+
+    /** Whether remote has changes compared to local */
+    remoteChanges: boolean;
+
+    /** Number of commits remote is ahead/behind */
+    remoteCommitCount?: number;
 }
 
 /**
@@ -36,6 +59,18 @@ export interface MultiGitSettings {
 
     /** Settings version for migration tracking */
     version: string;
+
+    /** Global default fetch interval in milliseconds */
+    globalFetchInterval: number;
+
+    /** Whether to fetch all repositories on plugin startup */
+    fetchOnStartup: boolean;
+
+    /** Whether to show notifications for remote changes */
+    notifyOnRemoteChanges: boolean;
+
+    /** Timestamp of last global fetch operation */
+    lastGlobalFetch?: number;
 }
 
 /**
@@ -45,4 +80,7 @@ export interface MultiGitSettings {
 export const DEFAULT_SETTINGS: MultiGitSettings = {
     repositories: [],
     version: '0.1.0',
+    globalFetchInterval: 300000, // 5 minutes
+    fetchOnStartup: true,
+    notifyOnRemoteChanges: true,
 };

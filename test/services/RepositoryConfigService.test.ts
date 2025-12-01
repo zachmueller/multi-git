@@ -17,11 +17,14 @@ describe('RepositoryConfigService', () => {
     let mockGitService: jest.Mocked<GitCommandService>;
 
     beforeEach(() => {
-        // Create mock plugin with settings
+        // Create mock plugin with settings including fetch fields
         mockPlugin = {
             settings: {
                 repositories: [],
                 version: '0.1.0',
+                globalFetchInterval: 300000,
+                fetchOnStartup: true,
+                notifyOnRemoteChanges: true,
             },
             saveSettings: jest.fn().mockResolvedValue(undefined),
         } as any;
@@ -120,7 +123,7 @@ describe('RepositoryConfigService', () => {
                 DuplicateError
             );
             await expect(service.addRepository(validPath)).rejects.toThrow(
-                'Repository already exists'
+                'Repository already configured'
             );
             expect(mockPlugin.settings.repositories).toHaveLength(1);
         });
@@ -426,6 +429,361 @@ describe('RepositoryConfigService', () => {
 
             // Original should not be affected
             expect(mockPlugin.settings.repositories[0].name).toBe('repo');
+        });
+    });
+
+    describe('updateFetchStatus', () => {
+        beforeEach(() => {
+            (validateAbsolutePath as jest.Mock).mockReturnValue(true);
+            (isDirectory as jest.Mock).mockResolvedValue(true);
+            mockGitService.isGitRepository.mockResolvedValue(true);
+        });
+
+        it('should update fetch status to success and clear error', async () => {
+            const repo = await service.addRepository('/test/repo');
+            jest.clearAllMocks();
+
+            await service.updateFetchStatus(repo.id, 'success');
+
+            const updated = mockPlugin.settings.repositories[0];
+            expect(updated.lastFetchStatus).toBe('success');
+            expect(updated.lastFetchTime).toBeDefined();
+            expect(updated.lastFetchError).toBeUndefined();
+            expect(mockPlugin.saveSettings).toHaveBeenCalledTimes(1);
+        });
+
+        it('should update fetch status to error with error message', async () => {
+            const repo = await service.addRepository('/test/repo');
+            jest.clearAllMocks();
+
+            await service.updateFetchStatus(repo.id, 'error', 'Network timeout');
+
+            const updated = mockPlugin.settings.repositories[0];
+            expect(updated.lastFetchStatus).toBe('error');
+            expect(updated.lastFetchError).toBe('Network timeout');
+            expect(mockPlugin.saveSettings).toHaveBeenCalledTimes(1);
+        });
+
+        it('should update lastFetchTime timestamp', async () => {
+            const repo = await service.addRepository('/test/repo');
+            const beforeUpdate = Date.now();
+            jest.clearAllMocks();
+
+            await service.updateFetchStatus(repo.id, 'success');
+            const afterUpdate = Date.now();
+
+            const updated = mockPlugin.settings.repositories[0];
+            expect(updated.lastFetchTime).toBeGreaterThanOrEqual(beforeUpdate);
+            expect(updated.lastFetchTime).toBeLessThanOrEqual(afterUpdate);
+        });
+
+        it('should throw error when repository not found', async () => {
+            await expect(
+                service.updateFetchStatus('non-existent-id', 'success')
+            ).rejects.toThrow('Repository not found');
+            expect(mockPlugin.saveSettings).not.toHaveBeenCalled();
+        });
+
+        it('should clear error on successful status update', async () => {
+            const repo = await service.addRepository('/test/repo');
+
+            // First set an error
+            await service.updateFetchStatus(repo.id, 'error', 'Some error');
+            expect(mockPlugin.settings.repositories[0].lastFetchError).toBe('Some error');
+
+            jest.clearAllMocks();
+
+            // Then update to success
+            await service.updateFetchStatus(repo.id, 'success');
+
+            const updated = mockPlugin.settings.repositories[0];
+            expect(updated.lastFetchError).toBeUndefined();
+        });
+    });
+
+    describe('setRemoteChanges', () => {
+        beforeEach(() => {
+            (validateAbsolutePath as jest.Mock).mockReturnValue(true);
+            (isDirectory as jest.Mock).mockResolvedValue(true);
+            mockGitService.isGitRepository.mockResolvedValue(true);
+        });
+
+        it('should set remote changes flag and commit count', async () => {
+            const repo = await service.addRepository('/test/repo');
+            jest.clearAllMocks();
+
+            await service.setRemoteChanges(repo.id, true, 5);
+
+            const updated = mockPlugin.settings.repositories[0];
+            expect(updated.remoteChanges).toBe(true);
+            expect(updated.remoteCommitCount).toBe(5);
+            expect(mockPlugin.saveSettings).toHaveBeenCalledTimes(1);
+        });
+
+        it('should clear remote changes and commit count', async () => {
+            const repo = await service.addRepository('/test/repo');
+
+            // First set changes
+            await service.setRemoteChanges(repo.id, true, 3);
+            jest.clearAllMocks();
+
+            // Then clear changes
+            await service.setRemoteChanges(repo.id, false);
+
+            const updated = mockPlugin.settings.repositories[0];
+            expect(updated.remoteChanges).toBe(false);
+            expect(updated.remoteCommitCount).toBeUndefined();
+        });
+
+        it('should set remote changes without commit count', async () => {
+            const repo = await service.addRepository('/test/repo');
+            jest.clearAllMocks();
+
+            await service.setRemoteChanges(repo.id, true);
+
+            const updated = mockPlugin.settings.repositories[0];
+            expect(updated.remoteChanges).toBe(true);
+            expect(updated.remoteCommitCount).toBeUndefined();
+        });
+
+        it('should throw error when repository not found', async () => {
+            await expect(
+                service.setRemoteChanges('non-existent-id', true)
+            ).rejects.toThrow('Repository not found');
+            expect(mockPlugin.saveSettings).not.toHaveBeenCalled();
+        });
+    });
+
+    describe('recordFetchResult', () => {
+        beforeEach(() => {
+            (validateAbsolutePath as jest.Mock).mockReturnValue(true);
+            (isDirectory as jest.Mock).mockResolvedValue(true);
+            mockGitService.isGitRepository.mockResolvedValue(true);
+        });
+
+        it('should record successful fetch result with remote changes', async () => {
+            const repo = await service.addRepository('/test/repo');
+            jest.clearAllMocks();
+
+            const fetchResult = {
+                repositoryId: repo.id,
+                timestamp: Date.now(),
+                success: true,
+                remoteChanges: true,
+                commitsBehind: 3,
+            };
+
+            await service.recordFetchResult(fetchResult);
+
+            const updated = mockPlugin.settings.repositories[0];
+            expect(updated.lastFetchStatus).toBe('success');
+            expect(updated.lastFetchTime).toBe(fetchResult.timestamp);
+            expect(updated.remoteChanges).toBe(true);
+            expect(updated.remoteCommitCount).toBe(3);
+            expect(updated.lastFetchError).toBeUndefined();
+            expect(mockPlugin.saveSettings).toHaveBeenCalledTimes(1);
+        });
+
+        it('should record failed fetch result with error', async () => {
+            const repo = await service.addRepository('/test/repo');
+            jest.clearAllMocks();
+
+            const fetchResult = {
+                repositoryId: repo.id,
+                timestamp: Date.now(),
+                success: false,
+                remoteChanges: false,
+                error: 'Network error',
+            };
+
+            await service.recordFetchResult(fetchResult);
+
+            const updated = mockPlugin.settings.repositories[0];
+            expect(updated.lastFetchStatus).toBe('error');
+            expect(updated.lastFetchError).toBe('Network error');
+            expect(updated.remoteChanges).toBe(false);
+        });
+
+        it('should clear commit count when no remote changes', async () => {
+            const repo = await service.addRepository('/test/repo');
+
+            // First set some changes
+            await service.setRemoteChanges(repo.id, true, 5);
+            jest.clearAllMocks();
+
+            // Then fetch result with no changes
+            const fetchResult = {
+                repositoryId: repo.id,
+                timestamp: Date.now(),
+                success: true,
+                remoteChanges: false,
+            };
+
+            await service.recordFetchResult(fetchResult);
+
+            const updated = mockPlugin.settings.repositories[0];
+            expect(updated.remoteChanges).toBe(false);
+            expect(updated.remoteCommitCount).toBeUndefined();
+        });
+
+        it('should throw error when repository not found', async () => {
+            const fetchResult = {
+                repositoryId: 'non-existent-id',
+                timestamp: Date.now(),
+                success: true,
+                remoteChanges: false,
+            };
+
+            await expect(
+                service.recordFetchResult(fetchResult)
+            ).rejects.toThrow('Repository not found');
+            expect(mockPlugin.saveSettings).not.toHaveBeenCalled();
+        });
+    });
+
+    describe('getRepositoriesWithRemoteChanges', () => {
+        beforeEach(() => {
+            (validateAbsolutePath as jest.Mock).mockReturnValue(true);
+            (isDirectory as jest.Mock).mockResolvedValue(true);
+            mockGitService.isGitRepository.mockResolvedValue(true);
+        });
+
+        it('should return only repositories with remote changes', async () => {
+            const repo1 = await service.addRepository('/repo1');
+            const repo2 = await service.addRepository('/repo2');
+            const repo3 = await service.addRepository('/repo3');
+
+            // Set remote changes for repo1 and repo3
+            await service.setRemoteChanges(repo1.id, true, 2);
+            await service.setRemoteChanges(repo3.id, true, 5);
+
+            const result = service.getRepositoriesWithRemoteChanges();
+
+            expect(result).toHaveLength(2);
+            expect(result).toContainEqual(expect.objectContaining({ id: repo1.id }));
+            expect(result).toContainEqual(expect.objectContaining({ id: repo3.id }));
+            expect(result).not.toContainEqual(expect.objectContaining({ id: repo2.id }));
+        });
+
+        it('should return empty array when no repositories have remote changes', async () => {
+            await service.addRepository('/repo1');
+            await service.addRepository('/repo2');
+
+            const result = service.getRepositoriesWithRemoteChanges();
+
+            expect(result).toEqual([]);
+        });
+
+        it('should return defensive copies', async () => {
+            const repo = await service.addRepository('/test/repo');
+            await service.setRemoteChanges(repo.id, true);
+
+            const result = service.getRepositoriesWithRemoteChanges();
+            result[0].name = 'Modified Name';
+
+            expect(mockPlugin.settings.repositories[0].name).toBe('repo');
+        });
+    });
+
+    describe('migrateSettings', () => {
+        it('should add missing global fetch settings', () => {
+            const oldSettings: any = {
+                repositories: [],
+                version: '0.1.0',
+            };
+
+            const migrated = service.migrateSettings(oldSettings);
+
+            expect(migrated.globalFetchInterval).toBe(300000);
+            expect(migrated.fetchOnStartup).toBe(true);
+            expect(migrated.notifyOnRemoteChanges).toBe(true);
+        });
+
+        it('should add missing repository fetch fields', () => {
+            const oldSettings: any = {
+                repositories: [
+                    {
+                        id: 'test-id',
+                        path: '/test/repo',
+                        name: 'Test',
+                        enabled: true,
+                        createdAt: Date.now(),
+                    },
+                ],
+                version: '0.1.0',
+                globalFetchInterval: 300000,
+                fetchOnStartup: true,
+                notifyOnRemoteChanges: true,
+            };
+
+            const migrated = service.migrateSettings(oldSettings);
+
+            const repo = migrated.repositories[0];
+            expect(repo.fetchInterval).toBe(300000);
+            expect(repo.lastFetchStatus).toBe('idle');
+            expect(repo.remoteChanges).toBe(false);
+        });
+
+        it('should not modify settings that already have fetch fields', () => {
+            const currentSettings: any = {
+                repositories: [
+                    {
+                        id: 'test-id',
+                        path: '/test/repo',
+                        name: 'Test',
+                        enabled: true,
+                        createdAt: Date.now(),
+                        fetchInterval: 600000,
+                        lastFetchStatus: 'success',
+                        remoteChanges: true,
+                    },
+                ],
+                version: '0.1.0',
+                globalFetchInterval: 300000,
+                fetchOnStartup: true,
+                notifyOnRemoteChanges: true,
+            };
+
+            const migrated = service.migrateSettings(currentSettings);
+
+            const repo = migrated.repositories[0];
+            expect(repo.fetchInterval).toBe(600000);
+            expect(repo.lastFetchStatus).toBe('success');
+            expect(repo.remoteChanges).toBe(true);
+        });
+
+        it('should use global fetch interval for repository defaults', () => {
+            const oldSettings: any = {
+                repositories: [
+                    {
+                        id: 'test-id',
+                        path: '/test/repo',
+                        name: 'Test',
+                        enabled: true,
+                        createdAt: Date.now(),
+                    },
+                ],
+                version: '0.1.0',
+                globalFetchInterval: 600000,
+                fetchOnStartup: true,
+                notifyOnRemoteChanges: true,
+            };
+
+            const migrated = service.migrateSettings(oldSettings);
+
+            expect(migrated.repositories[0].fetchInterval).toBe(600000);
+        });
+
+        it('should be idempotent - running twice has same result', () => {
+            const oldSettings: any = {
+                repositories: [],
+                version: '0.1.0',
+            };
+
+            const migrated1 = service.migrateSettings(oldSettings);
+            const migrated2 = service.migrateSettings(migrated1);
+
+            expect(migrated1).toEqual(migrated2);
         });
     });
 });

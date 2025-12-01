@@ -217,79 +217,79 @@ npm test -- FetchSchedulerService
 
 ## Phase 3: Repository Status Updates
 
-### STATUS-001: Extend RepositoryConfig interface
+### STATUS-001: Extend RepositoryConfig interface ✅
 **Description:** Add fetch-related fields to RepositoryConfig data model
 **Files:** `src/settings/data.ts`
 **Dependencies:** SCHED-006
 **Acceptance Criteria:**
-- [ ] Add `fetchInterval: number` field (default: 300000ms)
-- [ ] Add `lastFetchTime?: number` field
-- [ ] Add `lastFetchStatus: 'idle' | 'fetching' | 'success' | 'error'` field
-- [ ] Add `lastFetchError?: string` field
-- [ ] Add `remoteChanges: boolean` field (default: false)
-- [ ] Add `remoteCommitCount?: number` field
-- [ ] Update type definitions and defaults
+- [x] Add `fetchInterval: number` field (default: 300000ms)
+- [x] Add `lastFetchTime?: number` field
+- [x] Add `lastFetchStatus: 'idle' | 'fetching' | 'success' | 'error'` field
+- [x] Add `lastFetchError?: string` field
+- [x] Add `remoteChanges: boolean` field (default: false)
+- [x] Add `remoteCommitCount?: number` field
+- [x] Update type definitions and defaults
 
-### STATUS-002: Extend MultiGitSettings interface
+### STATUS-002: Extend MultiGitSettings interface ✅
 **Description:** Add global fetch settings to plugin settings
 **Files:** `src/settings/data.ts`
 **Dependencies:** STATUS-001
 **Acceptance Criteria:**
-- [ ] Add `globalFetchInterval: number` field (default: 300000ms)
-- [ ] Add `fetchOnStartup: boolean` field (default: true)
-- [ ] Add `notifyOnRemoteChanges: boolean` field (default: true)
-- [ ] Add `lastGlobalFetch?: number` field
-- [ ] Update settings schema and defaults
+- [x] Add `globalFetchInterval: number` field (default: 300000ms)
+- [x] Add `fetchOnStartup: boolean` field (default: true)
+- [x] Add `notifyOnRemoteChanges: boolean` field (default: true)
+- [x] Add `lastGlobalFetch?: number` field
+- [x] Update settings schema and defaults
 
-### STATUS-003: Implement repository status update methods
+### STATUS-003: Implement repository status update methods ✅
 **Description:** Add methods to RepositoryConfigService for updating fetch status
 **Files:** `src/services/RepositoryConfigService.ts`
 **Dependencies:** STATUS-002
 **Acceptance Criteria:**
-- [ ] `updateFetchStatus()` method updates status fields
-- [ ] `setRemoteChanges()` method updates remote change flags
-- [ ] `recordFetchResult()` method processes FetchResult and updates config
-- [ ] Triggers settings save after updates
-- [ ] Validates status transitions correctly
-- [ ] Preserves other repository config fields
+- [x] `updateFetchStatus()` method updates status fields
+- [x] `setRemoteChanges()` method updates remote change flags
+- [x] `recordFetchResult()` method processes FetchResult and updates config
+- [x] Triggers settings save after updates
+- [x] Validates status transitions correctly
+- [x] Preserves other repository config fields
 
-### STATUS-004 [P]: Implement settings migration
+### STATUS-004 [P]: Implement settings migration ✅
 **Description:** Handle migration from configs without fetch fields
-**Files:** `src/settings/data.ts`, `src/services/RepositoryConfigService.ts`
+**Files:** `src/settings/data.ts`, `src/services/RepositoryConfigService.ts`, `src/main.ts`
 **Dependencies:** STATUS-003
 **Acceptance Criteria:**
-- [ ] Detect when fetch fields are missing from loaded configs
-- [ ] Add default values for new fields during load
-- [ ] Maintain backward compatibility
-- [ ] Save migrated settings automatically
-- [ ] Migration is idempotent (safe to run multiple times)
+- [x] Detect when fetch fields are missing from loaded configs
+- [x] Add default values for new fields during load
+- [x] Maintain backward compatibility
+- [x] Save migrated settings automatically
+- [x] Migration is idempotent (safe to run multiple times)
 
 **Parallel Note:** Can be developed alongside STATUS-005 as both are config-related utilities.
 
-### STATUS-005 [P]: Implement status retrieval methods
+### STATUS-005 [P]: Implement status retrieval methods ✅
 **Description:** Add getter methods for querying fetch status
 **Files:** `src/services/RepositoryConfigService.ts`
 **Dependencies:** STATUS-003
 **Acceptance Criteria:**
-- [ ] `getRepositoryStatus()` returns enriched status for one repo
-- [ ] `getAllRepositoryStatuses()` returns status for all repos
-- [ ] `getRepositoriesWithRemoteChanges()` filters repos with changes
-- [ ] Methods return complete status information
-- [ ] Efficient query patterns (no unnecessary data transformation)
+- [x] `getRepositoryStatus()` returns enriched status for one repo
+- [x] `getAllRepositoryStatuses()` returns status for all repos
+- [x] `getRepositoriesWithRemoteChanges()` filters repos with changes
+- [x] Methods return complete status information
+- [x] Efficient query patterns (no unnecessary data transformation)
 
 **Parallel Note:** Can be developed alongside STATUS-004 as both are config utilities.
 
-### STATUS-006: Unit tests for status management
+### STATUS-006: Unit tests for status management ✅
 **Description:** Test suite for status update and retrieval functionality
 **Files:** `test/services/RepositoryConfigService.test.ts`
 **Dependencies:** STATUS-004, STATUS-005
 **Acceptance Criteria:**
-- [ ] Test status update methods
-- [ ] Test FetchResult processing and storage
-- [ ] Test status retrieval and filtering
-- [ ] Test settings migration logic
-- [ ] Test persistence of status changes
-- [ ] All tests passing with good coverage
+- [x] Test status update methods
+- [x] Test FetchResult processing and storage
+- [x] Test status retrieval and filtering
+- [x] Test settings migration logic
+- [x] Test persistence of status changes
+- [x] All tests passing with good coverage (50/50 tests passing)
 
 ### STATUS-007: Integration test for scheduler + status updates
 **Description:** End-to-end test of fetch execution updating repository status

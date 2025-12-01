@@ -27,6 +27,10 @@ export default class MultiGitPlugin extends Plugin {
 		this.gitCommandService = new GitCommandService();
 		this.repositoryConfigService = new RepositoryConfigService(this);
 
+		// Apply settings migration for backward compatibility
+		this.settings = this.repositoryConfigService.migrateSettings(this.settings);
+		await this.saveSettings();
+
 		// Register settings tab
 		this.addSettingTab(new MultiGitSettingTab(this.app, this));
 
@@ -46,10 +50,14 @@ export default class MultiGitPlugin extends Plugin {
 	/**
 	 * Load plugin settings from data.json
 	 * Merges saved settings with defaults to handle new fields
+	 * Applies migration for backward compatibility
 	 */
 	async loadSettings() {
 		const savedData = await this.loadData();
 		this.settings = Object.assign({}, DEFAULT_SETTINGS, savedData);
+
+		// Apply migrations for backward compatibility
+		// This will be done after repositoryConfigService is initialized
 	}
 
 	/**
