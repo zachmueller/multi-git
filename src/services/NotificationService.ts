@@ -5,6 +5,7 @@
 
 import { Notice } from 'obsidian';
 import { MultiGitSettings } from '../settings/data';
+import { Logger } from '../utils/logger';
 
 /**
  * Service for managing Obsidian Notice-based notifications
@@ -40,6 +41,7 @@ export class NotificationService {
     notifyRemoteChanges(repoName: string, commitCount: number): void {
         // Check if notifications are globally enabled
         if (!this.areNotificationsEnabled()) {
+            Logger.debug('Notification', `Notification suppressed (disabled in settings): remote changes for ${repoName}`);
             return;
         }
 
@@ -48,12 +50,15 @@ export class NotificationService {
 
         // Check if we recently showed this notification
         if (this.isRecentNotification(notificationKey)) {
+            Logger.debug('Notification', `Notification suppressed (cooldown): remote changes for ${repoName}`);
             return;
         }
 
         // Build clear, concise message
         const commitText = commitCount === 1 ? 'commit' : 'commits';
         const message = `📥 Repository '${repoName}' has ${commitCount} new ${commitText} available`;
+
+        Logger.debug('Notification', `Showing remote changes notification for ${repoName}: ${commitCount} ${commitText}`);
 
         // Show Obsidian Notice (dismissible by user)
         new Notice(message, 8000); // 8 second duration
@@ -71,6 +76,7 @@ export class NotificationService {
     notifyFetchError(repoName: string, error: string): void {
         // Check if notifications are globally enabled
         if (!this.areNotificationsEnabled()) {
+            Logger.debug('Notification', `Error notification suppressed (disabled in settings): ${repoName}`);
             return;
         }
 
@@ -79,11 +85,14 @@ export class NotificationService {
 
         // Check if we recently showed this notification (prevent error spam)
         if (this.isRecentNotification(notificationKey)) {
+            Logger.debug('Notification', `Error notification suppressed (cooldown): ${repoName}`);
             return;
         }
 
         // Build clear error message
         const message = `⚠️ Failed to fetch repository '${repoName}': ${error}`;
+
+        Logger.debug('Notification', `Showing fetch error notification for ${repoName}: ${error}`);
 
         // Show Obsidian Notice with longer duration for errors
         new Notice(message, 10000); // 10 second duration for errors
@@ -139,6 +148,8 @@ export class NotificationService {
      * Useful for testing or when plugin reloads
      */
     clearTracking(): void {
+        const count = this.recentNotifications.size;
         this.recentNotifications.clear();
+        Logger.debug('Notification', `Cleared ${count} tracked notifications`);
     }
 }

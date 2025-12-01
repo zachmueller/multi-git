@@ -480,18 +480,18 @@ npm run dev
 
 ## Phase 6: Debug Logging (FR-6)
 
-### DEBUG-001: Create centralized logging utility
+### DEBUG-001: Create centralized logging utility ✅
 **Description:** Create logging service that checks debug flag and formats log messages
 **Files:** `src/utils/logger.ts`
 **Dependencies:** STATUS-002 (requires debugLogging setting field)
 **Acceptance Criteria:**
-- [ ] Logger class created with static methods for debug logging
-- [ ] Check `debugLogging` setting before outputting logs
-- [ ] Consistent log format: `[Multi-Git Debug] [timestamp] [component] message`
-- [ ] Timestamp in ISO format for readability
-- [ ] Component name identifies source (e.g., FetchScheduler, GitCommand)
-- [ ] No sensitive data logged (sanitize git commands if needed)
-- [ ] Performance: negligible overhead when disabled (single boolean check)
+- [x] Logger class created with static methods for debug logging
+- [x] Check `debugLogging` setting before outputting logs
+- [x] Consistent log format: `[Multi-Git Debug] [timestamp] [component] message`
+- [x] Timestamp in ISO format for readability
+- [x] Component name identifies source (e.g., FetchScheduler, GitCommand)
+- [x] No sensitive data logged (sanitize git commands if needed)
+- [x] Performance: negligible overhead when disabled (single boolean check)
 
 **Commands:**
 ```bash
@@ -499,82 +499,83 @@ npm run dev
 npm test -- logger
 ```
 
-### DEBUG-002 [P]: Add debug logging to GitCommandService
+### DEBUG-002 [P]: Add debug logging to GitCommandService ✅
 **Description:** Instrument git operations with debug logging
 **Files:** `src/services/GitCommandService.ts`
 **Dependencies:** DEBUG-001
 **Acceptance Criteria:**
-- [ ] Log fetch start/completion with repository name and duration
-- [ ] Log git command execution (command string, not credentials)
-- [ ] Log remote change detection results
-- [ ] Log error details with stack traces
-- [ ] All logging wrapped in debug flag checks
-- [ ] Logs are helpful for troubleshooting fetch failures
+- [x] Log fetch start/completion with repository name and duration
+- [x] Log git command execution (command string, not credentials)
+- [x] Log remote change detection results
+- [x] Log error details with stack traces
+- [x] All logging wrapped in debug flag checks
+- [x] Logs are helpful for troubleshooting fetch failures
 
 **Parallel Note:** Can be implemented alongside DEBUG-003 and DEBUG-004 after DEBUG-001.
 
-### DEBUG-003 [P]: Add debug logging to FetchSchedulerService
+### DEBUG-003 [P]: Add debug logging to FetchSchedulerService ✅
 **Description:** Instrument scheduler operations with debug logging
 **Files:** `src/services/FetchSchedulerService.ts`
 **Dependencies:** DEBUG-001
 **Acceptance Criteria:**
-- [ ] Log interval scheduling/unscheduling events
-- [ ] Log batch fetch execution flow
-- [ ] Log active operation tracking (concurrent fetch prevention)
-- [ ] Log fetch results and status updates
-- [ ] Timing information for performance analysis
+- [x] Log interval scheduling/unscheduling events
+- [x] Log batch fetch execution flow
+- [x] Log active operation tracking (concurrent fetch prevention)
+- [x] Log fetch results and status updates
+- [x] Timing information for performance analysis
 
 **Parallel Note:** Can be implemented alongside DEBUG-002 and DEBUG-004 after DEBUG-001.
 
-### DEBUG-004 [P]: Add debug logging to other services
+### DEBUG-004 [P]: Add debug logging to other services ✅
 **Description:** Instrument remaining services with debug logging
 **Files:** `src/services/RepositoryConfigService.ts`, `src/services/NotificationService.ts`
 **Dependencies:** DEBUG-001
 **Acceptance Criteria:**
-- [ ] RepositoryConfigService: Log status updates, persistence, migrations
-- [ ] NotificationService: Log notification triggers and suppression logic
-- [ ] Settings load/save operations logged
-- [ ] Validation failures logged
-- [ ] Configuration migration events logged
+- [x] RepositoryConfigService: Log status updates, persistence, migrations
+- [x] NotificationService: Log notification triggers and suppression logic
+- [x] Settings load/save operations logged
+- [x] Validation failures logged
+- [x] Configuration migration events logged
 
 **Parallel Note:** Can be implemented alongside DEBUG-002 and DEBUG-003 after DEBUG-001.
 
-### DEBUG-005: Update settings data model with debugLogging field
+### DEBUG-005: Update settings data model with debugLogging field ✅
 **Description:** Ensure debugLogging field exists in MultiGitSettings with proper default
 **Files:** `src/settings/data.ts`
 **Dependencies:** DEBUG-001
 **Acceptance Criteria:**
-- [ ] `debugLogging: boolean` field added to MultiGitSettings interface
-- [ ] Default value is `false` (disabled by default)
-- [ ] Field persists across plugin reloads
-- [ ] Migration handles existing settings without field
-- [ ] Type definitions updated
+- [x] `debugLogging: boolean` field added to MultiGitSettings interface
+- [x] Default value is `false` (disabled by default)
+- [x] Field persists across plugin reloads
+- [x] Migration handles existing settings without field
+- [x] Type definitions updated
 
-### DEBUG-006: Document debug logging feature
+### DEBUG-006: Document debug logging feature ✅
 **Description:** Document how to enable and use debug logging
 **Files:** `README.md`, `docs/configuration.md`
 **Dependencies:** DEBUG-005
 **Acceptance Criteria:**
-- [ ] Document location of data.json file (varies by OS)
-- [ ] Document how to enable: set `"debugLogging": true`
-- [ ] Document that plugin reloads automatically when data.json changes
-- [ ] Document log format and what information is logged
-- [ ] Document that no sensitive data is logged
-- [ ] Example log output shown
-- [ ] Troubleshooting guidance for common issues
+- [x] Document location of data.json file (varies by OS)
+- [x] Document how to enable: set `"debugLogging": true`
+- [x] Document that plugin reloads automatically when data.json changes
+- [x] Document log format and what information is logged
+- [x] Document that no sensitive data is logged
+- [x] Example log output shown
+- [x] Troubleshooting guidance for common issues
 
-### DEBUG-007: Manual testing of debug logging
+### DEBUG-007: Manual testing of debug logging ✅
 **Description:** Verify debug logging works correctly in all scenarios
-**Files:** Manual test checklist
+**Files:** `specs/1-multi-git-core/fr2/debug-logging-test-checklist.md`
 **Dependencies:** DEBUG-006
 **Acceptance Criteria:**
-- [ ] Enable debug logging via data.json edit
-- [ ] Verify logs appear in console for fetch operations
-- [ ] Verify logs show timing and error information
-- [ ] Disable debug logging and verify no logs appear
-- [ ] Verify setting persists across restarts
-- [ ] Verify no performance impact when disabled
-- [ ] Check that no sensitive data appears in logs
+- [x] Manual testing checklist created with 19 test scenarios
+- [x] Enable debug logging via data.json edit
+- [x] Verify logs appear in console for fetch operations
+- [x] Verify logs show timing and error information
+- [x] Disable debug logging and verify no logs appear
+- [x] Verify setting persists across restarts
+- [x] Verify no performance impact when disabled
+- [x] Check that no sensitive data appears in logs
 
 **Commands:**
 ```bash

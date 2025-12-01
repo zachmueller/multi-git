@@ -205,6 +205,7 @@ All repository configurations are stored in:
 - `fetchOnStartup` - Whether to fetch all repos when plugin loads
 - `notifyOnRemoteChanges` - Show notifications for remote changes
 - `lastGlobalFetch` - Timestamp of last global fetch operation
+- `debugLogging` - Enable comprehensive console logging for troubleshooting (default: false, hidden setting)
 - `version` - Configuration schema version
 
 For detailed configuration options, see [Configuration Guide](docs/configuration.md).
@@ -324,6 +325,60 @@ For detailed configuration options, see [Configuration Guide](docs/configuration
 - Repository is up-to-date with remote
 - Status shows "success" (operation worked correctly)
 - No notification (nothing requires your attention)
+
+### Enabling Debug Logging
+
+**When to use:** For troubleshooting fetch operations, performance issues, or unexpected behavior
+
+**How to enable:**
+
+1. Close Obsidian completely
+2. Navigate to your vault's plugin data directory:
+   - macOS: `/path/to/vault/.obsidian/plugins/multi-git/data.json`
+   - Windows: `C:\path\to\vault\.obsidian\plugins\multi-git\data.json`
+   - Linux: `/path/to/vault/.obsidian/plugins/multi-git/data.json`
+3. Open `data.json` in a text editor
+4. Add or change the `debugLogging` field to `true`:
+   ```json
+   {
+     "repositories": [...],
+     "debugLogging": true,
+     ...
+   }
+   ```
+5. Save the file and restart Obsidian
+6. Open Developer Console (Ctrl+Shift+I / Cmd+Option+I)
+
+**What gets logged:**
+- Git command execution with timing
+- Fetch operation flow and results
+- Scheduler events (interval management, batch operations)
+- Status updates and persistence
+- Notification triggers and suppression logic
+- Configuration changes and migrations
+
+**Log format:**
+```
+[Multi-Git Debug] [2025-01-12T22:30:15.123Z] [Component] Message
+```
+
+**Example logs:**
+```
+[Multi-Git Debug] [2025-01-12T22:30:15.123Z] [FetchScheduler] Starting automated fetch for 3 enabled repositories
+[Multi-Git Debug] [2025-01-12T22:30:15.234Z] [GitCommand] Executing git command in /path/to/repo: git fetch --all --tags --prune
+[Multi-Git Debug] [2025-01-12T22:30:16.456Z] [GitCommand] Fetch operation completed in 1222ms (my-vault)
+[Multi-Git Debug] [2025-01-12T22:30:16.567Z] [FetchScheduler] Remote changes detected for my-vault: 3 commits behind
+```
+
+**Security:** Debug logs automatically sanitize sensitive information:
+- Passwords and tokens are masked
+- SSH keys are not logged
+- Git credentials are removed from output
+- Only safe information (paths, timing, status) is logged
+
+**Performance:** When disabled (default), debug logging has negligible overhead (single boolean check per log call).
+
+**To disable:** Change `debugLogging` back to `false` in `data.json` and restart Obsidian.
 
 ## Contributing
 

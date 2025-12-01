@@ -7,6 +7,7 @@ import { GitCommandService } from './GitCommandService';
 import { RepositoryConfigService } from './RepositoryConfigService';
 import { FetchError } from '../utils/errors';
 import { NotificationService } from './NotificationService';
+import { Logger } from '../utils/logger';
 
 /**
  * Detailed information about a specific branch's status
@@ -71,11 +72,15 @@ export class FetchSchedulerService {
         // Get all enabled repositories
         const enabledRepos = this.configService.getEnabledRepositories();
 
+        Logger.debug('FetchScheduler', `Starting automated fetch for ${enabledRepos.length} enabled repositories`);
+
         // Schedule each enabled repository
         // TODO: In Phase 3, use per-repository fetchInterval instead of default
         for (const repo of enabledRepos) {
             this.scheduleRepository(repo.id, this.DEFAULT_FETCH_INTERVAL);
         }
+
+        Logger.debug('FetchScheduler', 'All repositories scheduled successfully');
     }
 
     /**
@@ -83,6 +88,11 @@ export class FetchSchedulerService {
      * Called on plugin unload for cleanup
      */
     stopAll(): void {
+        const intervalCount = this.intervals.size;
+        const activeCount = this.activeOperations.size;
+
+        Logger.debug('FetchScheduler', `Stopping all automated fetch operations (${intervalCount} intervals, ${activeCount} active operations)`);
+
         // Clear all intervals to prevent memory leaks
         for (const [_repoId, intervalHandle] of this.intervals.entries()) {
             clearInterval(intervalHandle);
@@ -90,6 +100,8 @@ export class FetchSchedulerService {
 
         // Clear the map
         this.intervals.clear();
+
+        Logger.debug('FetchScheduler', 'All intervals cleared successfully');
 
         // Note: We don't cancel active operations as they should complete naturally
         // The activeOperations map will clean itself up as operations finish
@@ -103,8 +115,11 @@ export class FetchSchedulerService {
     scheduleRepository(repoId: string, interval: number): void {
         // If already scheduled, unschedule first to replace the interval
         if (this.intervals.has(repoId)) {
+            Logger.debug('FetchScheduler', `Re-scheduling repository ${repoId} (replacing existing interval)`);
             this.unscheduleRepository(repoId);
         }
+
+        Logger.debug('FetchScheduler', `Scheduling repository ${repoId} with interval ${interval}ms`);
 
         // Create interval for periodic fetch
         const intervalHandle = setInterval(() => {
@@ -112,6 +127,7 @@ export class FetchSchedulerService {
             this.executeFetch(repoId).catch(error => {
                 // Log error but don't crash - fetch will retry on next interval
                 console.error(`Fetch failed for repository ${repoId}:`, error);
+                Logger.error('FetchScheduler', `Interval-triggered fetch failed for ${repoId}`, error);
             });
         }, interval);
 
@@ -127,6 +143,7 @@ export class FetchSchedulerService {
     unscheduleRepository(repoId: string): void {
         const intervalHandle = this.intervals.get(repoId);
         if (intervalHandle) {
+            Logger.debug('FetchScheduler', `Unscheduling repository ${repoId}`);
             clearInterval(intervalHandle);
             this.intervals.delete(repoId);
         }
@@ -140,6 +157,7 @@ export class FetchSchedulerService {
     private async executeFetch(repoId: string): Promise<FetchResult> {
         // Prevent concurrent fetches for same repository
         if (this.activeOperations.has(repoId)) {
+            Logger.debug('FetchScheduler', `Fetch already in progress for ${repoId}, returning existing promise`);
             // Return the existing promise instead of starting a new fetch
             return this.activeOperations.get(repoId)!;
         }
@@ -150,9 +168,12 @@ export class FetchSchedulerService {
             throw new Error(`Repository not found: ${repoId}`);
         }
 
+        Logger.debug('FetchScheduler', `Starting fetch execution for repository: ${repo.name} (${repoId})`);
+
         // Create fetch operation promise
         const fetchOperation = (async (): Promise<FetchResult> => {
-            const timestamp = Date.now();
+            const startTime = Date.now();
+            const timestamp = startTime;
             const result: FetchResult = {
                 repositoryId: repoId,
                 timestamp,
@@ -195,8 +216,12 @@ export class FetchSchedulerService {
                 result.commitsBehind = changeStatus.commitsBehind;
                 result.branchInfo = branchInfo.length > 0 ? branchInfo : undefined;
 
+                const duration = Date.now() - startTime;
+                Logger.timing('FetchScheduler', 'Complete fetch operation', duration, `${repo.name} (${changeStatus.hasChanges ? `${changeStatus.commitsBehind} commits behind` : 'up to date'})`);
+
                 // Trigger notification if remote has changes
                 if (changeStatus.hasChanges && this.notificationService) {
+                    Logger.debug('FetchScheduler', `Remote changes detected for ${repo.name}: ${changeStatus.commitsBehind} commits behind`);
                     this.notificationService.notifyRemoteChanges(
                         repo.name,
                         changeStatus.commitsBehind
@@ -208,6 +233,9 @@ export class FetchSchedulerService {
             } catch (error) {
                 // Handle fetch errors
                 result.success = false;
+
+                const duration = Date.now() - startTime;
+                Logger.error('FetchScheduler', `Fetch operation failed after ${duration}ms for ${repo.name}`, error);
 
                 if (error instanceof FetchError) {
                     result.error = error.message;
@@ -228,18 +256,21 @@ export class FetchSchedulerService {
 
         // Track active operation
         this.activeOperations.set(repoId, fetchOperation);
+        Logger.debug('FetchScheduler', `Added ${repoId} to active operations (${this.activeOperations.size} total active)`);
 
         try {
             // Wait for completion
             const result = await fetchOperation;
 
             // Record result in repository configuration
+            Logger.debug('FetchScheduler', `Recording fetch result for ${repo.name}: ${result.success ? 'success' : 'failed'}`);
             await this.configService.recordFetchResult(result);
 
             return result;
         } finally {
             // Always remove from active operations when done
             this.activeOperations.delete(repoId);
+            Logger.debug('FetchScheduler', `Removed ${repoId} from active operations (${this.activeOperations.size} remaining)`);
         }
     }
 
@@ -273,6 +304,9 @@ export class FetchSchedulerService {
         // Get all enabled repositories
         const enabledRepos = this.configService.getEnabledRepositories();
 
+        Logger.debug('FetchScheduler', `Starting batch fetch for ${enabledRepos.length} enabled repositories`);
+        const batchStartTime = Date.now();
+
         // Execute fetches sequentially to avoid system overload
         const results: FetchResult[] = [];
 
@@ -281,6 +315,7 @@ export class FetchSchedulerService {
                 const result = await this.executeFetch(repo.id);
                 results.push(result);
             } catch (error) {
+                Logger.error('FetchScheduler', `Batch fetch failed for ${repo.name}`, error);
                 // If fetch fails, create error result and continue with other repos
                 results.push({
                     repositoryId: repo.id,
@@ -291,6 +326,10 @@ export class FetchSchedulerService {
                 });
             }
         }
+
+        const batchDuration = Date.now() - batchStartTime;
+        const successCount = results.filter(r => r.success).length;
+        Logger.timing('FetchScheduler', 'Batch fetch operation', batchDuration, `${successCount}/${enabledRepos.length} successful`);
 
         return results;
     }

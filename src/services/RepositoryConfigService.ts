@@ -5,6 +5,7 @@ import { GitCommandService } from './GitCommandService';
 import { validateAbsolutePath, isDirectory } from '../utils/validation';
 import { ValidationError, DuplicateError } from '../utils/errors';
 import { FetchResult } from './FetchSchedulerService';
+import { Logger } from '../utils/logger';
 
 /**
  * Service for managing repository configurations
@@ -70,7 +71,9 @@ export class RepositoryConfigService {
 
         // Add to settings and save
         this.plugin.settings.repositories.push(newRepo);
+        Logger.debug('RepositoryConfig', `Added new repository: ${repoName} (${path})`);
         await this.plugin.saveSettings();
+        Logger.debug('RepositoryConfig', `Repository configuration persisted for ${repoName}`);
 
         return newRepo;
     }
@@ -92,7 +95,9 @@ export class RepositoryConfigService {
         }
 
         // Remove from array
+        const removedRepo = this.plugin.settings.repositories[index];
         this.plugin.settings.repositories.splice(index, 1);
+        Logger.debug('RepositoryConfig', `Removed repository: ${removedRepo.name} (${id})`);
         await this.plugin.saveSettings();
 
         return true;
@@ -117,6 +122,7 @@ export class RepositoryConfigService {
         repo.enabled = !repo.enabled;
         repo.lastValidated = Date.now();
 
+        Logger.debug('RepositoryConfig', `Toggled repository ${repo.name} to ${repo.enabled ? 'enabled' : 'disabled'}`);
         await this.plugin.saveSettings();
 
         return repo.enabled;
@@ -190,6 +196,7 @@ export class RepositoryConfigService {
             delete repo.lastFetchError;
         }
 
+        Logger.debug('RepositoryConfig', `Updated fetch status for ${repo.name}: ${status}${error ? ` (${error})` : ''}`);
         await this.plugin.saveSettings();
     }
 
@@ -222,6 +229,7 @@ export class RepositoryConfigService {
             delete repo.remoteCommitCount;
         }
 
+        Logger.debug('RepositoryConfig', `Updated remote changes for ${repo.name}: ${hasChanges}${commitCount !== undefined ? ` (${commitCount} commits)` : ''}`);
         await this.plugin.saveSettings();
     }
 
@@ -241,6 +249,7 @@ export class RepositoryConfigService {
         }
 
         repo.fetchInterval = intervalMs;
+        Logger.debug('RepositoryConfig', `Updated fetch interval for ${repo.name}: ${intervalMs}ms`);
         await this.plugin.saveSettings();
     }
 
@@ -278,6 +287,7 @@ export class RepositoryConfigService {
             delete repo.remoteCommitCount;
         }
 
+        Logger.debug('RepositoryConfig', `Recorded fetch result for ${repo.name}: ${result.success ? 'success' : 'error'}, remoteChanges: ${result.remoteChanges}`);
         await this.plugin.saveSettings();
     }
 
@@ -319,28 +329,49 @@ export class RepositoryConfigService {
      * @returns Migrated settings object
      */
     migrateSettings(settings: MultiGitSettings): MultiGitSettings {
+        let migrationNeeded = false;
+
         // Migrate global settings if missing
         if (settings.globalFetchInterval === undefined) {
             settings.globalFetchInterval = 300000; // 5 minutes default
+            migrationNeeded = true;
         }
         if (settings.fetchOnStartup === undefined) {
             settings.fetchOnStartup = true;
+            migrationNeeded = true;
         }
         if (settings.notifyOnRemoteChanges === undefined) {
             settings.notifyOnRemoteChanges = true;
+            migrationNeeded = true;
+        }
+        if (settings.debugLogging === undefined) {
+            settings.debugLogging = false;
+            migrationNeeded = true;
         }
 
         // Migrate repository configurations
+        let reposMigrated = 0;
         for (const repo of settings.repositories) {
+            let repoMigrated = false;
             if (repo.fetchInterval === undefined) {
                 repo.fetchInterval = settings.globalFetchInterval;
+                repoMigrated = true;
             }
             if (repo.lastFetchStatus === undefined) {
                 repo.lastFetchStatus = 'idle';
+                repoMigrated = true;
             }
             if (repo.remoteChanges === undefined) {
                 repo.remoteChanges = false;
+                repoMigrated = true;
             }
+            if (repoMigrated) {
+                reposMigrated++;
+            }
+        }
+
+        if (migrationNeeded || reposMigrated > 0) {
+            Logger.debug('RepositoryConfig', `Settings migration completed: ${reposMigrated}/${settings.repositories.length} repositories migrated`);
         }
 
         return settings;

@@ -5,6 +5,7 @@ import { GitCommandService } from './services/GitCommandService';
 import { FetchSchedulerService } from './services/FetchSchedulerService';
 import { NotificationService } from './services/NotificationService';
 import { MultiGitSettingTab } from './settings/SettingTab';
+import { Logger } from './utils/logger';
 
 /**
  * Multi-Git Plugin for Obsidian
@@ -26,6 +27,10 @@ export default class MultiGitPlugin extends Plugin {
 
 		// Load settings from data.json
 		await this.loadSettings();
+
+		// Initialize logger with settings
+		Logger.initialize(this.settings);
+		Logger.debug('Plugin', 'Multi-Git plugin loading');
 
 		// Initialize services
 		this.gitCommandService = new GitCommandService();
@@ -64,9 +69,12 @@ export default class MultiGitPlugin extends Plugin {
 	 */
 	onunload() {
 		console.log('Unloading Multi-Git plugin');
+		Logger.debug('Plugin', 'Multi-Git plugin unloading');
 
 		// Stop all scheduled fetches
 		this.fetchSchedulerService.stopAll();
+
+		Logger.debug('Plugin', 'Multi-Git plugin unloaded successfully');
 	}
 
 	/**

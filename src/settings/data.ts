@@ -71,6 +71,13 @@ export interface MultiGitSettings {
 
     /** Timestamp of last global fetch operation */
     lastGlobalFetch?: number;
+
+    /** 
+     * Enable comprehensive debug logging to console
+     * Hidden setting - not exposed in UI, must be edited in data.json directly
+     * @default false
+     */
+    debugLogging: boolean;
 }
 
 /**
@@ -83,4 +90,5 @@ export const DEFAULT_SETTINGS: MultiGitSettings = {
     globalFetchInterval: 300000, // 5 minutes
     fetchOnStartup: true,
     notifyOnRemoteChanges: true,
+    debugLogging: false, // Hidden setting for troubleshooting
 };

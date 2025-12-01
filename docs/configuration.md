@@ -636,6 +636,151 @@ When a repository is added, default fetch settings are:
 | Path length | 4096 chars | OS-dependent |
 | Name length | 255 chars | Display constraint |
 
+### Debug Logging
+
+**Hidden Setting:** Debug logging is not exposed in the settings UI and must be enabled manually by editing the configuration file.
+
+#### When to Enable
+
+Enable debug logging for:
+- Troubleshooting fetch operations
+- Investigating performance issues
+- Diagnosing unexpected behavior
+- Reporting bugs with detailed logs
+
+#### How to Enable
+
+1. **Close Obsidian completely**
+2. **Locate configuration file:**
+   - macOS: `/path/to/vault/.obsidian/plugins/multi-git/data.json`
+   - Windows: `C:\path\to\vault\.obsidian\plugins\multi-git\data.json`  
+   - Linux: `/path/to/vault/.obsidian/plugins/multi-git/data.json`
+
+3. **Edit configuration:**
+   Open `data.json` in a text editor and add or modify:
+   ```json
+   {
+     "repositories": [...],
+     "debugLogging": true,
+     ...
+   }
+   ```
+
+4. **Save and restart Obsidian**
+
+5. **Open Developer Console:**
+   - macOS: `Cmd + Option + I`
+   - Windows/Linux: `Ctrl + Shift + I`
+
+#### What Gets Logged
+
+When `debugLogging` is `true`, the plugin logs:
+
+**Git Operations:**
+- Command execution with sanitized parameters
+- Execution timing (duration in milliseconds)
+- Command results (success/failure)
+- Remote change detection results
+
+**Fetch Scheduler:**
+- Interval scheduling and unscheduling events
+- Batch fetch execution flow
+- Active operation tracking (concurrent fetch prevention)
+- Fetch completion with timing and status
+
+**Repository Configuration:**
+- Status updates and transitions
+- Configuration persistence events
+- Remote changes flag updates
+- Settings migration operations
+
+**Notifications:**
+- Notification trigger events
+- Notification suppression logic (cooldown, settings)
+- Duplicate prevention tracking
+
+#### Log Format
+
+All debug logs follow a consistent format:
+
+```
+[Multi-Git Debug] [ISO-Timestamp] [Component] Message
+```
+
+**Example Logs:**
+
+```
+[Multi-Git Debug] [2025-01-12T22:30:15.123Z] [Plugin] Multi-Git plugin loading
+[Multi-Git Debug] [2025-01-12T22:30:15.234Z] [FetchScheduler] Starting automated fetch for 3 enabled repositories
+[Multi-Git Debug] [2025-01-12T22:30:15.345Z] [GitCommand] Executing git command in /path/to/repo: git fetch --all --tags --prune
+[Multi-Git Debug] [2025-01-12T22:30:16.456Z] [GitCommand] Git command succeeded in 1111ms: git fetch --all --tags --prune
+[Multi-Git Debug] [2025-01-12T22:30:16.567Z] [GitCommand] Fetch operation completed in 1222ms (my-vault)
+[Multi-Git Debug] [2025-01-12T22:30:16.678Z] [FetchScheduler] Remote changes detected for my-vault: 3 commits behind
+[Multi-Git Debug] [2025-01-12T22:30:16.789Z] [Notification] Showing remote changes notification for my-vault: 3 commits
+```
+
+#### Security Considerations
+
+**Automatic Sanitization:**
+Debug logs automatically sanitize sensitive information:
+- Passwords masked: `password=***`
+- Tokens masked: `token=***`
+- Bearer tokens: `Bearer ***`
+- SSH URLs: `ssh://***@host`
+- HTTPS credentials: `https://***:***@host`
+
+**Safe to Log:**
+- Repository paths (no credentials in paths)
+- Git command structure (credentials sanitized)
+- Timing information
+- Status codes and states
+- Error messages (sanitized)
+
+**Never Logged:**
+- Raw git output containing credentials
+- SSH private keys
+- Authentication tokens
+- User passwords
+
+#### Performance Impact
+
+**When Disabled (default):**
+- Negligible overhead: Single boolean check per log call
+- No string formatting or processing
+- No console I/O
+
+**When Enabled:**
+- Minimal overhead: Only console logging
+- No file I/O or network operations
+- Acceptable for debugging scenarios
+
+#### Disabling Debug Logging
+
+1. Edit `data.json` again
+2. Change `debugLogging` to `false`:
+   ```json
+   {
+     "debugLogging": false
+   }
+   ```
+3. Save and restart Obsidian
+
+#### Using Debug Logs for Bug Reports
+
+When reporting issues on GitHub:
+
+1. Enable debug logging
+2. Reproduce the issue
+3. Copy relevant log entries from console
+4. Include logs in your bug report
+5. Disable debug logging when done
+
+**What to include:**
+- Full log entries showing the issue
+- Timestamps to show sequence of events
+- Any error messages or stack traces
+- Context about what you were trying to do
+
 ### Error Codes
 
 Common configuration errors:

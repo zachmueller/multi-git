@@ -6,6 +6,7 @@
 import { exec } from 'child_process';
 import { promisify } from 'util';
 import { GitRepositoryError, FetchError, FetchErrorCode } from '../utils/errors';
+import { Logger } from '../utils/logger';
 
 const execPromise = promisify(exec);
 
@@ -107,6 +108,11 @@ export class GitCommandService {
         // Build the full git command
         const fullCommand = `git ${command}`;
 
+        // Log command execution
+        Logger.gitCommand('GitCommand', fullCommand, cwd || 'unknown');
+
+        const startTime = Date.now();
+
         try {
             const { stdout, stderr } = await execPromise(fullCommand, {
                 cwd,
@@ -115,12 +121,17 @@ export class GitCommandService {
                 maxBuffer: 10 * 1024 * 1024, // 10MB
             });
 
+            const duration = Date.now() - startTime;
+            Logger.gitResult('GitCommand', fullCommand, true, duration);
+
             return {
                 stdout: stdout || '',
                 stderr: stderr || '',
                 exitCode: 0,
             };
         } catch (error: unknown) {
+            const duration = Date.now() - startTime;
+            Logger.gitResult('GitCommand', fullCommand, false, duration);
             // Type-safe error handling
             if (this.isExecError(error)) {
                 const stderr = error.stderr?.toString() || '';
@@ -256,14 +267,23 @@ export class GitCommandService {
      * @throws FetchError with categorized error code if fetch fails
      */
     async fetchRepository(repoPath: string, timeout: number = 30000): Promise<boolean> {
+        Logger.debug('GitCommand', `Starting fetch for repository: ${repoPath}`);
+        const startTime = Date.now();
+
         try {
             // Use --all to fetch all remotes, --tags to include tags, --prune to remove stale refs
             await this.executeGitCommand('fetch --all --tags --prune', {
                 cwd: repoPath,
                 timeout,
             });
+
+            const duration = Date.now() - startTime;
+            Logger.timing('GitCommand', 'Fetch operation', duration, repoPath);
+
             return true;
         } catch (error) {
+            const duration = Date.now() - startTime;
+            Logger.error('GitCommand', `Fetch failed after ${duration}ms for ${repoPath}`, error);
             // Categorize the error and throw FetchError with appropriate code
             const errorMessage = error instanceof Error ? error.message : String(error);
             const errorStr = errorMessage.toLowerCase();
@@ -446,12 +466,15 @@ export class GitCommandService {
      * @throws GitRepositoryError if command fails
      */
     async checkRemoteChanges(repoPath: string, branch?: string): Promise<RemoteChangeStatus> {
+        Logger.debug('GitCommand', `Checking remote changes for repository: ${repoPath}`);
+
         try {
             // Get current branch if not specified
             const currentBranch = branch || await this.getCurrentBranch(repoPath);
 
             // If in detached HEAD state, no tracking possible
             if (!currentBranch) {
+                Logger.debug('GitCommand', `Repository in detached HEAD state: ${repoPath}`);
                 return {
                     hasChanges: false,
                     commitsBehind: 0,
@@ -466,6 +489,7 @@ export class GitCommandService {
 
             // If no tracking branch, can't check for changes
             if (!trackingBranch) {
+                Logger.debug('GitCommand', `No tracking branch configured for ${currentBranch} in ${repoPath}`);
                 return {
                     hasChanges: false,
                     commitsBehind: 0,
@@ -485,14 +509,19 @@ export class GitCommandService {
             // Has changes if there are commits we're behind on
             const hasChanges = behind > 0;
 
-            return {
+            const status = {
                 hasChanges,
                 commitsBehind: behind,
                 commitsAhead: ahead,
                 trackingBranch,
                 currentBranch,
             };
+
+            Logger.debug('GitCommand', `Remote change detection complete for ${repoPath}`, status);
+
+            return status;
         } catch (error) {
+            Logger.error('GitCommand', `Failed to check remote changes for ${repoPath}`, error);
             if (error instanceof GitRepositoryError) {
                 throw error;
             }
