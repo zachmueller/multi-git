@@ -150,12 +150,13 @@
 - **Deadline:** Before Phase 2 implementation
 
 #### 3. Obsidian Notice API Best Practices
-- **Question:** How to create non-intrusive notifications that users can act on?
+- **Question:** How to create non-intrusive notifications that provide clear information?
 - **Research Areas:**
   - Notice duration and dismissal patterns
   - Grouping multiple notices
-  - Notice with action buttons (if supported)
+  - Message clarity and brevity
 - **Success Criteria:** Notice pattern that aligns with Obsidian UX standards
+- **Note:** Notices are for simple non-interactive notifications only. User interaction will require modals (future feature).
 - **Deadline:** Before Phase 3 implementation
 
 ### Architecture Investigation
@@ -164,9 +165,9 @@
 - **Investigation:** Impact of periodic git fetch on system resources
 - **Test Scenarios:**
   - 10 repositories with 5-minute intervals
-  - Large repositories (1GB+) fetch performance
   - Multiple concurrent fetches vs sequential
 - **Success Criteria:** Negligible impact on Obsidian responsiveness
+- **Note:** Focusing on small repositories for initial use cases; large repo performance can be addressed in future iterations if needed.
 
 #### Remote Change Detection Accuracy
 - **Investigation:** Reliability of rev-list based change detection
@@ -787,7 +788,6 @@ See `../quickstart.md` for complete testing setup.
 5. **Edge case testing**
    - Test with repository behind firewall
    - Test with very slow network
-   - Test with large repositories (1GB+)
    - Test with no network connection
 
 6. **Documentation updates**
