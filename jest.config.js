@@ -17,17 +17,20 @@ module.exports = {
 				esModuleInterop: true,
 				allowSyntheticDefaultImports: true,
 			},
+			isolatedModules: true,
+		}],
+		'^.+\\.js$': ['ts-jest', {
+			tsconfig: {
+				esModuleInterop: true,
+				allowSyntheticDefaultImports: true,
+			},
 		}],
 	},
 	moduleNameMapper: {
 		'^obsidian$': '<rootDir>/test/__mocks__/obsidian.ts',
+		'^uuid$': require.resolve('uuid'),
 	},
 	transformIgnorePatterns: [
-		'node_modules/(?!(uuid)/)',
+		'node_modules/(?!uuid)',
 	],
-	globals: {
-		'ts-jest': {
-			isolatedModules: true,
-		},
-	},
 };

@@ -139,75 +139,75 @@ npm test -- GitCommandService
 
 ## Phase 2: Fetch Scheduler Service
 
-### SCHED-001: Create FetchSchedulerService class structure
+### SCHED-001: Create FetchSchedulerService class structure ✅
 **Description:** Create service class with interval and operation tracking
 **Files:** `src/services/FetchSchedulerService.ts`
 **Dependencies:** FETCH-008
 **Acceptance Criteria:**
-- [ ] FetchSchedulerService class created
-- [ ] Private maps for intervals and active operations initialized
-- [ ] Constructor accepts RepositoryConfigService and GitCommandService
-- [ ] Basic structure follows service layer patterns from FR-1
-- [ ] TypeScript interfaces defined for FetchResult and BranchStatus
+- [x] FetchSchedulerService class created
+- [x] Private maps for intervals and active operations initialized
+- [x] Constructor accepts RepositoryConfigService and GitCommandService
+- [x] Basic structure follows service layer patterns from FR-1
+- [x] TypeScript interfaces defined for FetchResult and BranchStatus
 
-### SCHED-002: Implement repository scheduling logic
+### SCHED-002: Implement repository scheduling logic ✅
 **Description:** Add methods to schedule/unschedule fetch for individual repositories
 **Files:** `src/services/FetchSchedulerService.ts`
 **Dependencies:** SCHED-001
 **Acceptance Criteria:**
-- [ ] `scheduleRepository()` creates setInterval for repository
-- [ ] Interval handle stored in map with repository ID as key
-- [ ] `unscheduleRepository()` clears interval and removes from map
-- [ ] Proper cleanup prevents memory leaks
-- [ ] Handles scheduling for already-scheduled repositories (replace interval)
+- [x] `scheduleRepository()` creates setInterval for repository
+- [x] Interval handle stored in map with repository ID as key
+- [x] `unscheduleRepository()` clears interval and removes from map
+- [x] Proper cleanup prevents memory leaks
+- [x] Handles scheduling for already-scheduled repositories (replace interval)
 
-### SCHED-003: Implement fetch execution with status tracking
+### SCHED-003: Implement fetch execution with status tracking ✅
 **Description:** Execute fetch operation and track status during execution
 **Files:** `src/services/FetchSchedulerService.ts`
 **Dependencies:** SCHED-002
 **Acceptance Criteria:**
-- [ ] Fetch execution marked as 'fetching' in active operations map
-- [ ] Prevent concurrent fetches for same repository
-- [ ] Execute GitCommandService.fetchRepository()
-- [ ] Execute GitCommandService.checkRemoteChanges() after fetch
-- [ ] Remove from active operations map when complete
-- [ ] Return structured FetchResult object
+- [x] Fetch execution marked as 'fetching' in active operations map
+- [x] Prevent concurrent fetches for same repository
+- [x] Execute GitCommandService.fetchRepository()
+- [x] Execute GitCommandService.checkRemoteChanges() after fetch
+- [x] Remove from active operations map when complete
+- [x] Return structured FetchResult object
 
-### SCHED-004: Implement immediate fetch operations
+### SCHED-004: Implement immediate fetch operations ✅
 **Description:** Add methods for manual immediate fetch (single repo and all repos)
 **Files:** `src/services/FetchSchedulerService.ts`
 **Dependencies:** SCHED-003
 **Acceptance Criteria:**
-- [ ] `fetchRepositoryNow()` executes immediate fetch for one repository
-- [ ] Skips if fetch already in progress for that repository
-- [ ] Returns detailed FetchResult with all status information
-- [ ] `fetchAllNow()` executes sequential fetch for all enabled repos
-- [ ] Collects and returns array of all FetchResults
-- [ ] Updates timestamps and status for each repository
+- [x] `fetchRepositoryNow()` executes immediate fetch for one repository
+- [x] Skips if fetch already in progress for that repository
+- [x] Returns detailed FetchResult with all status information
+- [x] `fetchAllNow()` executes sequential fetch for all enabled repos
+- [x] Collects and returns array of all FetchResults
+- [x] Updates timestamps and status for each repository
 
-### SCHED-005: Implement lifecycle management
+### SCHED-005: Implement lifecycle management ✅
 **Description:** Add plugin lifecycle integration (load/unload)
 **Files:** `src/services/FetchSchedulerService.ts`
 **Dependencies:** SCHED-004
 **Acceptance Criteria:**
-- [ ] `startAll()` method schedules all enabled repositories on plugin load
-- [ ] Uses repository configurations to set individual intervals
-- [ ] `stopAll()` method clears all intervals on plugin unload
-- [ ] Proper cleanup prevents memory leaks
-- [ ] Handles plugin hot reload gracefully
+- [x] `startAll()` method schedules all enabled repositories on plugin load
+- [x] Uses repository configurations to set individual intervals
+- [x] `stopAll()` method clears all intervals on plugin unload
+- [x] Proper cleanup prevents memory leaks
+- [x] Handles plugin hot reload gracefully
 
-### SCHED-006: Unit tests for scheduler service
+### SCHED-006: Unit tests for scheduler service ✅
 **Description:** Comprehensive test suite for FetchSchedulerService
 **Files:** `test/services/FetchSchedulerService.test.ts`
 **Dependencies:** SCHED-005
 **Acceptance Criteria:**
-- [ ] Test interval scheduling and cleanup using jest.useFakeTimers()
-- [ ] Test concurrent fetch prevention
-- [ ] Test immediate fetch operations
-- [ ] Test batch fetch operations (fetchAllNow)
-- [ ] Test lifecycle management (startAll, stopAll)
-- [ ] Test error handling in fetch operations
-- [ ] All tests passing with good coverage
+- [x] Test interval scheduling and cleanup using jest.useFakeTimers()
+- [x] Test concurrent fetch prevention
+- [x] Test immediate fetch operations
+- [x] Test batch fetch operations (fetchAllNow)
+- [x] Test lifecycle management (startAll, stopAll)
+- [x] Test error handling in fetch operations
+- [x] All tests passing with good coverage (29/29 tests passing)
 
 **Commands:**
 ```bash
