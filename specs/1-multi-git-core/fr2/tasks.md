@@ -3,7 +3,7 @@
 **Created:** 2025-01-12
 **Implementation Plan:** [plan.md](./plan.md)
 **Specification:** [../spec.md](../spec.md)
-**Status:** In Progress - Phase 1 Complete
+**Status:** In Progress - Phase 5 Complete
 
 ## Task Summary
 
@@ -385,76 +385,76 @@ npm run dev
 # Test in Obsidian with multiple repos having remote changes
 ```
 
-## Phase 5: Settings UI Integration
+## Phase 5: Settings UI Integration ✅
 
-### UI-001: Add global fetch settings to SettingTab
+### UI-001: Add global fetch settings to SettingTab ✅
 **Description:** Extend MultiGitSettingTab with fetch configuration options
 **Files:** `src/settings/SettingTab.ts`
 **Dependencies:** NOTIFY-006
 **Acceptance Criteria:**
-- [ ] Add global fetch interval setting with validation
-- [ ] Add fetch-on-startup toggle
-- [ ] Add notification enable/disable toggle
-- [ ] Add manual "Fetch All Now" button
-- [ ] Display last global fetch time
-- [ ] Settings persist correctly
+- [x] Add global fetch interval setting with validation
+- [x] Add fetch-on-startup toggle
+- [x] Add notification enable/disable toggle
+- [x] Add manual "Fetch All Now" button
+- [x] Display last global fetch time
+- [x] Settings persist correctly
 
-### UI-002: Add per-repository fetch interval configuration
+### UI-002: Add per-repository fetch interval configuration ✅
 **Description:** Add fetch interval setting to each repository in settings
 **Files:** `src/settings/SettingTab.ts`
 **Dependencies:** UI-001
 **Acceptance Criteria:**
-- [ ] Each repository shows fetch interval setting
-- [ ] Default to global interval but allow override
-- [ ] Validate interval range (1 min to 1 hour)
-- [ ] Show validation errors inline
-- [ ] Update scheduler when interval changes
-- [ ] Setting persists per repository
+- [x] Each repository shows fetch interval setting
+- [x] Default to global interval but allow override
+- [x] Validate interval range (1 min to 1 hour)
+- [x] Show validation errors inline
+- [x] Update scheduler when interval changes
+- [x] Setting persists per repository
 
-### UI-003: Display fetch status in repository list
+### UI-003: Display fetch status in repository list ✅
 **Description:** Show fetch status indicators for each repository
-**Files:** `src/settings/SettingTab.ts`
+**Files:** `src/settings/SettingTab.ts`, `styles.css`
 **Dependencies:** UI-002
 **Acceptance Criteria:**
-- [ ] Display last fetch time for each repo ("2 minutes ago" format)
-- [ ] Show fetch status indicator (success/error/fetching)
-- [ ] Show remote changes indicator if applicable
-- [ ] Visual distinction between states
-- [ ] Updates when status changes
+- [x] Display last fetch time for each repo ("2 minutes ago" format)
+- [x] Show fetch status indicator (success/error/fetching)
+- [x] Show remote changes indicator if applicable
+- [x] Visual distinction between states
+- [x] Updates when status changes
 
-### UI-004: Add manual fetch button per repository
+### UI-004: Add manual fetch button per repository ✅
 **Description:** Add button to trigger immediate fetch for specific repository
 **Files:** `src/settings/SettingTab.ts`
 **Dependencies:** UI-003
 **Acceptance Criteria:**
-- [ ] Manual fetch button added to each repository row
-- [ ] Button triggers FetchSchedulerService.fetchRepositoryNow()
-- [ ] Show loading state during fetch
-- [ ] Update status display after fetch completes
-- [ ] Handle errors gracefully with user feedback
+- [x] Manual fetch button added to each repository row
+- [x] Button triggers FetchSchedulerService.fetchRepositoryNow()
+- [x] Show loading state during fetch
+- [x] Update status display after fetch completes
+- [x] Handle errors gracefully with user feedback
 
-### UI-005: Implement interval validation and error display
+### UI-005: Implement interval validation and error display ✅
 **Description:** Add client-side validation for fetch interval inputs
 **Files:** `src/settings/SettingTab.ts`
 **Dependencies:** UI-004
 **Acceptance Criteria:**
-- [ ] Validate minimum interval (60000ms / 1 minute)
-- [ ] Validate maximum interval (3600000ms / 1 hour)
-- [ ] Show inline validation errors
-- [ ] Prevent saving invalid values
-- [ ] Validation errors are clear and actionable
+- [x] Validate minimum interval (60000ms / 1 minute)
+- [x] Validate maximum interval (3600000ms / 1 hour)
+- [x] Show inline validation errors
+- [x] Prevent saving invalid values
+- [x] Validation errors are clear and actionable
 
-### UI-006: Polish and UX improvements
+### UI-006: Polish and UX improvements ✅
 **Description:** Refine settings UI following Obsidian design patterns
-**Files:** `src/settings/SettingTab.ts`
+**Files:** `src/settings/SettingTab.ts`, `styles.css`
 **Dependencies:** UI-005
 **Acceptance Criteria:**
-- [ ] Clear labels and descriptions for all settings
-- [ ] Consistent layout with FR-1 settings
-- [ ] Helpful tooltips for complex settings
-- [ ] Visual feedback for all user actions
-- [ ] Follows Obsidian design system
-- [ ] Responsive layout
+- [x] Clear labels and descriptions for all settings
+- [x] Consistent layout with FR-1 settings
+- [x] Helpful tooltips for complex settings
+- [x] Visual feedback for all user actions
+- [x] Follows Obsidian design system
+- [x] Responsive layout
 
 ### UI-007: Manual testing of settings interface
 **Description:** Validate settings UI functionality end-to-end

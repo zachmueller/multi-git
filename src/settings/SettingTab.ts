@@ -30,8 +30,131 @@ export class MultiGitSettingTab extends PluginSettingTab {
             cls: 'setting-item-description'
         });
 
+        // Add global fetch settings section
+        this.displayGlobalFetchSettings(containerEl);
+
         // Add repository list section
         this.displayRepositoryList(containerEl);
+    }
+
+    /**
+     * Display global fetch settings
+     */
+    private displayGlobalFetchSettings(containerEl: HTMLElement): void {
+        containerEl.createEl('h3', { text: 'Fetch Settings' });
+
+        // Global fetch interval
+        new Setting(containerEl)
+            .setName('Default Fetch Interval')
+            .setDesc('Default interval for automatic fetching (in minutes). Applied to new repositories.')
+            .addText(text => {
+                text
+                    .setPlaceholder('5')
+                    .setValue(String(this.plugin.settings.globalFetchInterval / 60000))
+                    .onChange(async (value) => {
+                        const minutes = parseInt(value);
+                        if (!isNaN(minutes) && this.validateInterval(minutes)) {
+                            this.plugin.settings.globalFetchInterval = minutes * 60000;
+                            await this.plugin.saveSettings();
+                        }
+                    });
+                text.inputEl.type = 'number';
+                text.inputEl.min = '1';
+                text.inputEl.max = '60';
+            });
+
+        // Fetch on startup toggle
+        new Setting(containerEl)
+            .setName('Fetch on Startup')
+            .setDesc('Automatically fetch all enabled repositories when Obsidian starts')
+            .addToggle(toggle => toggle
+                .setValue(this.plugin.settings.fetchOnStartup)
+                .onChange(async (value) => {
+                    this.plugin.settings.fetchOnStartup = value;
+                    await this.plugin.saveSettings();
+                })
+            );
+
+        // Notification toggle
+        new Setting(containerEl)
+            .setName('Notify on Remote Changes')
+            .setDesc('Show notifications when remote repositories have new commits available')
+            .addToggle(toggle => toggle
+                .setValue(this.plugin.settings.notifyOnRemoteChanges)
+                .onChange(async (value) => {
+                    this.plugin.settings.notifyOnRemoteChanges = value;
+                    await this.plugin.saveSettings();
+                })
+            );
+
+        // Manual fetch all button with last fetch time
+        const fetchAllSetting = new Setting(containerEl)
+            .setName('Manual Fetch')
+            .setDesc(this.getLastGlobalFetchDescription());
+
+        fetchAllSetting.addButton(button => button
+            .setButtonText('Fetch All Now')
+            .setClass('mod-cta')
+            .onClick(async () => {
+                await this.handleFetchAllNow(button.buttonEl);
+            })
+            .setTooltip('Manually fetch all enabled repositories now')
+        );
+    }
+
+    /**
+     * Get description text for last global fetch time
+     */
+    private getLastGlobalFetchDescription(): string {
+        if (!this.plugin.settings.lastGlobalFetch) {
+            return 'Manually trigger fetch for all enabled repositories';
+        }
+
+        const lastFetchTime = this.formatRelativeTime(this.plugin.settings.lastGlobalFetch);
+        return `Manually trigger fetch for all enabled repositories. Last fetch: ${lastFetchTime}`;
+    }
+
+    /**
+     * Handle manual fetch all button click
+     */
+    private async handleFetchAllNow(buttonEl: HTMLElement): Promise<void> {
+        const originalText = buttonEl.textContent || 'Fetch All Now';
+        buttonEl.textContent = 'Fetching...';
+        buttonEl.setAttribute('disabled', 'true');
+
+        try {
+            const results = await this.plugin.fetchSchedulerService.fetchAllNow();
+
+            // Update last global fetch time
+            this.plugin.settings.lastGlobalFetch = Date.now();
+            await this.plugin.saveSettings();
+
+            // Count successes and failures
+            const successCount = results.filter(r => r.success).length;
+            const errorCount = results.filter(r => !r.success).length;
+            const changesCount = results.filter(r => r.remoteChanges).length;
+
+            // Show summary notification
+            if (errorCount === 0) {
+                if (changesCount > 0) {
+                    new Notice(`✓ Fetched ${successCount} repositories. ${changesCount} have remote changes.`);
+                } else {
+                    new Notice(`✓ Fetched ${successCount} repositories. All up to date.`);
+                }
+            } else {
+                new Notice(`Fetched ${successCount} repositories. ${errorCount} failed. Check status indicators.`, 5000);
+            }
+
+            // Refresh display to show updated status
+            this.display();
+        } catch (error) {
+            console.error('Failed to fetch all repositories:', error);
+            const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+            new Notice(`Failed to fetch repositories: ${errorMessage}`, 5000);
+        } finally {
+            buttonEl.textContent = originalText;
+            buttonEl.removeAttribute('disabled');
+        }
     }
 
     /**
@@ -108,13 +231,18 @@ export class MultiGitSettingTab extends PluginSettingTab {
         statusIcon.setAttribute('aria-label', repo.enabled ? 'Enabled' : 'Disabled');
         nameDiv.createSpan({ text: ` ${repo.name}`, cls: 'multi-git-name-text' });
 
+        // Fetch status indicator
+        if (repo.enabled) {
+            this.addFetchStatusIndicator(nameDiv, repo);
+        }
+
         // Repository path
         infoDiv.createDiv({
             text: repo.path,
             cls: 'multi-git-repo-path setting-item-description'
         });
 
-        // Repository metadata
+        // Repository metadata (including fetch status)
         const metaDiv = infoDiv.createDiv({ cls: 'multi-git-repo-meta setting-item-description' });
         const createdDate = new Date(repo.createdAt).toLocaleDateString();
         metaDiv.createSpan({ text: `Added: ${createdDate}` });
@@ -122,6 +250,52 @@ export class MultiGitSettingTab extends PluginSettingTab {
         if (repo.lastValidated) {
             const validatedDate = new Date(repo.lastValidated).toLocaleDateString();
             metaDiv.createSpan({ text: ` • Last validated: ${validatedDate}` });
+        }
+
+        // Add fetch status info
+        if (repo.enabled && repo.lastFetchTime) {
+            const lastFetchTime = this.formatRelativeTime(repo.lastFetchTime);
+            metaDiv.createSpan({ text: ` • Last fetch: ${lastFetchTime}` });
+        }
+
+        // Fetch interval setting
+        if (repo.enabled) {
+            const intervalSetting = new Setting(infoDiv)
+                .setName('Fetch Interval')
+                .setDesc('Automatic fetch interval for this repository (in minutes)')
+                .setClass('multi-git-nested-setting');
+
+            intervalSetting.addText(text => {
+                text
+                    .setPlaceholder('5')
+                    .setValue(String(repo.fetchInterval / 60000))
+                    .onChange(async (value) => {
+                        const minutes = parseInt(value);
+                        if (!isNaN(minutes) && this.validateInterval(minutes)) {
+                            await this.updateRepositoryInterval(repo.id, minutes);
+                            // Clear any previous error
+                            text.inputEl.style.borderColor = '';
+                        } else {
+                            // Show validation error
+                            text.inputEl.style.borderColor = 'var(--text-error)';
+                        }
+                    });
+                text.inputEl.type = 'number';
+                text.inputEl.min = '1';
+                text.inputEl.max = '60';
+                text.inputEl.style.width = '80px';
+            });
+        }
+
+        // Fetch Now button (only for enabled repos)
+        if (repo.enabled) {
+            setting.addButton(button => button
+                .setButtonText('Fetch Now')
+                .onClick(async () => {
+                    await this.handleFetchRepositoryNow(repo.id, button.buttonEl);
+                })
+                .setTooltip('Manually fetch this repository now')
+            );
         }
 
         // Toggle button
@@ -153,6 +327,137 @@ export class MultiGitSettingTab extends PluginSettingTab {
     }
 
     /**
+     * Add fetch status indicator to repository name
+     */
+    private addFetchStatusIndicator(container: HTMLElement, repo: RepositoryConfig): void {
+        let statusText = '';
+        let statusClass = '';
+        let tooltip = '';
+
+        switch (repo.lastFetchStatus) {
+            case 'fetching':
+                statusText = ' ⟳';
+                statusClass = 'multi-git-fetch-fetching';
+                tooltip = 'Fetch in progress...';
+                break;
+            case 'success':
+                if (repo.remoteChanges && repo.remoteCommitCount) {
+                    statusText = ` ↓${repo.remoteCommitCount}`;
+                    statusClass = 'multi-git-fetch-changes';
+                    tooltip = `${repo.remoteCommitCount} commit(s) available from remote`;
+                } else {
+                    statusText = ' ✓';
+                    statusClass = 'multi-git-fetch-success';
+                    tooltip = 'Up to date with remote';
+                }
+                break;
+            case 'error':
+                statusText = ' ✗';
+                statusClass = 'multi-git-fetch-error';
+                tooltip = repo.lastFetchError || 'Last fetch failed';
+                break;
+            case 'idle':
+                // No indicator for idle state
+                break;
+        }
+
+        if (statusText) {
+            const indicator = container.createSpan({
+                text: statusText,
+                cls: statusClass
+            });
+            indicator.setAttribute('aria-label', tooltip);
+            indicator.setAttribute('title', tooltip);
+        }
+    }
+
+    /**
+     * Format timestamp as relative time
+     */
+    private formatRelativeTime(timestamp: number): string {
+        const now = Date.now();
+        const diff = now - timestamp;
+        const seconds = Math.floor(diff / 1000);
+        const minutes = Math.floor(seconds / 60);
+        const hours = Math.floor(minutes / 60);
+        const days = Math.floor(hours / 24);
+
+        if (seconds < 60) {
+            return 'just now';
+        } else if (minutes < 60) {
+            return `${minutes} minute${minutes !== 1 ? 's' : ''} ago`;
+        } else if (hours < 24) {
+            return `${hours} hour${hours !== 1 ? 's' : ''} ago`;
+        } else if (days < 7) {
+            return `${days} day${days !== 1 ? 's' : ''} ago`;
+        } else {
+            return new Date(timestamp).toLocaleDateString();
+        }
+    }
+
+    /**
+     * Validate fetch interval value
+     */
+    private validateInterval(minutes: number): boolean {
+        return minutes >= 1 && minutes <= 60 && Number.isInteger(minutes);
+    }
+
+    /**
+     * Update repository fetch interval
+     */
+    private async updateRepositoryInterval(repoId: string, minutes: number): Promise<void> {
+        try {
+            const intervalMs = minutes * 60000;
+            await this.plugin.repositoryConfigService.updateFetchInterval(repoId, intervalMs);
+
+            // Reschedule the repository with new interval
+            this.plugin.fetchSchedulerService.unscheduleRepository(repoId);
+            this.plugin.fetchSchedulerService.scheduleRepository(repoId, intervalMs);
+
+            new Notice(`Fetch interval updated to ${minutes} minute${minutes !== 1 ? 's' : ''}`);
+        } catch (error) {
+            console.error('Failed to update fetch interval:', error);
+            const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+            new Notice(`Failed to update interval: ${errorMessage}`, 5000);
+        }
+    }
+
+    /**
+     * Handle manual fetch for specific repository
+     */
+    private async handleFetchRepositoryNow(repoId: string, buttonEl: HTMLElement): Promise<void> {
+        const originalText = buttonEl.textContent || 'Fetch Now';
+        buttonEl.textContent = 'Fetching...';
+        buttonEl.setAttribute('disabled', 'true');
+
+        try {
+            const result = await this.plugin.fetchSchedulerService.fetchRepositoryNow(repoId);
+
+            if (result.success) {
+                if (result.remoteChanges) {
+                    const count = result.commitsBehind || 0;
+                    new Notice(`✓ Fetch complete. ${count} commit${count !== 1 ? 's' : ''} available from remote.`);
+                } else {
+                    new Notice('✓ Fetch complete. Repository is up to date.');
+                }
+            } else {
+                const errorMsg = result.error || 'Unknown error';
+                new Notice(`✗ Fetch failed: ${errorMsg}`, 5000);
+            }
+
+            // Refresh display to show updated status
+            this.display();
+        } catch (error) {
+            console.error('Failed to fetch repository:', error);
+            const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+            new Notice(`Failed to fetch: ${errorMessage}`, 5000);
+        } finally {
+            buttonEl.textContent = originalText;
+            buttonEl.removeAttribute('disabled');
+        }
+    }
+
+    /**
      * Handle toggling repository enabled state
      */
     private async handleToggleRepository(repoId: string): Promise<void> {
@@ -160,6 +465,16 @@ export class MultiGitSettingTab extends PluginSettingTab {
             const newState = await this.plugin.repositoryConfigService.toggleRepository(repoId);
 
             if (newState !== null) {
+                // Update scheduler based on new state
+                if (newState) {
+                    const repo = this.plugin.repositoryConfigService.getRepository(repoId);
+                    if (repo) {
+                        this.plugin.fetchSchedulerService.scheduleRepository(repoId, repo.fetchInterval);
+                    }
+                } else {
+                    this.plugin.fetchSchedulerService.unscheduleRepository(repoId);
+                }
+
                 new Notice(`Repository ${newState ? 'enabled' : 'disabled'}`);
                 this.display(); // Refresh display
             } else {
@@ -182,6 +497,9 @@ export class MultiGitSettingTab extends PluginSettingTab {
             repo.name,
             async () => {
                 try {
+                    // Unschedule before removing
+                    this.plugin.fetchSchedulerService.unscheduleRepository(repo.id);
+
                     const removed = await this.plugin.repositoryConfigService.removeRepository(repo.id);
 
                     if (removed) {

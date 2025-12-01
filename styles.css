@@ -131,3 +131,61 @@ button:disabled {
     opacity: 0.5;
     cursor: not-allowed;
 }
+
+/* FR-2: Fetch status indicators */
+.multi-git-fetch-fetching {
+    color: var(--text-accent);
+    animation: spin 1s linear infinite;
+}
+
+.multi-git-fetch-success {
+    color: var(--color-green);
+}
+
+.multi-git-fetch-error {
+    color: var(--text-error);
+}
+
+.multi-git-fetch-changes {
+    color: var(--color-orange);
+    font-weight: 600;
+}
+
+/* Spin animation for fetching indicator */
+@keyframes spin {
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* FR-2: Nested settings (fetch interval) */
+.multi-git-nested-setting {
+    margin-top: 0.8em;
+    padding-top: 0.8em;
+    border-top: 1px dashed var(--background-modifier-border);
+}
+
+.multi-git-nested-setting .setting-item-info {
+    flex: 1;
+}
+
+.multi-git-nested-setting .setting-item-name {
+    font-size: 0.95em;
+    font-weight: 500;
+}
+
+.multi-git-nested-setting .setting-item-description {
+    font-size: 0.85em;
+}
+
+.multi-git-nested-setting .setting-item-control {
+    min-width: auto;
+}
+
+.multi-git-nested-setting input[type="number"] {
+    width: 80px;
+}

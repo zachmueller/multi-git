@@ -226,6 +226,25 @@ export class RepositoryConfigService {
     }
 
     /**
+     * Update fetch interval for a repository
+     * 
+     * @param id - Repository identifier
+     * @param intervalMs - New fetch interval in milliseconds
+     */
+    async updateFetchInterval(id: string, intervalMs: number): Promise<void> {
+        const repo = this.plugin.settings.repositories.find(
+            repo => repo.id === id
+        );
+
+        if (!repo) {
+            throw new Error(`Repository not found: ${id}`);
+        }
+
+        repo.fetchInterval = intervalMs;
+        await this.plugin.saveSettings();
+    }
+
+    /**
      * Process a fetch result and update repository configuration
      * Combines status and remote change updates in one operation
      * 

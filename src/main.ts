@@ -2,6 +2,8 @@ import { Plugin } from 'obsidian';
 import { MultiGitSettings, DEFAULT_SETTINGS } from './settings/data';
 import { RepositoryConfigService } from './services/RepositoryConfigService';
 import { GitCommandService } from './services/GitCommandService';
+import { FetchSchedulerService } from './services/FetchSchedulerService';
+import { NotificationService } from './services/NotificationService';
 import { MultiGitSettingTab } from './settings/SettingTab';
 
 /**
@@ -12,6 +14,8 @@ export default class MultiGitPlugin extends Plugin {
 	settings!: MultiGitSettings;
 	repositoryConfigService!: RepositoryConfigService;
 	gitCommandService!: GitCommandService;
+	fetchSchedulerService!: FetchSchedulerService;
+	notificationService!: NotificationService;
 
 	/**
 	 * Called when the plugin is loaded
@@ -26,6 +30,12 @@ export default class MultiGitPlugin extends Plugin {
 		// Initialize services
 		this.gitCommandService = new GitCommandService();
 		this.repositoryConfigService = new RepositoryConfigService(this);
+		this.notificationService = new NotificationService(this.settings);
+		this.fetchSchedulerService = new FetchSchedulerService(
+			this.repositoryConfigService,
+			this.gitCommandService,
+			this.notificationService
+		);
 
 		// Apply settings migration for backward compatibility
 		this.settings = this.repositoryConfigService.migrateSettings(this.settings);
@@ -33,6 +43,17 @@ export default class MultiGitPlugin extends Plugin {
 
 		// Register settings tab
 		this.addSettingTab(new MultiGitSettingTab(this.app, this));
+
+		// Start automated fetching for all enabled repositories
+		this.fetchSchedulerService.startAll();
+
+		// Optionally fetch on startup if enabled
+		if (this.settings.fetchOnStartup) {
+			// Delay initial fetch to avoid blocking plugin load
+			setTimeout(async () => {
+				await this.fetchSchedulerService.fetchAllNow();
+			}, 2000);
+		}
 
 		// TODO: Register commands
 	}
@@ -44,7 +65,8 @@ export default class MultiGitPlugin extends Plugin {
 	onunload() {
 		console.log('Unloading Multi-Git plugin');
 
-		// TODO: Cleanup resources
+		// Stop all scheduled fetches
+		this.fetchSchedulerService.stopAll();
 	}
 
 	/**
