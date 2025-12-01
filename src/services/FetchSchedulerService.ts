@@ -6,6 +6,7 @@
 import { GitCommandService, RemoteChangeStatus } from './GitCommandService';
 import { RepositoryConfigService } from './RepositoryConfigService';
 import { FetchError } from '../utils/errors';
+import { NotificationService } from './NotificationService';
 
 /**
  * Detailed information about a specific branch's status
@@ -38,6 +39,7 @@ export class FetchSchedulerService {
     private activeOperations: Map<string, Promise<FetchResult>>;
     private configService: RepositoryConfigService;
     private gitService: GitCommandService;
+    private notificationService?: NotificationService;
 
     // Default fetch interval: 5 minutes (300000ms) per spec requirement
     // This will be replaced with per-repository intervals in Phase 3
@@ -47,15 +49,18 @@ export class FetchSchedulerService {
      * Create a new FetchSchedulerService
      * @param configService Repository configuration service
      * @param gitService Git command service
+     * @param notificationService Optional notification service for user alerts
      */
     constructor(
         configService: RepositoryConfigService,
-        gitService: GitCommandService
+        gitService: GitCommandService,
+        notificationService?: NotificationService
     ) {
         this.intervals = new Map();
         this.activeOperations = new Map();
         this.configService = configService;
         this.gitService = gitService;
+        this.notificationService = notificationService;
     }
 
     /**
@@ -184,6 +189,14 @@ export class FetchSchedulerService {
                 result.commitsBehind = changeStatus.commitsBehind;
                 result.branchInfo = branchInfo.length > 0 ? branchInfo : undefined;
 
+                // Trigger notification if remote has changes
+                if (changeStatus.hasChanges && this.notificationService) {
+                    this.notificationService.notifyRemoteChanges(
+                        repo.name,
+                        changeStatus.commitsBehind
+                    );
+                }
+
                 return result;
 
             } catch (error) {
@@ -196,6 +209,11 @@ export class FetchSchedulerService {
                     result.error = error.message;
                 } else {
                     result.error = String(error);
+                }
+
+                // Trigger error notification
+                if (this.notificationService && result.error) {
+                    this.notificationService.notifyFetchError(repo.name, result.error);
                 }
 
                 return result;

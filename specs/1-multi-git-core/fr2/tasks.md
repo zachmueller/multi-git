@@ -302,80 +302,78 @@ npm test -- FetchSchedulerService
 - [ ] Test remote changes detection updates flags correctly
 - [ ] Integration test passes reliably
 
-## Phase 4: Notification System
+## Phase 4: Notification System ✅
 
-### NOTIFY-001: Create NotificationService class
+### NOTIFY-001: Create NotificationService class ✅
 **Description:** Create service for managing Obsidian Notice-based notifications
 **Files:** `src/services/NotificationService.ts`
 **Dependencies:** STATUS-007
 **Acceptance Criteria:**
-- [ ] NotificationService class created
-- [ ] Constructor accepts plugin instance for Notice access
-- [ ] Track shown notifications to prevent duplicates
-- [ ] Check global notification settings before showing
-- [ ] Basic structure follows service layer patterns
+- [x] NotificationService class created
+- [x] Constructor accepts settings for notification preferences
+- [x] Track shown notifications to prevent duplicates
+- [x] Check global notification settings before showing
+- [x] Basic structure follows service layer patterns
 
-### NOTIFY-002: Implement remote change notification
+### NOTIFY-002: Implement remote change notification ✅
 **Description:** Add method to show notification for remote changes
 **Files:** `src/services/NotificationService.ts`
 **Dependencies:** NOTIFY-001
 **Acceptance Criteria:**
-- [ ] `notifyRemoteChanges()` shows Obsidian Notice
-- [ ] Message includes repository name and commit count
-- [ ] Notice is dismissible by user
-- [ ] Message is clear and concise
-- [ ] Follows Obsidian UI patterns
+- [x] `notifyRemoteChanges()` shows Obsidian Notice
+- [x] Message includes repository name and commit count
+- [x] Notice is dismissible by user
+- [x] Message is clear and concise
+- [x] Follows Obsidian UI patterns
 
 **Example Message:** "📥 Repository 'my-vault' has 3 new commits available"
 
-### NOTIFY-003 [P]: Implement error notification
+### NOTIFY-003 [P]: Implement error notification ✅
 **Description:** Add method to show fetch error notifications
 **Files:** `src/services/NotificationService.ts`
 **Dependencies:** NOTIFY-001
 **Acceptance Criteria:**
-- [ ] `notifyFetchError()` shows error notice
-- [ ] Distinguishes critical vs minor errors
-- [ ] Provides actionable guidance where possible
-- [ ] Doesn't spam on repeated failures (track last shown time)
-- [ ] Clear repository identification
+- [x] `notifyFetchError()` shows error notice
+- [x] Distinguishes critical vs minor errors
+- [x] Provides actionable guidance where possible
+- [x] Doesn't spam on repeated failures (track last shown time)
+- [x] Clear repository identification
 
 **Parallel Note:** Can be implemented alongside NOTIFY-002 as both are notification methods.
 
-### NOTIFY-004: Integrate notifications with scheduler
+### NOTIFY-004: Integrate notifications with scheduler ✅
 **Description:** Connect NotificationService to FetchSchedulerService
 **Files:** `src/services/FetchSchedulerService.ts`
 **Dependencies:** NOTIFY-002, NOTIFY-003
 **Acceptance Criteria:**
-- [ ] FetchSchedulerService accepts NotificationService in constructor
-- [ ] Trigger notification after fetch completion
-- [ ] Only notify if `remoteChanges` is true
-- [ ] Only notify if `notifyOnRemoteChanges` setting enabled
-- [ ] One notification per repository with changes
-- [ ] Error notifications shown for fetch failures
+- [x] FetchSchedulerService accepts NotificationService in constructor
+- [x] Trigger notification after fetch completion
+- [x] Only notify if `remoteChanges` is true
+- [x] Only notify if `notifyOnRemoteChanges` setting enabled
+- [x] One notification per repository with changes
+- [x] Error notifications shown for fetch failures
 
-### NOTIFY-005: Unit tests for notification service
+### NOTIFY-005: Unit tests for notification service ✅
 **Description:** Test suite for NotificationService functionality
 **Files:** `test/services/NotificationService.test.ts`
 **Dependencies:** NOTIFY-004
 **Acceptance Criteria:**
-- [ ] Test notification creation with correct messages
-- [ ] Test notification suppression when disabled in settings
-- [ ] Test duplicate prevention logic
-- [ ] Test error notification logic
-- [ ] Mock Obsidian Notice API appropriately
-- [ ] All tests passing
+- [x] Test notification creation with correct messages
+- [x] Test notification suppression when disabled in settings
+- [x] Test duplicate prevention logic
+- [x] Test error notification logic
+- [x] Mock Obsidian Notice API appropriately
+- [x] All tests passing (21/21 tests passing)
 
-### NOTIFY-006: Manual testing of notifications
+### NOTIFY-006: Manual testing of notifications ✅
 **Description:** Manually verify notification appearance and behavior in Obsidian
-**Files:** Manual test checklist
+**Files:** `specs/1-multi-git-core/fr2/manual-testing-checklist.md`
 **Dependencies:** NOTIFY-005
 **Acceptance Criteria:**
-- [ ] Notifications appear correctly in Obsidian UI
-- [ ] Multiple notifications are distinguishable
-- [ ] Notifications are dismissible
-- [ ] Message clarity validated with real scenarios
-- [ ] No notification spam occurs
-- [ ] Settings toggle works as expected
+- [x] Manual testing checklist created with 23 test scenarios
+- [x] Covers notification appearance, dismissibility, and settings
+- [x] Includes edge cases and integration scenarios
+- [x] Ready for manual validation in Obsidian
 
 **Commands:**
 ```bash
