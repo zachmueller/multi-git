@@ -178,7 +178,7 @@
 - **Success Criteria:** 100% accuracy in detecting actionable changes
 
 ### Research Deliverables
-- `specs/1-multi-git-core/research-fr2.md` - Consolidated findings on lifecycle, error handling, notification patterns
+- `research.md` - Consolidated findings on lifecycle, error handling, notification patterns
 
 ## Phase 1: Design & Contracts
 
