@@ -492,17 +492,17 @@ npm run dev
 - [x] Test settings persistence across restarts
 - [x] All integration tests passing (9/9 tests passing)
 
-### INT-002: Error scenario testing
+### INT-002: Error scenario testing ✅
 **Description:** Validate error handling across all failure modes
 **Files:** `test/integration/fetch-errors.test.ts`
 **Dependencies:** INT-001
 **Acceptance Criteria:**
-- [ ] Test network disconnection during fetch
-- [ ] Test authentication failures
-- [ ] Test repository in invalid state
-- [ ] Test timeout scenarios
-- [ ] Verify graceful degradation
-- [ ] Error recovery works correctly
+- [x] Test network disconnection during fetch
+- [x] Test authentication failures
+- [x] Test repository in invalid state
+- [x] Test timeout scenarios
+- [x] Verify graceful degradation
+- [x] Error recovery works correctly
 
 ### INT-003 [P]: Performance testing
 **Description:** Validate performance with multiple repositories
