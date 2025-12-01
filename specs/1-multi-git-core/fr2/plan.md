@@ -241,6 +241,9 @@ interface MultiGitSettings {
   fetchOnStartup: boolean;  // Whether to fetch immediately on plugin load
   notifyOnRemoteChanges: boolean;  // Master toggle for notifications
   lastGlobalFetch?: number;  // Timestamp of last "fetch all" operation
+  
+  // FR-6: Debug logging (hidden setting)
+  debugLogging: boolean;  // Enable comprehensive console logging (default: false)
 }
 ```
 
@@ -269,6 +272,65 @@ interface MultiGitSettings {
 [Execute Fetch] → [Detect Changes] → [Notify if Needed] → [Store Results]
 [Plugin Unload] → [Cancel All Intervals] → [Cleanup]
 ```
+
+### Debug Logging Strategy (FR-6)
+
+#### Purpose
+Provide hidden debug logging capability for troubleshooting without cluttering the UI or requiring code changes.
+
+#### Implementation Approach
+- **Hidden Setting:** `debugLogging: boolean` in MultiGitSettings (default: false)
+- **No UI Exposure:** Setting not shown in settings tab; user edits data.json directly
+- **Logging Service:** Centralized logging utility that checks debug flag before logging
+- **Console Output:** All debug logs written to browser console with consistent format
+- **Log Levels:** DEBUG level for detailed operations, normal console methods for errors/warnings
+
+#### Logging Points
+Key operations to log when debug mode is enabled:
+1. **Fetch Operations:**
+   - Fetch start/completion with repository name and duration
+   - Git command execution with full command string
+   - Remote change detection results
+   - Error details with stack traces
+
+2. **Scheduler Operations:**
+   - Interval scheduling/unscheduling events
+   - Batch fetch execution flow
+   - Active operation tracking
+
+3. **Status Updates:**
+   - Repository status transitions
+   - Configuration persistence events
+   - Remote changes flag updates
+
+4. **Notifications:**
+   - Notification trigger events
+   - Notification suppression logic
+
+5. **Settings:**
+   - Settings load/save operations
+   - Migration events
+   - Validation failures
+
+#### Log Format
+```
+[Multi-Git Debug] [2025-01-12 22:30:15] [FetchScheduler] Starting fetch for repo: my-vault (interval: 300000ms)
+[Multi-Git Debug] [2025-01-12 22:30:15] [GitCommand] Executing: git fetch --all --tags --prune
+[Multi-Git Debug] [2025-01-12 22:30:16] [GitCommand] Fetch completed successfully (duration: 1234ms)
+[Multi-Git Debug] [2025-01-12 22:30:16] [FetchScheduler] Remote changes detected: 3 commits behind
+```
+
+#### Security Considerations
+- Never log sensitive data (passwords, tokens, SSH keys)
+- Sanitize git command output to remove credentials
+- Only log git command structure, not full output if it contains sensitive info
+- File paths are safe to log (no credentials in paths)
+
+#### Performance Impact
+- Negligible when disabled (single boolean check per log call)
+- When enabled, console logging has minimal overhead
+- No file I/O or network operations
+- Acceptable for debugging scenarios
 
 ### API Contract Generation
 

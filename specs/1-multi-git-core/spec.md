@@ -99,6 +99,19 @@ Enable efficient management of multiple git repositories within an Obsidian vaul
   - [ ] Authentication failures provide clear instructions in modal for configuring credentials
   - [ ] All error presentations include repository name and specific failure reason
 
+#### FR-6: Debug Logging (Hidden Setting)
+- **Description:** The plugin must provide a hidden debug logging capability to aid in troubleshooting issues without cluttering the UI
+- **Priority:** Low
+- **Acceptance Criteria:**
+  - [ ] Debug logging can be enabled via direct modification of plugin's data.json file
+  - [ ] Setting is not exposed in the plugin's settings UI
+  - [ ] When enabled, comprehensive debug logs are written to the browser console
+  - [ ] Debug logs include key operations: fetch attempts, status updates, git command execution, error details
+  - [ ] Debug logs include timestamps and context (repository name, operation type)
+  - [ ] Debug logs do not contain sensitive information (passwords, tokens)
+  - [ ] Setting persists across Obsidian restarts
+  - [ ] Debug logging can be toggled on/off without plugin reload (takes effect on next operation)
+
 ### Non-Functional Requirements
 
 #### NFR-1: Performance
