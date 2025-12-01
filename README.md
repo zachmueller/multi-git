@@ -10,6 +10,10 @@ A powerful Obsidian plugin for managing multiple git repositories from within yo
 - 💾 **Persistent Configuration** - Repository settings persist across Obsidian sessions
 - 🛡️ **Security** - Path validation prevents traversal attacks and invalid paths
 - 🌍 **Cross-Platform** - Works on macOS, Windows, and Linux
+- 📥 **Automated Remote Fetch** - Automatically fetch remote changes at configurable intervals
+- 🔔 **Smart Notifications** - Get notified only when remote changes require your attention
+- ⚡ **Manual Fetch** - Trigger immediate fetch for any repository with one click
+- 📊 **Fetch Status** - See last fetch time and remote change indicators for each repository
 
 ## Requirements
 
@@ -90,11 +94,55 @@ The plugin will validate that:
 Each repository in the list shows:
 - **Repository name** and full path
 - **Status** (Enabled/Disabled)
+- **Last fetch time** - When remote changes were last checked
+- **Fetch status** - Current state (idle, fetching, success, error)
+- **Remote changes indicator** - Shows if new commits are available
 - **Creation date**
 
 Available actions:
 - **Toggle** - Enable or disable a repository
+- **Fetch Now** - Manually trigger immediate fetch for this repository
 - **Remove** - Delete the repository from configuration (does not affect files on disk)
+
+### Automated Remote Fetch
+
+The plugin automatically fetches remote changes for all enabled repositories:
+
+1. **Default Behavior:**
+   - Fetch runs every 5 minutes by default
+   - Operates silently in the background
+   - Does not interrupt your workflow
+
+2. **Notifications:**
+   - You receive a notification ONLY when remote changes are detected
+   - Notification shows repository name and number of new commits
+   - No notifications for successful fetches without changes
+
+3. **Configuration:**
+   - Set global fetch interval in plugin settings
+   - Override interval per repository if needed
+   - Enable fetch on plugin startup (enabled by default)
+   - Toggle notifications on/off globally
+
+4. **Manual Fetch:**
+   - Click "Fetch Now" button for any repository
+   - Click "Fetch All Now" to check all repositories immediately
+   - Manual fetches show real-time status updates
+
+**Example notification:**
+```
+📥 Repository 'my-vault' has 3 new commits available
+```
+
+### Fetch Status Indicators
+
+Each repository displays its fetch status:
+
+- **✓ Success** - Last fetch completed successfully
+- **⟳ Fetching** - Fetch operation currently in progress
+- **✗ Error** - Last fetch failed (see error message)
+- **◯ Idle** - No fetch has run yet
+- **📥 Changes Available** - Remote changes detected, action needed
 
 ### Repository List
 
@@ -121,20 +169,42 @@ All repository configurations are stored in:
       "name": "Repository Name",
       "enabled": true,
       "createdAt": 1704067200000,
-      "lastValidated": 1704153600000
+      "lastValidated": 1704153600000,
+      "fetchInterval": 300000,
+      "lastFetchTime": 1704153600000,
+      "lastFetchStatus": "success",
+      "lastFetchError": null,
+      "remoteChanges": false,
+      "remoteCommitCount": 0
     }
   ],
+  "globalFetchInterval": 300000,
+  "fetchOnStartup": true,
+  "notifyOnRemoteChanges": true,
+  "lastGlobalFetch": 1704153600000,
   "version": "0.1.0"
 }
 ```
 
-**Fields:**
+**Repository Fields:**
 - `id` - Unique identifier (UUID v4)
 - `path` - Absolute path to git repository
 - `name` - Display name for the repository
 - `enabled` - Whether repository is active
 - `createdAt` - Timestamp when repository was added
 - `lastValidated` - Timestamp of last validation (optional)
+- `fetchInterval` - Fetch interval in milliseconds (default: 300000 / 5 min)
+- `lastFetchTime` - Timestamp of last successful fetch
+- `lastFetchStatus` - Current fetch state: 'idle', 'fetching', 'success', 'error'
+- `lastFetchError` - Error message from last failed fetch (if any)
+- `remoteChanges` - Boolean indicating if remote changes are available
+- `remoteCommitCount` - Number of commits behind remote
+
+**Global Settings:**
+- `globalFetchInterval` - Default fetch interval for all repositories (milliseconds)
+- `fetchOnStartup` - Whether to fetch all repos when plugin loads
+- `notifyOnRemoteChanges` - Show notifications for remote changes
+- `lastGlobalFetch` - Timestamp of last global fetch operation
 - `version` - Configuration schema version
 
 For detailed configuration options, see [Configuration Guide](docs/configuration.md).
@@ -199,6 +269,62 @@ For detailed configuration options, see [Configuration Guide](docs/configuration
 2. Try reloading Obsidian
 3. Manually edit `data.json` as last resort (backup first!)
 
+### Fetch operations failing
+
+**Problem:** Automatic fetch shows error status
+
+**Common Causes & Solutions:**
+
+1. **Network Error:**
+   - Check internet connection
+   - Verify repository remote URL is accessible
+   - Check firewall settings
+
+2. **Authentication Error:**
+   - Ensure SSH keys are configured (for SSH URLs)
+   - Check HTTPS credentials are cached (for HTTPS URLs)
+   - Test manual fetch: `git fetch` in repository directory
+
+3. **Timeout Error:**
+   - Repository may be very large
+   - Network may be slow
+   - Increase timeout in git config: `git config http.timeout 60`
+
+4. **Repository Error:**
+   - Repository may be in invalid state
+   - Try running `git status` manually
+   - Check for uncommitted changes or conflicts
+
+### Fetch running too frequently
+
+**Problem:** Fetch operations consuming resources
+
+**Solution:**
+1. Increase fetch interval in settings (default is 5 minutes)
+2. Disable fetch for specific repositories
+3. Disable "Fetch on Startup" if not needed
+4. Monitor performance with dev tools
+
+### Not receiving notifications
+
+**Problem:** No notifications when remote changes available
+
+**Solution:**
+1. Check "Notify on Remote Changes" is enabled in settings
+2. Verify Obsidian notifications are enabled in system preferences
+3. Check if repository actually has remote changes: `git fetch && git status`
+4. Test with manual fetch to see if notification appears
+
+### Fetch shows "success" but no remote changes
+
+**Problem:** Expected to see remote changes but none shown
+
+**Explanation:** This is normal behavior:
+- Fetch checks for changes but finds none
+- Repository is up-to-date with remote
+- Status shows "success" (operation worked correctly)
+- No notification (nothing requires your attention)
+
 ## Contributing
 
 Contributions are welcome! See [Contributing Guide](docs/contributing.md) for details.
@@ -252,28 +378,41 @@ multi-git/
 ## Roadmap
 
 ### Current Version (0.1.0)
-- ✅ Repository configuration management
+- ✅ Repository configuration management (FR-1)
 - ✅ Path validation and security
 - ✅ Settings UI
 - ✅ Cross-platform support
+- ✅ Automated remote fetch (FR-2)
+- ✅ Smart notifications
+- ✅ Fetch status monitoring
+- ✅ Manual fetch operations
 
 ### Future Versions
 
-**v0.2.0 - Git Operations**
-- Execute git commands on repositories
-- Status monitoring
-- Branch information
-- Commit history
+**v0.2.0 - Push Operations (FR-3)**
+- Hotkey-driven commit and push
+- Repository picker dialog
+- Commit message editor
+- Push operation feedback
 
-**v0.3.0 - UI Enhancements**
+**v0.3.0 - Status Display (FR-4)**
+- Dedicated status panel
+- Repository status view
+- Real-time updates
+- Manual refresh
+
+**v0.4.0 - Enhanced Error Handling (FR-5)**
+- Modal dialogs for critical errors
+- Context-appropriate error presentation
+- Improved error recovery
+- Detailed error guidance
+
+**v0.5.0 - Advanced Features**
+- Branch information display
+- Commit history viewing
 - Repository status indicators in file explorer
-- Quick actions from sidebar
-- Bulk operations
-
-**v0.4.0 - Advanced Features**
 - Automatic repository detection
 - Submodule support
-- Workspace presets
 
 See [CHANGELOG.md](CHANGELOG.md) for detailed version history.
 
