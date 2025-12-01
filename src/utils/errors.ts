@@ -82,3 +82,41 @@ export class FileSystemError extends RepositoryConfigError {
         this.fsPath = path;
     }
 }
+
+/**
+ * Error codes for fetch operation failures
+ */
+export enum FetchErrorCode {
+    NETWORK_ERROR = 'NETWORK_ERROR',
+    AUTH_ERROR = 'AUTH_ERROR',
+    TIMEOUT = 'TIMEOUT',
+    REPO_ERROR = 'REPO_ERROR',
+    UNKNOWN = 'UNKNOWN'
+}
+
+/**
+ * Error thrown when git fetch operation fails
+ */
+export class FetchError extends Error {
+    repoPath: string;
+    code: FetchErrorCode;
+    originalError?: Error;
+
+    constructor(
+        message: string,
+        repoPath: string,
+        code: FetchErrorCode,
+        originalError?: Error
+    ) {
+        super(message);
+        this.name = 'FetchError';
+        this.repoPath = repoPath;
+        this.code = code;
+        this.originalError = originalError;
+
+        // Maintains proper stack trace for where error was thrown (available on V8)
+        if (Error.captureStackTrace) {
+            Error.captureStackTrace(this, FetchError);
+        }
+    }
+}
