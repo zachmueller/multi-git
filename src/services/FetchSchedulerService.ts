@@ -166,6 +166,12 @@ export class FetchSchedulerService {
 
                 if (!fetchSuccess) {
                     result.error = 'Fetch operation failed';
+
+                    // Trigger error notification
+                    if (this.notificationService) {
+                        this.notificationService.notifyFetchError(repo.name, result.error);
+                    }
+
                     return result;
                 }
 
@@ -226,6 +232,10 @@ export class FetchSchedulerService {
         try {
             // Wait for completion
             const result = await fetchOperation;
+
+            // Record result in repository configuration
+            await this.configService.recordFetchResult(result);
+
             return result;
         } finally {
             // Always remove from active operations when done

@@ -480,17 +480,17 @@ npm run dev
 
 ## Phase 6: Integration and Testing
 
-### INT-001: End-to-end integration test
+### INT-001: End-to-end integration test ✅
 **Description:** Test complete fetch workflow from plugin load to notification
 **Files:** `test/integration/fetch-workflow.test.ts`
 **Dependencies:** UI-007
 **Acceptance Criteria:**
-- [ ] Test plugin load → schedule → fetch → status update → notification
-- [ ] Test with multiple repositories simultaneously
-- [ ] Test interval changes during operation
-- [ ] Test plugin reload scenarios
-- [ ] Test settings persistence across restarts
-- [ ] All integration tests passing
+- [x] Test plugin load → schedule → fetch → status update → notification
+- [x] Test with multiple repositories simultaneously
+- [x] Test interval changes during operation
+- [x] Test plugin reload scenarios
+- [x] Test settings persistence across restarts
+- [x] All integration tests passing (9/9 tests passing)
 
 ### INT-002: Error scenario testing
 **Description:** Validate error handling across all failure modes
