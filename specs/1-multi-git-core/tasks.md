@@ -13,7 +13,7 @@ This file will contain the detailed task breakdown for FR-2 (Automated Remote Fe
 
 ## Reference
 
-- **Previous Feature:** See [completed/tasks-fr1.md](./completed/tasks-fr1.md) for FR-1 task structure
+- **Previous Feature:** See [completed/fr1/tasks.md](./completed/fr1/tasks.md) for FR-1 task structure
 - **Implementation Plan:** [plan-fr2.md](./plan-fr2.md) contains the technical architecture and phases
 - **Specification:** [spec.md](./spec.md) section FR-2 for requirements and acceptance criteria
 

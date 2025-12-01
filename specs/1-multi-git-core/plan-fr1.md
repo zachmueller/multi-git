@@ -6,8 +6,9 @@
 **Status:** ✅ Complete - Released as v0.1.0
 **Feature:** Multi-Git Core for Obsidian
 **Requirement:** FR-1: Repository Configuration
-**Tasks:** [completed/tasks-fr1.md](./completed/tasks-fr1.md)
-**Validation:** [validation-report.md](./validation-report.md)
+**Tasks:** [completed/fr1/tasks.md](./completed/fr1/tasks.md)
+**Validation:** [completed/fr1/validation-report.md](./completed/fr1/validation-report.md)
+**Testing:** [completed/fr1/manual-testing-checklist.md](./completed/fr1/manual-testing-checklist.md)
 
 ## Technical Context
 
