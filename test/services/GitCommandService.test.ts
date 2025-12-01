@@ -293,4 +293,272 @@ describe('GitCommandService', () => {
             }
         });
     });
+
+    describe('FR-2: Git Fetch Operations', () => {
+        let remoteRepoPath: string;
+        let localRepoPath: string;
+
+        beforeAll(async () => {
+            // Create a remote repository
+            const tmpDir = os.tmpdir();
+            remoteRepoPath = path.join(tmpDir, `remote-repo-${Date.now()}`);
+            localRepoPath = path.join(tmpDir, `local-repo-${Date.now()}`);
+
+            // Initialize remote repository
+            fs.mkdirSync(remoteRepoPath, { recursive: true });
+            await execPromise('git init', { cwd: remoteRepoPath });
+            await execPromise('git config user.email "test@example.com"', { cwd: remoteRepoPath });
+            await execPromise('git config user.name "Test User"', { cwd: remoteRepoPath });
+
+            // Create initial commit in remote
+            fs.writeFileSync(path.join(remoteRepoPath, 'README.md'), '# Remote Repository');
+            await execPromise('git add README.md', { cwd: remoteRepoPath });
+            await execPromise('git commit -m "Initial commit"', { cwd: remoteRepoPath });
+
+            // Clone to local repository
+            await execPromise(`git clone "${remoteRepoPath}" "${localRepoPath}"`);
+            await execPromise('git config user.email "test@example.com"', { cwd: localRepoPath });
+            await execPromise('git config user.name "Test User"', { cwd: localRepoPath });
+            await execPromise('git config pull.rebase false', { cwd: localRepoPath });
+        });
+
+        afterAll(async () => {
+            try {
+                fs.rmSync(remoteRepoPath, { recursive: true, force: true });
+                fs.rmSync(localRepoPath, { recursive: true, force: true });
+            } catch (error) {
+                // Ignore cleanup errors
+            }
+        });
+
+        describe('getCurrentBranch', () => {
+            it('should return current branch name', async () => {
+                const branch = await service.getCurrentBranch(localRepoPath);
+                expect(branch).toMatch(/^(main|master)$/);
+            });
+
+            it('should return null for detached HEAD state', async () => {
+                // Get the current commit hash
+                const { stdout: commitHash } = await execPromise('git rev-parse HEAD', { cwd: localRepoPath });
+
+                // Checkout specific commit to enter detached HEAD state
+                await execPromise(`git checkout ${commitHash.trim()}`, { cwd: localRepoPath });
+
+                const branch = await service.getCurrentBranch(localRepoPath);
+                expect(branch).toBeNull();
+
+                // Return to main branch
+                await execPromise('git checkout main || git checkout master', { cwd: localRepoPath });
+            });
+
+            it('should throw error for non-git directory', async () => {
+                await expect(service.getCurrentBranch(nonGitPath)).rejects.toThrow(GitRepositoryError);
+            });
+        });
+
+        describe('getTrackingBranch', () => {
+            it('should return tracking branch for current branch', async () => {
+                const tracking = await service.getTrackingBranch(localRepoPath);
+                expect(tracking).toMatch(/origin\/(main|master)/);
+            });
+
+            it('should return tracking branch for specific branch', async () => {
+                // Get current branch name
+                const { stdout: currentBranch } = await execPromise('git rev-parse --abbrev-ref HEAD', { cwd: localRepoPath });
+
+                const tracking = await service.getTrackingBranch(localRepoPath, currentBranch.trim());
+                expect(tracking).toMatch(/origin\/(main|master)/);
+            });
+
+            it('should return null when no tracking branch configured', async () => {
+                // Create a local-only branch
+                await execPromise('git checkout -b local-only-branch', { cwd: localRepoPath });
+
+                const tracking = await service.getTrackingBranch(localRepoPath);
+                expect(tracking).toBeNull();
+
+                // Return to main branch
+                await execPromise('git checkout main || git checkout master', { cwd: localRepoPath });
+                await execPromise('git branch -D local-only-branch', { cwd: localRepoPath });
+            });
+
+            it('should throw error for non-git directory', async () => {
+                await expect(service.getTrackingBranch(nonGitPath)).rejects.toThrow(GitRepositoryError);
+            });
+        });
+
+        describe('compareWithRemote', () => {
+            it('should return zero ahead/behind when branches are in sync', async () => {
+                // Ensure we're in sync
+                await execPromise('git fetch origin', { cwd: localRepoPath });
+                const { stdout: currentBranch } = await execPromise('git rev-parse --abbrev-ref HEAD', { cwd: localRepoPath });
+                const { stdout: tracking } = await execPromise('git rev-parse --abbrev-ref @{u}', { cwd: localRepoPath });
+
+                const result = await service.compareWithRemote(
+                    localRepoPath,
+                    currentBranch.trim(),
+                    tracking.trim()
+                );
+
+                expect(result.ahead).toBe(0);
+                expect(result.behind).toBe(0);
+            });
+
+            it('should detect commits ahead of remote', async () => {
+                // Create a local commit
+                fs.writeFileSync(path.join(localRepoPath, 'local-file.txt'), 'local content');
+                await execPromise('git add local-file.txt', { cwd: localRepoPath });
+                await execPromise('git commit -m "Local commit"', { cwd: localRepoPath });
+
+                const { stdout: currentBranch } = await execPromise('git rev-parse --abbrev-ref HEAD', { cwd: localRepoPath });
+                const { stdout: tracking } = await execPromise('git rev-parse --abbrev-ref @{u}', { cwd: localRepoPath });
+
+                const result = await service.compareWithRemote(
+                    localRepoPath,
+                    currentBranch.trim(),
+                    tracking.trim()
+                );
+
+                expect(result.ahead).toBeGreaterThan(0);
+                expect(result.behind).toBe(0);
+
+                // Clean up - reset to remote state
+                await execPromise('git reset --hard origin/main || git reset --hard origin/master', { cwd: localRepoPath });
+            });
+
+            it('should detect commits behind remote', async () => {
+                // Create a commit in remote
+                fs.writeFileSync(path.join(remoteRepoPath, 'remote-file.txt'), 'remote content');
+                await execPromise('git add remote-file.txt', { cwd: remoteRepoPath });
+                await execPromise('git commit -m "Remote commit"', { cwd: remoteRepoPath });
+
+                // Fetch but don't merge
+                await execPromise('git fetch origin', { cwd: localRepoPath });
+
+                const { stdout: currentBranch } = await execPromise('git rev-parse --abbrev-ref HEAD', { cwd: localRepoPath });
+                const { stdout: tracking } = await execPromise('git rev-parse --abbrev-ref @{u}', { cwd: localRepoPath });
+
+                const result = await service.compareWithRemote(
+                    localRepoPath,
+                    currentBranch.trim(),
+                    tracking.trim()
+                );
+
+                expect(result.ahead).toBe(0);
+                expect(result.behind).toBeGreaterThan(0);
+
+                // Clean up - pull changes
+                await execPromise('git pull origin main || git pull origin master', { cwd: localRepoPath });
+            });
+
+            it('should throw error for invalid branch names', async () => {
+                await expect(
+                    service.compareWithRemote(localRepoPath, 'invalid-branch', 'origin/main')
+                ).rejects.toThrow(GitRepositoryError);
+            });
+        });
+
+        describe('checkRemoteChanges', () => {
+            it('should return no changes when in sync', async () => {
+                await execPromise('git fetch origin', { cwd: localRepoPath });
+                await execPromise('git pull origin main || git pull origin master', { cwd: localRepoPath });
+
+                const status = await service.checkRemoteChanges(localRepoPath);
+
+                expect(status.hasChanges).toBe(false);
+                expect(status.commitsBehind).toBe(0);
+                expect(status.currentBranch).toMatch(/main|master/);
+                expect(status.trackingBranch).toMatch(/origin\/(main|master)/);
+            });
+
+            it('should detect remote changes', async () => {
+                // Create a commit in remote
+                fs.writeFileSync(path.join(remoteRepoPath, 'new-remote-file.txt'), 'new remote content');
+                await execPromise('git add new-remote-file.txt', { cwd: remoteRepoPath });
+                await execPromise('git commit -m "New remote commit"', { cwd: remoteRepoPath });
+
+                // Fetch but don't merge
+                await execPromise('git fetch origin', { cwd: localRepoPath });
+
+                const status = await service.checkRemoteChanges(localRepoPath);
+
+                expect(status.hasChanges).toBe(true);
+                expect(status.commitsBehind).toBeGreaterThan(0);
+                expect(status.commitsAhead).toBe(0);
+                expect(status.currentBranch).toMatch(/main|master/);
+                expect(status.trackingBranch).toMatch(/origin\/(main|master)/);
+
+                // Clean up
+                await execPromise('git pull origin main || git pull origin master', { cwd: localRepoPath });
+            });
+
+            it('should return no changes for detached HEAD', async () => {
+                const { stdout: commitHash } = await execPromise('git rev-parse HEAD', { cwd: localRepoPath });
+                await execPromise(`git checkout ${commitHash.trim()}`, { cwd: localRepoPath });
+
+                const status = await service.checkRemoteChanges(localRepoPath);
+
+                expect(status.hasChanges).toBe(false);
+                expect(status.commitsBehind).toBe(0);
+                expect(status.commitsAhead).toBe(0);
+                expect(status.currentBranch).toBeNull();
+                expect(status.trackingBranch).toBeNull();
+
+                // Return to main branch
+                await execPromise('git checkout main || git checkout master', { cwd: localRepoPath });
+            });
+
+            it('should return no changes for branch without tracking', async () => {
+                await execPromise('git checkout -b no-tracking-branch', { cwd: localRepoPath });
+
+                const status = await service.checkRemoteChanges(localRepoPath);
+
+                expect(status.hasChanges).toBe(false);
+                expect(status.trackingBranch).toBeNull();
+                expect(status.currentBranch).toBe('no-tracking-branch');
+
+                // Clean up
+                await execPromise('git checkout main || git checkout master', { cwd: localRepoPath });
+                await execPromise('git branch -D no-tracking-branch', { cwd: localRepoPath });
+            });
+        });
+
+        describe('fetchRepository', () => {
+            it('should successfully fetch from remote', async () => {
+                const result = await service.fetchRepository(localRepoPath);
+                expect(result).toBe(true);
+            });
+
+            it('should respect custom timeout', async () => {
+                const result = await service.fetchRepository(localRepoPath, 60000);
+                expect(result).toBe(true);
+            });
+
+            it('should throw FetchError for non-git directory', async () => {
+                const { FetchError } = await import('../../src/utils/errors');
+                await expect(service.fetchRepository(nonGitPath)).rejects.toThrow(FetchError);
+            });
+
+            it('should throw FetchError for non-existent path', async () => {
+                const { FetchError } = await import('../../src/utils/errors');
+                const invalidPath = path.join(os.tmpdir(), 'non-existent-repo-12345');
+                await expect(service.fetchRepository(invalidPath)).rejects.toThrow(FetchError);
+            });
+
+            it('should categorize repository errors correctly', async () => {
+                const { FetchError, FetchErrorCode } = await import('../../src/utils/errors');
+
+                try {
+                    await service.fetchRepository(nonGitPath);
+                    fail('Should have thrown FetchError');
+                } catch (error) {
+                    expect(error).toBeInstanceOf(FetchError);
+                    if (error instanceof FetchError) {
+                        expect(error.code).toBe(FetchErrorCode.REPO_ERROR);
+                        expect(error.repoPath).toBe(nonGitPath);
+                    }
+                }
+            });
+        });
+    });
 });

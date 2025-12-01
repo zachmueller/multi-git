@@ -186,7 +186,7 @@ export class GitCommandService {
 
         // Ensure command starts with a valid git subcommand
         const validSubcommands = [
-            'rev-parse', 'status', 'log', 'diff', 'branch',
+            'rev-parse', 'rev-list', 'status', 'log', 'diff', 'branch',
             'remote', 'fetch', 'pull', 'push', 'commit',
             'add', 'checkout', 'merge', 'rebase', 'tag',
             'show', 'config', 'ls-files', 'ls-tree'
