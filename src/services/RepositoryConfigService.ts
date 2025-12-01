@@ -49,7 +49,7 @@ export class RepositoryConfigService {
             repo => repo.path === path
         );
         if (existingRepo) {
-            throw new DuplicateError('Repository already exists', path);
+            throw new DuplicateError('Repository already configured', path);
         }
 
         // Generate repository name from directory if not provided
