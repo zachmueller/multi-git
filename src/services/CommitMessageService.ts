@@ -168,7 +168,7 @@ export class CommitMessageService {
      * @returns Commit message summary
      */
     private generateSummary(analysis: FileChangeAnalysis): string {
-        const { added, modified, deleted, renamed, totalCount } = analysis;
+        const { added, deleted, renamed, totalCount } = analysis;
 
         // No changes (shouldn't happen, but handle gracefully)
         if (totalCount === 0) {
@@ -250,8 +250,8 @@ export class CommitMessageService {
         // Single file - be specific about what changed
         if (totalCount === 1) {
             const file = [
-                ...analysis.modified,
                 ...analysis.added,
+                ...analysis.modified,
                 ...analysis.deleted,
                 ...analysis.renamed
             ][0];
@@ -262,8 +262,8 @@ export class CommitMessageService {
         // 2-3 files - list them if summary fits
         if (totalCount >= 2 && totalCount <= 3) {
             const allFiles = [
-                ...analysis.modified,
                 ...analysis.added,
+                ...analysis.modified,
                 ...analysis.deleted,
                 ...analysis.renamed
             ];

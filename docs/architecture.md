@@ -35,6 +35,15 @@ Technical architecture documentation for Multi-Git Obsidian plugin.
 │  │  │  │  Command   │  │   Config   │    │       │  │
 │  │  │  │  Service   │  │  Service   │    │       │  │
 │  │  │  └─────┬──────┘  └──────┬─────┘    │       │  │
+│  │  │  ┌────────────┐  ┌────────────┐    │       │  │
+│  │  │  │  Commit    │  │   Fetch    │    │       │  │
+│  │  │  │  Message   │  │ Scheduler  │    │       │  │
+│  │  │  │  Service   │  │  Service   │    │       │  │
+│  │  │  └────────────┘  └────────────┘    │       │  │
+│  │  │  ┌────────────┐                    │       │  │
+│  │  │  │Notification│                    │       │  │
+│  │  │  │  Service   │                    │       │  │
+│  │  │  └────────────┘                    │       │  │
 │  │  └────────┼─────────────────┼──────────┘       │  │
 │  │           │                 │                   │  │
 │  │           │ uses            │ uses              │  │
@@ -69,7 +78,7 @@ Technical architecture documentation for Multi-Git Obsidian plugin.
 - Settings tab rendering
 - User interaction handling
 - Form validation and feedback
-- Modal dialogs
+- Modal dialogs (add repository, repository picker, commit message)
 
 **Service Layer:**
 - Business logic
@@ -91,13 +100,20 @@ multi-git/
 │   ├── main.ts                 # Plugin entry point
 │   ├── services/               # Business logic services
 │   │   ├── GitCommandService.ts
-│   │   └── RepositoryConfigService.ts
+│   │   ├── RepositoryConfigService.ts
+│   │   ├── CommitMessageService.ts
+│   │   ├── FetchSchedulerService.ts
+│   │   └── NotificationService.ts
 │   ├── settings/               # UI and data models
 │   │   ├── data.ts            # Type definitions
 │   │   └── SettingTab.ts      # Settings UI
+│   ├── ui/                     # UI components
+│   │   ├── RepositoryPickerModal.ts
+│   │   └── CommitMessageModal.ts
 │   └── utils/                  # Utility functions
 │       ├── errors.ts          # Custom error classes
-│       └── validation.ts      # Path validation
+│       ├── validation.ts      # Path validation
+│       └── logger.ts          # Debug logging
 ├── test/                       # Test suites
 │   ├── services/              # Service tests
 │   ├── utils/                 # Utility tests
@@ -233,7 +249,145 @@ Click "Add" → Service validates → Success/Error
 Modal closes → List refreshes
 ```
 
-### 5. Validation Utilities (src/utils/validation.ts)
+### 5. Commit Message Service (src/services/CommitMessageService.ts)
+
+**Responsibilities:**
+- Analyze repository file changes
+- Generate smart commit message suggestions
+- Apply commit message rules based on change patterns
+- Keep messages under 50 characters for best practice
+
+**Key Methods:**
+```typescript
+class CommitMessageService {
+    generateSuggestion(status: RepositoryStatus): CommitMessageSuggestion
+    private analyzeChanges(status: RepositoryStatus): FileChangeAnalysis
+    private generateSummary(analysis: FileChangeAnalysis): string
+}
+```
+
+**Suggestion Rules:**
+- Single file: "Update filename.txt"
+- 2-3 files: "Update file1, file2, file3"
+- 4+ files: "Update N files"
+- Only additions: "Add filename" or "Add N files"
+- Only deletions: "Remove filename" or "Remove N files"
+- Initial commit (3+ new files): "Initial commit"
+
+### 6. Fetch Scheduler Service (src/services/FetchSchedulerService.ts)
+
+**Responsibilities:**
+- Schedule automated fetch operations
+- Manage fetch intervals
+- Coordinate fetch batching
+- Handle fetch-on-startup
+
+**Key Methods:**
+```typescript
+class FetchSchedulerService {
+    start(): void
+    stop(): void
+    async fetchAll(): Promise<void>
+    async fetchRepository(repoId: string): Promise<void>
+}
+```
+
+**Scheduling Strategy:**
+- Global interval (default 5 minutes)
+- Per-repository override intervals
+- Fetch-on-startup option
+- Batch processing for multiple repos
+
+### 7. Notification Service (src/services/NotificationService.ts)
+
+**Responsibilities:**
+- Display user notifications
+- Manage notification cooldowns
+- Prevent notification spam
+- Track notification history
+
+**Key Methods:**
+```typescript
+class NotificationService {
+    notifyRemoteChanges(repoName: string, commitCount: number): void
+    notifyFetchError(repoName: string, error: string): void
+    private shouldNotify(key: string): boolean
+}
+```
+
+**Cooldown Logic:**
+- 60-second cooldown per unique notification
+- Prevents duplicate notifications
+- Separate cooldowns for different repositories
+
+### 8. Repository Picker Modal (src/ui/RepositoryPickerModal.ts)
+
+**Responsibilities:**
+- Display repositories with uncommitted changes
+- Handle keyboard navigation
+- Allow user selection
+- Invoke callback on selection
+
+**Key Features:**
+- Arrow key navigation
+- Enter to select
+- Escape to cancel
+- Visual selection highlighting
+- Change count display
+
+**UI Structure:**
+```
+┌─────────────────────────────────┐
+│      Select Repository          │
+├─────────────────────────────────┤
+│ ▶ my-project                    │
+│   Branch: main                  │
+│   3 changes                     │
+├─────────────────────────────────┤
+│   other-repo                    │
+│   Branch: develop               │
+│   1 change                      │
+└─────────────────────────────────┘
+```
+
+### 9. Commit Message Modal (src/ui/CommitMessageModal.ts)
+
+**Responsibilities:**
+- Display repository and file information
+- Show commit message suggestions
+- Allow message editing
+- Execute commit and push operation
+- Handle errors with retry capability
+
+**Key Features:**
+- Pre-filled suggested message
+- File list display (max 10, then "and N more...")
+- Multiline message support (Shift+Enter)
+- Loading state during operation
+- Error display in modal
+
+**UI Structure:**
+```
+┌─────────────────────────────────┐
+│    Commit and Push              │
+│    my-project on main           │
+├─────────────────────────────────┤
+│ Changed files:                  │
+│ • README.md                     │
+│ • src/main.ts                   │
+│ • styles.css                    │
+├─────────────────────────────────┤
+│ Commit message:                 │
+│ ┌─────────────────────────────┐ │
+│ │ Update 3 files              │ │
+│ │                             │ │
+│ └─────────────────────────────┘ │
+├─────────────────────────────────┤
+│           [Cancel] [Commit & Push]│
+└─────────────────────────────────┘
+```
+
+### 10. Validation Utilities (src/utils/validation.ts)
 
 **Functions:**
 ```typescript
@@ -251,13 +405,19 @@ validateRepositoryPath(path: string): { isValid: boolean; error?: string }
 - Absolute path enforcement
 - Safe path normalization
 
-### 6. Error Classes (src/utils/errors.ts)
+### 11. Error Classes (src/utils/errors.ts)
 
 **Hierarchy:**
 ```
 RepositoryConfigError (base)
     ├── ValidationError
     └── DuplicateError
+
+GitRepositoryError (base)
+    ├── FetchError
+    ├── GitStatusError
+    ├── GitCommitError
+    └── GitPushError
 ```
 
 **Error Codes:**
@@ -266,6 +426,23 @@ RepositoryConfigError (base)
 - `NOT_GIT_REPOSITORY` - Not a git repository
 - `DUPLICATE_PATH` - Path already configured
 - `SECURITY_ERROR` - Security violation detected
+- `AUTH_ERROR` - Authentication failure
+- `NETWORK_ERROR` - Network connectivity issue
+- `TIMEOUT` - Operation timeout
+
+### 12. Logger Utility (src/utils/logger.ts)
+
+**Responsibilities:**
+- Centralized logging
+- Debug mode control
+- Timestamp formatting
+- Component identification
+
+**Log Levels:**
+- Debug: Detailed operational information
+- Error: Error conditions
+- Timing: Performance metrics
+- Git Command: Git command execution traces
 
 ## Data Flow
 
@@ -297,6 +474,94 @@ RepositoryConfigService.addRepository()
     UI refreshes
         ↓
     User sees new repository in list
+```
+
+### Commit and Push Workflow
+
+```
+User triggers hotkey
+    ↓
+Main plugin command callback
+    ↓
+Get all enabled repositories
+    ↓
+For each repository:
+    GitCommandService.getRepositoryStatus()
+    ↓
+Filter repositories with uncommitted changes
+    ↓
+If no changes:
+    Show Notice "No uncommitted changes"
+    Exit
+    ↓
+If single repository with changes:
+    Skip picker, go directly to commit
+    ↓
+If multiple repositories with changes:
+    RepositoryPickerModal opens
+    User selects repository (keyboard/mouse)
+    ↓
+CommitMessageService.generateSuggestion()
+    Analyzes staged/unstaged/untracked files
+    Applies suggestion rules
+    Returns suggested message
+    ↓
+CommitMessageModal opens
+    Display repo name, branch, files
+    Pre-fill textarea with suggestion
+    User can edit message
+    User confirms or cancels
+    ↓
+If confirmed:
+    GitCommandService.commitAndPush()
+        ├→ stageAllChanges() (git add -A)
+        ├→ createCommit() (git commit -m)
+        └→ pushToRemote() (git push)
+    ↓
+If success:
+    Show success Notice
+    Close modal
+    ↓
+If error:
+    Display error in modal
+    Keep modal open for retry
+    User can cancel or fix issue
+```
+
+### Automated Fetch Workflow
+
+```
+Plugin loads
+    ↓
+FetchSchedulerService.start()
+    ↓
+Set up interval timer (default 5 min)
+    ↓
+On interval trigger:
+    Get all enabled repositories
+    ↓
+For each repository:
+    GitCommandService.fetchRepository()
+        Execute: git fetch --all --tags --prune
+        ↓
+    If fetch succeeds:
+        GitCommandService.checkRemoteChanges()
+            Compare local vs remote branches
+            Count commits behind
+        ↓
+        If commits behind > 0:
+            Update repository status
+            NotificationService.notifyRemoteChanges()
+                Check cooldown
+                Show Obsidian Notice
+        ↓
+    If fetch fails:
+        Categorize error (auth, network, timeout)
+        NotificationService.notifyFetchError()
+        Update repository error status
+    ↓
+Update last fetch timestamps
+Persist status to settings
 ```
 
 ### Toggling a Repository
@@ -339,6 +604,29 @@ Obsidian.saveData() → writes data.json
     ↓
 Settings persisted
 ```
+
+## Command Registration
+
+The plugin registers commands that appear in Obsidian's command palette and can be bound to hotkeys:
+
+**Registered Commands:**
+```typescript
+// In main.ts onload()
+this.addCommand({
+    id: 'multi-git:commit-push',
+    name: 'Commit and push changes',
+    callback: async () => {
+        // Commit and push workflow
+    }
+});
+```
+
+**Command Flow:**
+1. User triggers via hotkey or command palette
+2. Command callback executes
+3. Workflow handles repository selection
+4. User confirms action in modal
+5. Operation executes with feedback
 
 ## Design Patterns
 
@@ -451,20 +739,88 @@ private async executeCommand(
 1. **Add method to GitCommandService:**
 ```typescript
 async getBranchName(path: string): Promise<string> {
-    const output = await this.executeCommand(
-        'git branch --show-current',
-        path
+    const output = await this.executeGitCommand(
+        'branch --show-current',
+        { cwd: path }
     );
-    return output.trim();
+    return output.stdout.trim();
 }
 ```
 
-2. **Add tests:**
+2. **Update validation if needed:**
+```typescript
+private validateCommand(command: string): void {
+    // Add 'branch' to validSubcommands if not present
+}
+```
+
+3. **Add tests:**
 ```typescript
 it('should get current branch name', async () => {
     const branch = await service.getBranchName('/path/to/repo');
     expect(branch).toBe('main');
 });
+```
+
+### Adding New Commands
+
+1. **Register command in main.ts:**
+```typescript
+this.addCommand({
+    id: 'multi-git:your-command',
+    name: 'Your Command Name',
+    callback: async () => {
+        // Command logic
+    }
+});
+```
+
+2. **Implement workflow:**
+   - Get necessary data from services
+   - Show modal if user input needed
+   - Execute operations
+   - Provide feedback via Notice
+
+3. **Add hotkey support:**
+   - User configures in Obsidian settings
+   - No code needed beyond registration
+
+### Adding New Modal Dialogs
+
+1. **Create modal class:**
+```typescript
+export class YourModal extends Modal {
+    constructor(
+        app: App,
+        data: YourData,
+        callback: (result: YourResult) => void
+    ) {
+        super(app);
+        // Store parameters
+    }
+    
+    onOpen(): void {
+        // Render UI
+    }
+    
+    onClose(): void {
+        // Cleanup
+    }
+}
+```
+
+2. **Add styles to styles.css:**
+```css
+.your-modal {
+    /* Modal styles */
+}
+```
+
+3. **Use in command:**
+```typescript
+new YourModal(this.app, data, (result) => {
+    // Handle result
+}).open();
 ```
 
 ### Adding New Repository Operations
@@ -649,6 +1005,21 @@ Track these metrics:
 4. **Plugin API:**
    - Expose API for other plugins
    - Extension ecosystem
+
+5. **Pull Operations:**
+   - Interactive pull with conflict resolution
+   - Merge strategy selection
+   - Stash management
+
+6. **Status Panel:**
+   - Dedicated sidebar for repository status
+   - Real-time updates
+   - Quick actions
+
+7. **Branch Management:**
+   - Switch branches via UI
+   - Create/delete branches
+   - Branch comparison
 
 ### Migration Path
 

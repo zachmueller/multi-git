@@ -2,7 +2,7 @@
 
 **Created:** 2025-12-14
 **Specification:** [specs/1-multi-git-core/spec.md](../spec.md#fr-3-hotkey-driven-push-operations)
-**Status:** Planning
+**Status:** Complete
 
 ## Technical Context
 

@@ -30,8 +30,8 @@ Enable efficient management of multiple git repositories within an Obsidian vaul
 ### Success Criteria
 - [x] Users can configure and monitor multiple git repositories from within Obsidian without leaving the editor
 - [x] Remote changes are automatically fetched at configurable intervals without manual intervention
-- [ ] Users can commit and push changes to any configured repository using hotkeys within 2 seconds (FR-3 pending)
-- [x] 95% of git operations complete without requiring terminal access or command-line interaction (FR-1, FR-2, FR-7 implemented)
+- [x] Users can commit and push changes to any configured repository using hotkeys within 2 seconds (FR-3 implemented)
+- [x] 95% of git operations complete without requiring terminal access or command-line interaction (FR-1, FR-2, FR-3, FR-7 implemented)
 
 ## Requirements
 
@@ -65,16 +65,18 @@ Enable efficient management of multiple git repositories within an Obsidian vaul
   - [x] No notifications are displayed for successful fetches that find no remote changes
   - [x] Notification clearly identifies which repository has remote changes
 
-#### FR-3: Hotkey-Driven Push Operations
+#### FR-3: Hotkey-Driven Push Operations ✅ IMPLEMENTED
 - **Description:** Users must be able to commit and push changes using keyboard shortcuts without leaving Obsidian
 - **Priority:** High
+- **Status:** ✅ Complete - Implemented 2025-12-14 (Manual testing pending)
+- **Manual Testing Checklist:** [specs/1-multi-git-core/fr3/manual-testing-checklist.md](specs/1-multi-git-core/fr3/manual-testing-checklist.md)
 - **Acceptance Criteria:**
-  - [ ] Users can assign custom hotkeys for push operations
-  - [ ] Hotkey presents repository picker dialog requiring explicit selection
-  - [ ] After repository selection, commit dialog appears with pre-filled suggested commit message
-  - [ ] Users can edit commit message before confirming push
-  - [ ] Push operation provides immediate feedback on success or failure
-  - [ ] Repository picker only shows enabled repositories with uncommitted changes
+  - [x] Users can assign custom hotkeys for push operations
+  - [x] Hotkey presents repository picker dialog requiring explicit selection
+  - [x] After repository selection, commit dialog appears with pre-filled suggested commit message
+  - [x] Users can edit commit message before confirming push
+  - [x] Push operation provides immediate feedback on success or failure
+  - [x] Repository picker only shows enabled repositories with uncommitted changes
 
 #### FR-4: Repository Status Display
 - **Description:** Users must be able to view the current state of all managed repositories in a dedicated side panel
@@ -305,13 +307,13 @@ None - proceeding with reasonable defaults based on standard git workflows and O
 ### Completed Features
 - ✅ **FR-1: Repository Configuration** - Fully validated (95+ tests, 100% pass rate)
 - ✅ **FR-2: Automated Remote Fetch** - Implementation complete (249 tests, manual testing pending)
+- ✅ **FR-3: Hotkey-Driven Push Operations** - Implementation complete (148/148 tasks, manual testing pending)
 - ✅ **FR-6: Debug Logging** - Implemented as part of FR-2
 - ⏳ **FR-7: Custom PATH Configuration** - Implementation complete, testing in progress (54 unit tests passing)
 
 ### Pending Features
-- ⏳ **FR-3: Hotkey-Driven Push Operations** - Not yet started
 - ⏳ **FR-4: Repository Status Display** - Not yet started
-- ⏳ **FR-5: Error Handling and Recovery** - Partially implemented (fetch error handling complete)
+- ⏳ **FR-5: Error Handling and Recovery** - Partially implemented (fetch and commit/push error handling complete)
 
 ### Test Summary
 - **Total Tests:** 303 automated tests passing
@@ -324,7 +326,7 @@ None - proceeding with reasonable defaults based on standard git workflows and O
 ### Next Actions
 1. Complete FR-7 integration and manual testing
 2. Complete FR-2 manual testing in Obsidian
-3. Begin FR-3 implementation (push operations)
+3. Complete FR-3 manual testing in Obsidian
 4. Implement FR-4 (status display panel)
 5. Complete FR-5 (comprehensive error handling UI)
 

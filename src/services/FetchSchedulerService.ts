@@ -94,7 +94,7 @@ export class FetchSchedulerService {
         Logger.debug('FetchScheduler', `Stopping all automated fetch operations (${intervalCount} intervals, ${activeCount} active operations)`);
 
         // Clear all intervals to prevent memory leaks
-        for (const [_repoId, intervalHandle] of this.intervals.entries()) {
+        for (const intervalHandle of this.intervals.values()) {
             clearInterval(intervalHandle);
         }
 

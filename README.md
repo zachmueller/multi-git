@@ -14,6 +14,19 @@ A powerful Obsidian plugin for managing multiple git repositories from within yo
 - 🔔 **Smart Notifications** - Get notified only when remote changes require your attention
 - ⚡ **Manual Fetch** - Trigger immediate fetch for any repository with one click
 - 📊 **Fetch Status** - See last fetch time and remote change indicators for each repository
+- 🚀 **Hotkey-Driven Push** - Quickly commit and push changes with a single hotkey
+- 💬 **Smart Commit Messages** - Auto-generated commit message suggestions based on changed files
+- 📝 **Repository Picker** - Select from multiple repositories with uncommitted changes
+
+## Quick Start
+
+1. **Add a repository** in plugin settings
+2. **Configure hotkey** for "Commit and push changes" command
+3. **Make changes** to files in your repository
+4. **Press hotkey** to commit and push
+5. **Select repository** (if multiple have changes)
+6. **Review and edit** commit message
+7. **Confirm** to commit and push
 
 ## Requirements
 
@@ -326,6 +339,91 @@ For detailed configuration options, see [Configuration Guide](docs/configuration
 - Status shows "success" (operation worked correctly)
 - No notification (nothing requires your attention)
 
+### Commit and Push Workflow
+
+The plugin provides a streamlined workflow for committing and pushing changes:
+
+1. **Trigger the command:**
+   - Use configured hotkey (e.g., Cmd/Ctrl+Shift+P)
+   - Or search "Commit and push changes" in command palette
+
+2. **Repository Selection (if needed):**
+   - If only one repository has changes, it's selected automatically
+   - If multiple repositories have changes, a picker modal appears
+   - Use arrow keys to navigate, Enter to select, Escape to cancel
+
+3. **Commit Message:**
+   - Modal shows repository name, branch, and changed files
+   - Text area pre-filled with smart suggestion based on changes:
+     - Single file: "Update filename.txt"
+     - Multiple files: "Update file1.txt, file2.txt" or "Update 5 files"
+     - New files only: "Add filename.txt" or "Add 3 files"
+     - Deletions only: "Remove filename.txt" or "Remove 2 files"
+   - Edit message as needed (supports multiline with Shift+Enter)
+   - Press Enter or click "Commit & Push" to proceed
+
+4. **Operation Execution:**
+   - All changes are staged automatically (`git add -A`)
+   - Commit is created with your message
+   - Changes are pushed to remote
+   - Success notification appears
+
+5. **Error Handling:**
+   - Authentication failures: Clear message to configure credentials
+   - Network errors: Changes remain committed locally
+   - Pre-commit/pre-push hook failures: Hook output displayed
+   - All errors allow retry or manual intervention
+
+**Example workflow:**
+```
+[Hotkey pressed]
+  ↓
+[Repository selected from picker]
+  ↓
+[Commit message suggested: "Update 3 files"]
+  ↓
+[Edit message to: "Update documentation and configs"]
+  ↓
+[Confirm]
+  ↓
+[Success: "Successfully committed and pushed to my-project"]
+```
+
+### Hotkey Configuration
+
+1. Open Obsidian Settings
+2. Navigate to **Hotkeys**
+3. Search for "Multi-Git"
+4. Find "Multi-Git: Commit and push changes"
+5. Click the + icon and press your desired key combination
+6. Recommended: Cmd/Ctrl+Shift+P (if not conflicting)
+
+### Commit Message Suggestions
+
+The plugin analyzes your changes and generates appropriate commit messages:
+
+- **Single file changed:**
+  - "Update README.md"
+  - "Add new-feature.ts"
+  - "Remove old-file.txt"
+
+- **2-3 files changed:**
+  - "Update config.json, package.json"
+  - "Add utils.ts, types.ts"
+
+- **4+ files changed:**
+  - "Update 5 files"
+  - "Add 8 files"
+  - "Remove 3 files"
+
+- **Mixed changes:**
+  - "Update 10 files" (additions, modifications, and deletions)
+
+- **Initial commit:**
+  - "Initial commit" (when adding many files to empty repository)
+
+All suggestions keep the summary under 50 characters for good git practice. You can always edit the message before committing.
+
 ### Enabling Debug Logging
 
 **When to use:** For troubleshooting fetch operations, performance issues, or unexpected behavior
@@ -441,14 +539,12 @@ multi-git/
 - ✅ Smart notifications
 - ✅ Fetch status monitoring
 - ✅ Manual fetch operations
+- ✅ Hotkey-driven commit and push (FR-3)
+- ✅ Repository picker for multiple repos
+- ✅ Smart commit message generation
+- ✅ Comprehensive error handling
 
 ### Future Versions
-
-**v0.2.0 - Push Operations (FR-3)**
-- Hotkey-driven commit and push
-- Repository picker dialog
-- Commit message editor
-- Push operation feedback
 
 **v0.3.0 - Status Display (FR-4)**
 - Dedicated status panel
