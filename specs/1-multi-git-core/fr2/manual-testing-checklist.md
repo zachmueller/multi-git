@@ -14,6 +14,8 @@ This checklist validates the notification system for remote changes and fetch er
 - [ ] At least 2 test repositories configured
 - [ ] Test repositories have remote changes available (simulate by committing in remote)
 - [ ] Network connectivity available
+- [ ] **[FR-7]** Custom PATH entries configured if testing with credential helpers (e.g., AWS CodeCommit)
+- [ ] **[FR-7]** Verify `~/.cargo/bin` or other credential helper paths are in Custom PATH settings
 
 ## Test Scenarios
 
@@ -360,3 +362,72 @@ List minor issues or improvements:
 **Status:** ☐ Approved  ☐ Issues Found  ☐ Blocked
 
 **Notes:**
+
+---
+
+## FR-7 Custom PATH Configuration - Next Steps
+
+**Implementation Status:** Core functionality complete (Phases 1-4)
+**Remaining Work:**
+
+### Immediate Testing Priorities
+1. **Verify AWS CodeCommit Repository Works**
+   - Test fetch with 'zm' repository that previously failed
+   - Confirm `git-remote-codecommit` is found via custom PATH
+   - Enable debug logging (`debugLogging: true` in data.json) to see enhanced PATH in console
+   - Verify no "git: 'remote-codecommit' is not a git command" error
+
+2. **Test Settings UI**
+   - Open plugin settings and locate "Custom PATH entries" setting
+   - Verify default paths are displayed: `~/.cargo/bin`, `~/.local/bin`, `/opt/homebrew/bin`, `/usr/local/bin`
+   - Modify PATH entries and verify they save correctly
+   - Test that changes take effect immediately (no reload required)
+
+3. **Verify No Regressions**
+   - Test existing repositories (non-CodeCommit) still work
+   - Verify fetch operations complete successfully
+   - Check that standard git operations are not impacted
+
+### After Testing - Remaining Implementation Tasks
+
+#### Phase 5: Add Tests (Not Yet Started)
+- [ ] Add unit tests for `buildEnhancedPath()` method
+  - Test tilde expansion
+  - Test path validation (absolute paths, no shell metacharacters)
+  - Test duplicate removal
+  - Test platform-specific path separators
+- [ ] Add integration tests for GitCommandService with custom PATH
+- [ ] Update existing tests that instantiate GitCommandService (now requires settings parameter)
+
+#### Phase 6: Documentation (Not Yet Started)
+- [ ] Update `docs/configuration.md` with Custom PATH Configuration section
+- [ ] Add troubleshooting guide for credential helper issues
+- [ ] Document common scenarios (AWS CodeCommit, GitHub CLI, etc.)
+- [ ] Update `README.md` to mention PATH configuration capability
+
+#### Phase 7: Finalization (Not Yet Started)
+- [ ] Review all code changes for quality
+- [ ] Run full test suite
+- [ ] Perform final manual testing
+- [ ] Update `CHANGELOG.md` with new feature
+- [ ] Mark FR-7 spec as "Implemented"
+- [ ] Create final commit with all remaining changes
+
+### Key Files Modified in FR-7 Implementation
+- `src/settings/data.ts` - Added `customPathEntries` field to settings model
+- `src/services/GitCommandService.ts` - Added PATH enhancement logic
+- `src/services/RepositoryConfigService.ts` - Updated to accept GitCommandService instance
+- `src/main.ts` - Updated dependency injection
+- `src/settings/SettingTab.ts` - Added Custom PATH entries UI
+- `specs/1-multi-git-core/fr7/tasks.md` - Implementation task tracking
+
+### Testing Notes
+If the AWS CodeCommit repository ('zm') now works correctly:
+- ✅ FR-7 implementation is successful
+- Proceed with remaining phases (tests, documentation, finalization)
+
+If issues remain:
+- Check debug logs to verify PATH is being enhanced correctly
+- Verify `git-remote-codecommit` is actually installed in one of the configured paths
+- Check that credential helper is properly configured in git config
+- Review GitCommandService implementation for any issues
