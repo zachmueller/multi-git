@@ -10,12 +10,12 @@ This checklist validates the notification system for remote changes and fetch er
 
 ## Prerequisites
 
-- [ ] Multi-Git plugin built and loaded in Obsidian (`npm run dev`)
-- [ ] At least 2 test repositories configured
-- [ ] Test repositories have remote changes available (simulate by committing in remote)
-- [ ] Network connectivity available
-- [ ] **[FR-7]** Custom PATH entries configured if testing with credential helpers (e.g., AWS CodeCommit)
-- [ ] **[FR-7]** Verify `~/.cargo/bin` or other credential helper paths are in Custom PATH settings
+- [x] Multi-Git plugin built and loaded in Obsidian (`npm run dev`)
+- [x] At least 2 test repositories configured
+- [x] Test repositories have remote changes available (simulate by committing in remote)
+- [x] Network connectivity available
+- [x] **[FR-7]** Custom PATH entries configured if testing with credential helpers (e.g., AWS CodeCommit)
+- [x] **[FR-7]** Verify `~/.cargo/bin` or other credential helper paths are in Custom PATH settings
 
 ## Test Scenarios
 
@@ -28,11 +28,11 @@ This checklist validates the notification system for remote changes and fetch er
 3. Observe notification appearance
 
 **Expected Results:**
-- [ ] Notification appears with format: "📥 Repository 'name' has N new commit(s) available"
-- [ ] Notification is visible in top-right of Obsidian window
-- [ ] Notification shows correct repository name
-- [ ] Notification shows correct commit count
-- [ ] Notification is dismissible by clicking X or waiting
+- [x] Notification appears with format: "📥 Repository 'name' has N new commit(s) available"
+- [x] Notification is visible in top-right of Obsidian window
+- [x] Notification shows correct repository name
+- [x] Notification shows correct commit count
+- [x] Notification is dismissible by clicking X or waiting
 
 **Notes:**
 
@@ -44,7 +44,7 @@ This checklist validates the notification system for remote changes and fetch er
 3. Observe notification text
 
 **Expected Results:**
-- [ ] Notification uses "1 new commit" (singular, not "commits")
+- [x] Notification uses "1 new commit" (singular, not "commits")
 
 **Steps:**
 1. Create scenario with 3+ new commits
@@ -52,7 +52,7 @@ This checklist validates the notification system for remote changes and fetch er
 3. Observe notification text
 
 **Expected Results:**
-- [ ] Notification uses "N new commits" (plural)
+- [x] Notification uses "N new commits" (plural)
 
 **Notes:**
 
@@ -64,10 +64,10 @@ This checklist validates the notification system for remote changes and fetch er
 3. Observe notifications
 
 **Expected Results:**
-- [ ] Separate notification appears for each repository with changes
-- [ ] Each notification clearly identifies which repository
-- [ ] Notifications are stacked/queued appropriately
-- [ ] All notifications are dismissible individually
+- [x] Separate notification appears for each repository with changes
+- [x] Each notification clearly identifies which repository
+- [x] Notifications are stacked/queued appropriately
+- [x] All notifications are dismissible individually
 
 **Notes:**
 
@@ -80,10 +80,10 @@ This checklist validates the notification system for remote changes and fetch er
 4. Observe behavior
 
 **Expected Results:**
-- [ ] First fetch shows notification
-- [ ] Second fetch does NOT show duplicate notification (within 60 second cooldown)
-- [ ] Wait 61 seconds and trigger fetch again
-- [ ] Third fetch shows notification again (cooldown expired)
+- [x] First fetch shows notification
+- [x] Second fetch does NOT show duplicate notification (within 60 second cooldown)
+- [x] Wait 61 seconds and trigger fetch again
+- [x] Third fetch shows notification again (cooldown expired)
 
 **Notes:**
 
@@ -97,14 +97,16 @@ This checklist validates the notification system for remote changes and fetch er
 3. Observe notification
 
 **Expected Results:**
-- [ ] Error notification appears with format: "⚠️ Failed to fetch repository 'name': error"
+- [x] Error notification appears with format: "⚠️ Failed to fetch repository 'name': error"
 - [ ] Error message is clear and understandable
-- [ ] Notification has warning icon (⚠️)
-- [ ] Notification is dismissible
-- [ ] Notification duration is longer than success notifications
+- [x] Notification has warning icon (⚠️)
+- [x] Notification is dismissible
+- [x] Notification duration is longer than success notifications
 
 **Notes:**
 
+- The error message is quite verbose (fills up beyond the height of my entire screen). This seems to be because the failure is showing the full error trace
+- For now, I'm fine with this behavior. We can later revisit if it becomes annoying. No action needed.
 
 #### Test 2.2: Multiple Error Notifications
 **Steps:**
@@ -113,9 +115,9 @@ This checklist validates the notification system for remote changes and fetch er
 3. Observe notifications
 
 **Expected Results:**
-- [ ] Separate error notification for each repository
-- [ ] Each notification clearly identifies which repository failed
-- [ ] Error messages are repository-specific
+- [x] Separate error notification for each repository
+- [x] Each notification clearly identifies which repository failed
+- [x] Error messages are repository-specific
 
 **Notes:**
 
@@ -127,10 +129,10 @@ This checklist validates the notification system for remote changes and fetch er
 3. Observe notification behavior
 
 **Expected Results:**
-- [ ] First error shows notification
-- [ ] Second error does NOT show duplicate notification (cooldown prevents spam)
-- [ ] Wait 61 seconds and trigger fetch again
-- [ ] Third error shows notification again (cooldown expired)
+- [x] First error shows notification
+- [x] Second error does NOT show duplicate notification (cooldown prevents spam)
+- [x] Wait 61 seconds and trigger fetch again
+- [x] Third error shows notification again (cooldown expired)
 
 **Notes:**
 
@@ -144,8 +146,8 @@ This checklist validates the notification system for remote changes and fetch er
 3. Observe behavior
 
 **Expected Results:**
-- [ ] Notification appears for remote changes
-- [ ] Notification appears for errors
+- [x] Notification appears for remote changes
+- [x] Notification appears for errors
 
 **Notes:**
 
@@ -158,10 +160,10 @@ This checklist validates the notification system for remote changes and fetch er
 4. Observe behavior
 
 **Expected Results:**
-- [ ] NO notification appears for remote changes
-- [ ] NO notification appears for errors
-- [ ] Fetch operations still execute normally
-- [ ] Status updates still occur (verified in settings UI)
+- [x] NO notification appears for remote changes
+- [x] NO notification appears for errors
+- [x] Fetch operations still execute normally
+- [x] Status updates still occur (verified in settings UI)
 
 **Notes:**
 
@@ -175,9 +177,9 @@ This checklist validates the notification system for remote changes and fetch er
 5. Trigger another fetch with changes
 
 **Expected Results:**
-- [ ] First fetch shows notification (enabled)
-- [ ] Second fetch does NOT show notification (disabled)
-- [ ] Third fetch shows notification again (re-enabled)
+- [x] First fetch shows notification (enabled)
+- [x] Second fetch does NOT show notification (disabled)
+- [x] Third fetch shows notification again (re-enabled)
 
 **Notes:**
 
@@ -190,11 +192,11 @@ This checklist validates the notification system for remote changes and fetch er
 2. Examine visual appearance
 
 **Expected Results:**
-- [ ] Notifications follow Obsidian's visual design language
-- [ ] Text is clear and readable
-- [ ] Icons are appropriate (📥 for changes, ⚠️ for errors)
-- [ ] Notifications don't obstruct important UI elements
-- [ ] Duration is appropriate (8s for changes, 10s for errors)
+- [x] Notifications follow Obsidian's visual design language
+- [x] Text is clear and readable
+- [x] Icons are appropriate (📥 for changes, ⚠️ for errors)
+- [x] Notifications don't obstruct important UI elements
+- [x] Duration is appropriate (8s for changes, 10s for errors)
 
 **Notes:**
 
@@ -207,9 +209,9 @@ This checklist validates the notification system for remote changes and fetch er
 4. Wait for auto-dismiss
 
 **Expected Results:**
-- [ ] Clicking X dismisses notification immediately
-- [ ] Notification auto-dismisses after duration expires
-- [ ] Dismissal is smooth and doesn't cause UI flicker
+- [x] Clicking X dismisses notification immediately
+- [x] Notification auto-dismisses after duration expires
+- [x] Dismissal is smooth and doesn't cause UI flicker
 
 **Notes:**
 
@@ -220,11 +222,11 @@ This checklist validates the notification system for remote changes and fetch er
 2. Evaluate message clarity
 
 **Expected Results:**
-- [ ] Repository name is clearly visible
-- [ ] Commit count is clearly stated
-- [ ] Error messages are understandable
-- [ ] No technical jargon that confuses users
-- [ ] Messages are concise (not too long)
+- [x] Repository name is clearly visible
+- [x] Commit count is clearly stated
+- [x] Error messages are understandable
+- [x] No technical jargon that confuses users
+- [x] Messages are concise (not too long)
 
 **Notes:**
 
@@ -237,9 +239,9 @@ This checklist validates the notification system for remote changes and fetch er
 2. Trigger notification
 
 **Expected Results:**
-- [ ] Notification handles long names gracefully (wraps or truncates)
-- [ ] Message remains readable
-- [ ] UI doesn't break
+- [x] Notification handles long names gracefully (wraps or truncates)
+- [x] Message remains readable
+- [x] UI doesn't break
 
 **Notes:**
 
@@ -250,9 +252,9 @@ This checklist validates the notification system for remote changes and fetch er
 2. Trigger notification
 
 **Expected Results:**
-- [ ] Special characters display correctly
-- [ ] No encoding issues
-- [ ] Message formatting intact
+- [x] Special characters display correctly
+- [x] No encoding issues
+- [x] Message formatting intact
 
 **Notes:**
 
@@ -264,10 +266,10 @@ This checklist validates the notification system for remote changes and fetch er
 3. Observe notification behavior
 
 **Expected Results:**
-- [ ] All notifications appear (may queue)
-- [ ] Notifications don't overlap confusingly
-- [ ] System remains responsive
-- [ ] All notifications are dismissible
+- [x] All notifications appear (may queue)
+- [x] Notifications don't overlap confusingly
+- [x] System remains responsive
+- [x] All notifications are dismissible
 
 **Notes:**
 
@@ -278,10 +280,10 @@ This checklist validates the notification system for remote changes and fetch er
 2. Observe notification flow
 
 **Expected Results:**
-- [ ] Notifications appear in reasonable order
-- [ ] No notification is lost
-- [ ] Cooldown correctly tracks per repository
-- [ ] No notification spam
+- [x] Notifications appear in reasonable order
+- [x] No notification is lost
+- [x] Cooldown correctly tracks per repository
+- [x] No notification spam
 
 **Notes:**
 
@@ -294,11 +296,11 @@ This checklist validates the notification system for remote changes and fetch er
 2. Observe complete flow
 
 **Expected Results:**
-- [ ] Fetch executes successfully
-- [ ] Remote changes detected correctly
-- [ ] Notification appears
-- [ ] Repository status updates in settings
-- [ ] No errors in console
+- [x] Fetch executes successfully
+- [x] Remote changes detected correctly
+- [x] Notification appears
+- [x] Repository status updates in settings
+- [x] No errors in console
 
 **Notes:**
 
@@ -309,10 +311,10 @@ This checklist validates the notification system for remote changes and fetch er
 2. Observe behavior
 
 **Expected Results:**
-- [ ] Fetch executes successfully
-- [ ] No notification appears (correct - no changes)
-- [ ] Repository status shows success
-- [ ] No false positives
+- [x] Fetch executes successfully
+- [x] No notification appears (correct - no changes)
+- [x] Repository status shows success
+- [x] No false positives
 
 **Notes:**
 
@@ -324,11 +326,11 @@ This checklist validates the notification system for remote changes and fetch er
 3. Observe complete flow
 
 **Expected Results:**
-- [ ] Fetch fails as expected
-- [ ] Error notification appears
-- [ ] Error message is clear
-- [ ] Repository status shows error in settings
-- [ ] Error is logged to console
+- [x] Fetch fails as expected
+- [x] Error notification appears
+- [x] Error message is clear
+- [x] Repository status shows error in settings
+- [x] Error is logged to console
 
 **Notes:**
 
@@ -357,9 +359,9 @@ List minor issues or improvements:
 
 ### Sign-Off
 
-**Tester:** _______________
-**Date:** _______________
-**Status:** ☐ Approved  ☐ Issues Found  ☐ Blocked
+**Tester:** zmueller
+**Date:** 2025-12-14
+**Status:** ✅ Approved
 
 **Notes:**
 
