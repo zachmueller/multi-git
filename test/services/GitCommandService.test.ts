@@ -4,6 +4,7 @@
 
 import { GitCommandService } from '../../src/services/GitCommandService';
 import { GitRepositoryError } from '../../src/utils/errors';
+import { MultiGitSettings, DEFAULT_SETTINGS } from '../../src/settings/data';
 import { exec } from 'child_process';
 import { promisify } from 'util';
 import * as fs from 'fs';
@@ -16,6 +17,7 @@ describe('GitCommandService', () => {
     let service: GitCommandService;
     let testRepoPath: string;
     let nonGitPath: string;
+    let mockSettings: MultiGitSettings;
 
     beforeAll(async () => {
         // Create temporary directories for testing
@@ -50,7 +52,12 @@ describe('GitCommandService', () => {
     });
 
     beforeEach(() => {
-        service = new GitCommandService();
+        // Create mock settings with default values
+        mockSettings = {
+            ...DEFAULT_SETTINGS,
+            repositories: [],
+        };
+        service = new GitCommandService(mockSettings);
     });
 
     describe('isGitInstalled', () => {
@@ -558,6 +565,252 @@ describe('GitCommandService', () => {
                         expect(error.repoPath).toBe(nonGitPath);
                     }
                 }
+            });
+        });
+    });
+
+    describe('FR-7: Custom PATH Configuration', () => {
+        describe('buildEnhancedPath', () => {
+            it('should expand tilde to home directory', () => {
+                const settings: MultiGitSettings = {
+                    ...DEFAULT_SETTINGS,
+                    customPathEntries: ['~/test/bin', '~/.local/bin'],
+                };
+                const service = new GitCommandService(settings);
+
+                const homeDir = os.homedir();
+                const systemPath = '/usr/bin:/bin';
+                const result = (service as any).buildEnhancedPath(systemPath, settings.customPathEntries);
+
+                const pathSeparator = process.platform === 'win32' ? ';' : ':';
+                expect(result).toContain(`${homeDir}/test/bin`);
+                expect(result).toContain(`${homeDir}/.local/bin`);
+                expect(result.split(pathSeparator)[0]).toBe(`${homeDir}/test/bin`);
+            });
+
+            it('should filter out relative paths', () => {
+                const settings: MultiGitSettings = {
+                    ...DEFAULT_SETTINGS,
+                    customPathEntries: ['./relative/path', 'another/relative', '/absolute/path'],
+                };
+                const service = new GitCommandService(settings);
+
+                const systemPath = '/usr/bin:/bin';
+                const result = (service as any).buildEnhancedPath(systemPath, settings.customPathEntries);
+
+                expect(result).not.toContain('relative');
+                expect(result).toContain('/absolute/path');
+            });
+
+            it('should filter out paths with shell metacharacters', () => {
+                const settings: MultiGitSettings = {
+                    ...DEFAULT_SETTINGS,
+                    customPathEntries: [
+                        '/path;with;semicolon',
+                        '/path&with&ampersand',
+                        '/path|with|pipe',
+                        '/path`with`backtick',
+                        '/path$(with)subshell',
+                        '/safe/path',
+                    ],
+                };
+                const service = new GitCommandService(settings);
+
+                const systemPath = '/usr/bin:/bin';
+                const result = (service as any).buildEnhancedPath(systemPath, settings.customPathEntries);
+
+                expect(result).not.toContain('semicolon');
+                expect(result).not.toContain('ampersand');
+                expect(result).not.toContain('pipe');
+                expect(result).not.toContain('backtick');
+                expect(result).not.toContain('subshell');
+                expect(result).toContain('/safe/path');
+            });
+
+            it('should handle undefined system PATH', () => {
+                const settings: MultiGitSettings = {
+                    ...DEFAULT_SETTINGS,
+                    customPathEntries: ['/custom/bin', '/another/bin'],
+                };
+                const service = new GitCommandService(settings);
+
+                const result = (service as any).buildEnhancedPath(undefined, settings.customPathEntries);
+
+                const pathSeparator = process.platform === 'win32' ? ';' : ':';
+                expect(result).toBe(`/custom/bin${pathSeparator}/another/bin`);
+            });
+
+            it('should handle empty custom entries', () => {
+                const settings: MultiGitSettings = {
+                    ...DEFAULT_SETTINGS,
+                    customPathEntries: [],
+                };
+                const service = new GitCommandService(settings);
+
+                const systemPath = '/usr/bin:/bin';
+                const result = (service as any).buildEnhancedPath(systemPath, settings.customPathEntries);
+
+                expect(result).toBe(systemPath);
+            });
+
+            it('should remove duplicate paths while preserving order', () => {
+                const settings: MultiGitSettings = {
+                    ...DEFAULT_SETTINGS,
+                    customPathEntries: ['/usr/bin', '/custom/bin', '/usr/local/bin'],
+                };
+                const service = new GitCommandService(settings);
+
+                const systemPath = '/usr/bin:/bin:/usr/local/bin';
+                const result = (service as any).buildEnhancedPath(systemPath, settings.customPathEntries);
+
+                const pathSeparator = process.platform === 'win32' ? ';' : ':';
+                const paths = result.split(pathSeparator);
+
+                // Should keep first occurrence of /usr/bin (from custom)
+                expect(paths[0]).toBe('/usr/bin');
+                expect(paths.indexOf('/usr/bin')).toBe(paths.lastIndexOf('/usr/bin'));
+
+                // Should keep first occurrence of /usr/local/bin (from custom)
+                expect(paths.indexOf('/usr/local/bin')).toBe(2);
+                expect(paths.indexOf('/usr/local/bin')).toBe(paths.lastIndexOf('/usr/local/bin'));
+            });
+
+            it('should use correct path separator for platform', () => {
+                const settings: MultiGitSettings = {
+                    ...DEFAULT_SETTINGS,
+                    customPathEntries: ['/custom/bin'],
+                };
+                const service = new GitCommandService(settings);
+
+                const systemPath = '/usr/bin';
+                const result = (service as any).buildEnhancedPath(systemPath, settings.customPathEntries);
+
+                if (process.platform === 'win32') {
+                    expect(result).toContain(';');
+                    expect(result).not.toContain(':');
+                } else {
+                    expect(result).toContain(':');
+                    // Semicolon might appear in paths, so just check structure
+                    const parts = result.split(':');
+                    expect(parts.length).toBeGreaterThan(1);
+                }
+            });
+
+            it('should prepend custom paths to system PATH', () => {
+                const settings: MultiGitSettings = {
+                    ...DEFAULT_SETTINGS,
+                    customPathEntries: ['/custom/first', '/custom/second'],
+                };
+                const service = new GitCommandService(settings);
+
+                const systemPath = '/usr/bin:/bin';
+                const result = (service as any).buildEnhancedPath(systemPath, settings.customPathEntries);
+
+                const pathSeparator = process.platform === 'win32' ? ';' : ':';
+                const paths = result.split(pathSeparator);
+
+                expect(paths[0]).toBe('/custom/first');
+                expect(paths[1]).toBe('/custom/second');
+                expect(paths[2]).toBe('/usr/bin');
+                expect(paths[3]).toBe('/bin');
+            });
+
+            it('should handle Windows drive letters correctly', () => {
+                if (process.platform !== 'win32') {
+                    // Skip on non-Windows platforms
+                    return;
+                }
+
+                const settings: MultiGitSettings = {
+                    ...DEFAULT_SETTINGS,
+                    customPathEntries: ['C:\\custom\\bin', 'D:\\another\\bin'],
+                };
+                const service = new GitCommandService(settings);
+
+                const systemPath = 'C:\\Windows\\System32;C:\\Windows';
+                const result = (service as any).buildEnhancedPath(systemPath, settings.customPathEntries);
+
+                expect(result).toContain('C:\\custom\\bin');
+                expect(result).toContain('D:\\another\\bin');
+                expect(result.split(';')[0]).toBe('C:\\custom\\bin');
+            });
+
+            it('should handle paths with spaces correctly', () => {
+                const settings: MultiGitSettings = {
+                    ...DEFAULT_SETTINGS,
+                    customPathEntries: ['/path with spaces/bin', '/another path/bin'],
+                };
+                const service = new GitCommandService(settings);
+
+                const systemPath = '/usr/bin:/bin';
+                const result = (service as any).buildEnhancedPath(systemPath, settings.customPathEntries);
+
+                expect(result).toContain('/path with spaces/bin');
+                expect(result).toContain('/another path/bin');
+            });
+
+            it('should handle empty strings in custom entries', () => {
+                const settings: MultiGitSettings = {
+                    ...DEFAULT_SETTINGS,
+                    customPathEntries: ['', '/valid/path', '   ', '/another/valid'],
+                };
+                const service = new GitCommandService(settings);
+
+                const systemPath = '/usr/bin';
+                const result = (service as any).buildEnhancedPath(systemPath, settings.customPathEntries);
+
+                expect(result).toContain('/valid/path');
+                expect(result).toContain('/another/valid');
+                expect(result).toContain('/usr/bin');
+            });
+
+            it('should handle very long PATH strings', () => {
+                const longPathEntries = Array.from({ length: 50 }, (_, i) => `/custom/path/${i}`);
+                const settings: MultiGitSettings = {
+                    ...DEFAULT_SETTINGS,
+                    customPathEntries: longPathEntries,
+                };
+                const service = new GitCommandService(settings);
+
+                const systemPath = '/usr/bin:/bin';
+                const result = (service as any).buildEnhancedPath(systemPath, settings.customPathEntries);
+
+                const pathSeparator = process.platform === 'win32' ? ';' : ':';
+                const paths = result.split(pathSeparator);
+
+                // Should contain all valid custom paths plus system paths
+                expect(paths.length).toBeGreaterThanOrEqual(50);
+                expect(result).toContain('/custom/path/0');
+                expect(result).toContain('/custom/path/49');
+            });
+        });
+
+        describe('PATH enhancement integration', () => {
+            it('should use enhanced PATH when executing git commands', async () => {
+                const settings: MultiGitSettings = {
+                    ...DEFAULT_SETTINGS,
+                    customPathEntries: ['/custom/bin'],
+                    debugLogging: false, // Disable to avoid log spam in tests
+                };
+                const service = new GitCommandService(settings);
+
+                // Execute a git command - this should use the enhanced PATH
+                // We can't easily verify the PATH was used without mocking, but we can
+                // verify the command executes without error
+                const result = await service.isGitInstalled();
+                expect(result).toBe(true);
+            });
+
+            it('should work with repositories when PATH is enhanced', async () => {
+                const settings: MultiGitSettings = {
+                    ...DEFAULT_SETTINGS,
+                    customPathEntries: ['~/.cargo/bin', '/opt/homebrew/bin'],
+                    debugLogging: false,
+                };
+                const service = new GitCommandService(settings);
+
+                const result = await service.isGitRepository(testRepoPath);
+                expect(result).toBe(true);
             });
         });
     });

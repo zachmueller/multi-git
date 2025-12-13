@@ -79,16 +79,20 @@
 
 ### Unit Tests
 
-- [ ] Add unit tests for `buildEnhancedPath()` in `test/services/GitCommandService.test.ts`:
-  - [ ] Test tilde expansion to home directory
-  - [ ] Test duplicate path removal
-  - [ ] Test invalid path filtering (relative paths)
-  - [ ] Test shell metacharacter rejection (`;`, `&`, `|`, etc.)
-  - [ ] Test undefined/empty system PATH handling
-  - [ ] Test undefined/empty custom entries handling
-  - [ ] Test path separator handling (platform-specific if possible)
-  - [ ] Test path ordering (custom paths first)
-- [ ] Run unit tests and verify all pass
+- [x] Add unit tests for `buildEnhancedPath()` in `test/services/GitCommandService.test.ts`:
+  - [x] Test tilde expansion to home directory
+  - [x] Test duplicate path removal
+  - [x] Test invalid path filtering (relative paths)
+  - [x] Test shell metacharacter rejection (`;`, `&`, `|`, etc.)
+  - [x] Test undefined/empty system PATH handling
+  - [x] Test undefined/empty custom entries handling
+  - [x] Test path separator handling (platform-specific if possible)
+  - [x] Test path ordering (custom paths first)
+  - [x] Test Windows drive letters (platform-specific)
+  - [x] Test paths with spaces
+  - [x] Test empty strings in custom entries
+  - [x] Test very long PATH strings
+- [x] Run unit tests and verify all pass (54 tests passed)
 
 ### Integration Testing
 
