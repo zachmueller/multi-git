@@ -137,37 +137,37 @@
 ## Phase 5: Commit Message Modal
 
 ### Create CommitMessageModal Component
-- [ ] Create src/ui/CommitMessageModal.ts
-- [ ] Extend Obsidian Modal class
-- [ ] Define constructor accepting repo, suggestion, and callback
-- [ ] Implement onOpen() method
-- [ ] Display repository name and branch
-- [ ] Display list of changed files (max 10)
-- [ ] Show "and N more..." if >10 files
-- [ ] Render textarea for commit message
-- [ ] Pre-fill textarea with suggested message
-- [ ] Add "Commit & Push" button
-- [ ] Add "Cancel" button
-- [ ] Disable submit button during processing
-- [ ] Show loading state during operation
-- [ ] Implement handleSubmit() method
-- [ ] Validate message is not empty
-- [ ] Call commitAndPush callback
-- [ ] Handle success: show Notice, close modal
-- [ ] Handle error: display error in modal, allow retry
-- [ ] Implement onClose() cleanup
+- [x] Create src/ui/CommitMessageModal.ts
+- [x] Extend Obsidian Modal class
+- [x] Define constructor accepting repo, suggestion, and callback
+- [x] Implement onOpen() method
+- [x] Display repository name and branch
+- [x] Display list of changed files (max 10)
+- [x] Show "and N more..." if >10 files
+- [x] Render textarea for commit message
+- [x] Pre-fill textarea with suggested message
+- [x] Add "Commit & Push" button
+- [x] Add "Cancel" button
+- [x] Disable submit button during processing
+- [x] Show loading state during operation
+- [x] Implement handleSubmit() method
+- [x] Validate message is not empty
+- [x] Call commitAndPush callback
+- [x] Handle success: show Notice, close modal
+- [x] Handle error: display error in modal, allow retry
+- [x] Implement onClose() cleanup
 
 ### Add Modal Styling
-- [ ] Add .multi-git-commit-modal class to styles.css
-- [ ] Style modal header (repo name, branch)
-- [ ] Style file list container
-- [ ] Style individual file items
-- [ ] Style commit message textarea
-- [ ] Style button container
-- [ ] Style submit button (normal, hover, disabled, loading)
-- [ ] Style cancel button
-- [ ] Add loading spinner styles
-- [ ] Style error message display
+- [x] Add .multi-git-commit-modal class to styles.css
+- [x] Style modal header (repo name, branch)
+- [x] Style file list container
+- [x] Style individual file items
+- [x] Style commit message textarea
+- [x] Style button container
+- [x] Style submit button (normal, hover, disabled, loading)
+- [x] Style cancel button
+- [x] Add loading spinner styles
+- [x] Style error message display
 - [ ] Test styling in light mode
 - [ ] Test styling in dark mode
 
@@ -325,8 +325,8 @@
 - [x] Phase 2: GitCommandService Extensions (33/33 tasks - 100% complete)
 - [x] Phase 3: Commit Message Generation (16/16 tasks - 100% complete)
 - [ ] Phase 4: Repository Picker Modal (22/27 tasks - 81% complete)
-- [ ] Phase 5: Commit Message Modal (0/30 tasks)
+- [x] Phase 5: Commit Message Modal (28/30 tasks - 93% complete)
 - [ ] Phase 6: Command Registration & Orchestration (0/21 tasks)
 - [ ] Phase 7: Documentation & Finalization (0/28 tasks)
 
-**Overall Progress:** 83/148 tasks complete (56%)
+**Overall Progress:** 111/148 tasks complete (75%)

@@ -285,3 +285,204 @@ button:disabled {
         gap: 0.3em;
     }
 }
+
+/* FR-3: Commit Message Modal */
+.multi-git-commit-modal {
+    min-width: 450px;
+    max-width: 650px;
+}
+
+.multi-git-commit-header {
+    margin-bottom: 1.5em;
+}
+
+.multi-git-commit-title {
+    margin-top: 0;
+    margin-bottom: 0.5em;
+    font-size: 1.3em;
+    font-weight: 600;
+}
+
+.multi-git-commit-repo-info {
+    display: flex;
+    gap: 0.5em;
+    font-size: 0.95em;
+    color: var(--text-muted);
+}
+
+.multi-git-commit-repo-name {
+    font-weight: 600;
+    color: var(--text-normal);
+}
+
+.multi-git-commit-branch {
+    font-family: var(--font-monospace);
+}
+
+/* Changed files list */
+.multi-git-commit-files {
+    margin-bottom: 1.5em;
+}
+
+.multi-git-commit-files-title {
+    font-size: 0.9em;
+    font-weight: 600;
+    margin-bottom: 0.5em;
+    color: var(--text-muted);
+}
+
+.multi-git-commit-files-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    max-height: 200px;
+    overflow-y: auto;
+    background: var(--background-secondary);
+    border-radius: 4px;
+    padding: 0.75em;
+}
+
+.multi-git-commit-file-item {
+    padding: 0.3em 0;
+    font-family: var(--font-monospace);
+    font-size: 0.85em;
+    color: var(--text-normal);
+}
+
+.multi-git-commit-file-more {
+    padding: 0.3em 0;
+    font-style: italic;
+    color: var(--text-muted);
+    font-size: 0.85em;
+}
+
+/* Commit message input */
+.multi-git-commit-input-container {
+    margin-bottom: 1em;
+}
+
+.multi-git-commit-label {
+    display: block;
+    font-size: 0.9em;
+    font-weight: 600;
+    margin-bottom: 0.5em;
+    color: var(--text-muted);
+}
+
+.multi-git-commit-textarea {
+    width: 100%;
+    min-height: 100px;
+    padding: 0.75em;
+    font-family: var(--font-monospace);
+    font-size: 0.9em;
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 4px;
+    background: var(--background-primary);
+    color: var(--text-normal);
+    resize: vertical;
+}
+
+.multi-git-commit-textarea:focus {
+    outline: 2px solid var(--interactive-accent);
+    outline-offset: 0;
+    border-color: var(--interactive-accent);
+}
+
+.multi-git-commit-textarea:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+/* Error message */
+.multi-git-commit-error {
+    padding: 0.75em;
+    background: var(--background-modifier-error);
+    border-radius: 4px;
+    margin-bottom: 1em;
+    color: var(--text-error);
+    font-size: 0.9em;
+}
+
+/* Buttons */
+.multi-git-commit-buttons {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.75em;
+    margin-top: 1.5em;
+    padding-top: 1em;
+    border-top: 1px solid var(--background-modifier-border);
+}
+
+.multi-git-commit-button {
+    padding: 0.5em 1.25em;
+    border-radius: 4px;
+    font-size: 0.95em;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    border: 1px solid var(--background-modifier-border);
+}
+
+.multi-git-commit-button-cancel {
+    background: var(--background-secondary);
+    color: var(--text-normal);
+}
+
+.multi-git-commit-button-cancel:hover {
+    background: var(--background-secondary-alt);
+}
+
+.multi-git-commit-button-submit {
+    background: var(--interactive-accent);
+    color: var(--text-on-accent);
+    border-color: var(--interactive-accent);
+}
+
+.multi-git-commit-button-submit:hover:not(:disabled) {
+    background: var(--interactive-accent-hover);
+    border-color: var(--interactive-accent-hover);
+}
+
+.multi-git-commit-button-submit:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.multi-git-commit-button-loading {
+    position: relative;
+}
+
+.multi-git-commit-button-loading::after {
+    content: '';
+    position: absolute;
+    right: 0.75em;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 12px;
+    height: 12px;
+    border: 2px solid currentColor;
+    border-right-color: transparent;
+    border-radius: 50%;
+    animation: spin 0.6s linear infinite;
+}
+
+/* Responsive adjustments for commit modal */
+@media (max-width: 600px) {
+    .multi-git-commit-modal {
+        min-width: auto;
+        width: 100%;
+    }
+
+    .multi-git-commit-buttons {
+        flex-direction: column-reverse;
+    }
+
+    .multi-git-commit-button {
+        width: 100%;
+    }
+
+    .multi-git-commit-repo-info {
+        flex-direction: column;
+        gap: 0.3em;
+    }
+}
