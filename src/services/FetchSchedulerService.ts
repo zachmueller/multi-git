@@ -41,6 +41,7 @@ export class FetchSchedulerService {
     private configService: RepositoryConfigService;
     private gitService: GitCommandService;
     private notificationService?: NotificationService;
+    private onFetchComplete?: (repoId: string) => void;
 
     // Default fetch interval: 5 minutes (300000ms) per spec requirement
     // This will be replaced with per-repository intervals in Phase 3
@@ -51,17 +52,20 @@ export class FetchSchedulerService {
      * @param configService Repository configuration service
      * @param gitService Git command service
      * @param notificationService Optional notification service for user alerts
+     * @param onFetchComplete Optional callback when fetch operation completes
      */
     constructor(
         configService: RepositoryConfigService,
         gitService: GitCommandService,
-        notificationService?: NotificationService
+        notificationService?: NotificationService,
+        onFetchComplete?: (repoId: string) => void
     ) {
         this.intervals = new Map();
         this.activeOperations = new Map();
         this.configService = configService;
         this.gitService = gitService;
         this.notificationService = notificationService;
+        this.onFetchComplete = onFetchComplete;
     }
 
     /**
@@ -265,6 +269,12 @@ export class FetchSchedulerService {
             // Record result in repository configuration
             Logger.debug('FetchScheduler', `Recording fetch result for ${repo.name}: ${result.success ? 'success' : 'failed'}`);
             await this.configService.recordFetchResult(result);
+
+            // Notify listeners of fetch completion (e.g., status panel)
+            if (this.onFetchComplete) {
+                Logger.debug('FetchScheduler', `Notifying fetch completion for ${repoId}`);
+                this.onFetchComplete(repoId);
+            }
 
             return result;
         } finally {

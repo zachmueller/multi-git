@@ -261,79 +261,79 @@ npm run build
 
 ## Phase 4: Status Updates & Polling
 
-### POLL-001: startPolling() Implementation
+### POLL-001: startPolling() Implementation ✅
 **Description:** Implement automatic status polling with 30-second interval
 **Files:** `src/ui/StatusPanelView.ts`
 **Dependencies:** REFRESH-001
 **Acceptance Criteria:**
-- [ ] Creates setInterval with 30-second interval
-- [ ] Calls refreshAll() on each interval
-- [ ] Stores interval ID for cleanup
-- [ ] Only polls when panel is open
-- [ ] Skips poll if manual refresh in progress
-- [ ] Skips poll if no repositories configured
-- [ ] Logs polling activity in debug mode
+- [x] Creates setInterval with 30-second interval
+- [x] Calls refreshAll() on each interval
+- [x] Stores interval ID for cleanup
+- [x] Only polls when panel is open
+- [x] Skips poll if manual refresh in progress
+- [x] Skips poll if no repositories configured
+- [x] Logs polling activity in debug mode
 
-### POLL-002: stopPolling() Implementation
+### POLL-002: stopPolling() Implementation ✅
 **Description:** Implement polling cleanup to stop timers
 **Files:** `src/ui/StatusPanelView.ts`
 **Dependencies:** POLL-001
 **Acceptance Criteria:**
-- [ ] Clears interval using stored ID
-- [ ] Sets interval ID to null
-- [ ] Called automatically in onClose()
-- [ ] Prevents memory leaks
-- [ ] Logs stop event in debug mode
+- [x] Clears interval using stored ID
+- [x] Sets interval ID to null
+- [x] Called automatically in onClose()
+- [x] Prevents memory leaks
+- [x] Logs stop event in debug mode
 
-### BTN-001: Manual Refresh Button
+### BTN-001: Manual Refresh Button ✅
 **Description:** Wire up manual refresh button functionality
 **Files:** `src/ui/StatusPanelView.ts`
 **Dependencies:** REFRESH-001, UI-001
 **Acceptance Criteria:**
-- [ ] Refresh button click handler registered
-- [ ] Calls refreshAll() on click
-- [ ] Button disabled while refresh in progress
-- [ ] Loading indicator shown during refresh
-- [ ] Button re-enabled after refresh completes
-- [ ] Button has proper ARIA labels
-- [ ] Keyboard accessible (Enter/Space)
+- [x] Refresh button click handler registered
+- [x] Calls refreshAll() on click
+- [x] Button disabled while refresh in progress
+- [x] Loading indicator shown during refresh
+- [x] Button re-enabled after refresh completes
+- [x] Button has proper ARIA labels
+- [x] Keyboard accessible (Enter/Space)
 
-### EVENT-001: Fetch Completion Integration
+### EVENT-001: Fetch Completion Integration ✅
 **Description:** Hook status panel updates into fetch completion events
-**Files:** `src/main.ts`, `src/ui/StatusPanelView.ts`
+**Files:** `src/main.ts`, `src/services/FetchSchedulerService.ts`
 **Dependencies:** REFRESH-002
 **Acceptance Criteria:**
-- [ ] FetchSchedulerService completion triggers status update
-- [ ] Only refreshes affected repository, not all
-- [ ] Updates happen automatically without user action
-- [ ] Event handler doesn't block fetch completion
-- [ ] Error handling prevents event handler crashes
-- [ ] Integration works when panel is open or closed
+- [x] FetchSchedulerService completion triggers status update
+- [x] Only refreshes affected repository, not all
+- [x] Updates happen automatically without user action
+- [x] Event handler doesn't block fetch completion
+- [x] Error handling prevents event handler crashes
+- [x] Integration works when panel is open or closed
 
-### EVENT-002 [P]: Commit/Push Completion Integration
+### EVENT-002 [P]: Commit/Push Completion Integration ✅
 **Description:** Hook status panel updates into commit/push operations
 **Files:** `src/main.ts`, `src/ui/StatusPanelView.ts`
 **Dependencies:** REFRESH-002
 **Acceptance Criteria:**
-- [ ] Successful commit triggers status update for that repository
-- [ ] Successful push triggers status update for that repository
-- [ ] Updates clear uncommitted changes indicator
-- [ ] Updates unpushed commits count
-- [ ] Event handler doesn't block commit/push flow
-- [ ] Works whether panel is open or closed
+- [x] Successful commit triggers status update for that repository
+- [x] Successful push triggers status update for that repository
+- [x] Updates clear uncommitted changes indicator
+- [x] Updates unpushed commits count
+- [x] Event handler doesn't block commit/push flow
+- [x] Works whether panel is open or closed
 
-### API-001: notifyRepositoryChanged() Method
+### API-001: notifyRepositoryChanged() Method ✅
 **Description:** Create plugin method to notify panel of repository changes
 **Files:** `src/main.ts`
 **Dependencies:** REFRESH-002
 **Acceptance Criteria:**
-- [ ] Method accepts optional repository ID parameter
-- [ ] If ID provided, refreshes that repository only
-- [ ] If no ID, refreshes all repositories
-- [ ] Checks if panel view exists before calling
-- [ ] Handles case where panel is not open
-- [ ] Method has JSDoc documentation
-- [ ] Used by fetch, commit, and push operations
+- [x] Method accepts optional repository ID parameter
+- [x] If ID provided, refreshes that repository only
+- [x] If no ID, refreshes all repositories
+- [x] Checks if panel view exists before calling
+- [x] Handles case where panel is not open
+- [x] Method has JSDoc documentation
+- [x] Used by fetch, commit, and push operations
 
 ## Phase 5: Polish & Optimization
 
@@ -572,13 +572,12 @@ ENV-001 → ARCH-001 → ARCH-002 → ARCH-003 → REFRESH-001 → RENDER-001 �
 - [x] **Phase 2: Core Features** (5 tasks)
   - [x] DATA-001, GIT-001, GIT-002, GIT-003, TEST-001
 
-- [x] **Phase 3: Integration** (7 tasks complete, 4 deferred to Phase 4)
+- [x] **Phase 3: Integration** (7 tasks)
   - [x] UI-001, REFRESH-001, REFRESH-002, RENDER-001, RENDER-002
   - [x] STYLE-001, ICON-001
-  - [ ] EVENT-001, EVENT-002, API-001 (deferred to Phase 4)
 
-- [ ] **Phase 4: Status Updates** (3 tasks)
-  - [ ] POLL-001, POLL-002, BTN-001
+- [x] **Phase 4: Status Updates** (6 tasks)
+  - [x] POLL-001, POLL-002, BTN-001, EVENT-001, EVENT-002, API-001
 
 - [ ] **Phase 5: Polish** (8 tasks)
   - [ ] OPT-001, OPT-002, ERROR-001, A11Y-001, THEME-001, CMD-001
@@ -587,7 +586,7 @@ ENV-001 → ARCH-001 → ARCH-002 → ARCH-003 → REFRESH-001 → RENDER-001 �
   - [ ] TEST-002, TEST-003, TEST-004, MANUAL-001
   - [ ] DOC-001, DOC-002, QA-001, VAL-001
 
-### Overall Progress: 17/42 tasks complete (40%)
+### Overall Progress: 23/42 tasks complete (55%)
 
 ---
 

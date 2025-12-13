@@ -47,7 +47,11 @@ export default class MultiGitPlugin extends Plugin {
 		this.fetchSchedulerService = new FetchSchedulerService(
 			this.repositoryConfigService,
 			this.gitCommandService,
-			this.notificationService
+			this.notificationService,
+			// Callback for fetch completion - update status panel
+			(repoId: string) => {
+				this.notifyRepositoryChanged(repoId);
+			}
 		);
 
 		// Apply settings migration for backward compatibility
@@ -329,12 +333,22 @@ export default class MultiGitPlugin extends Plugin {
 			Logger.debug('Command', `Executing commit and push for repository: ${repoName}`);
 			Logger.debug('Command', `Commit message: ${message}`);
 
+			// Find repository ID for status panel update
+			const repo = this.repositoryConfigService.getEnabledRepositories()
+				.find(r => r.path === repoPath);
+
 			// Execute the commit and push workflow
 			await this.gitCommandService.commitAndPush(repoPath, message);
 
 			// Show success notification
 			new Notice(`Successfully committed and pushed changes to "${repoName}"`);
 			Logger.debug('Command', `Successfully committed and pushed to "${repoName}"`);
+
+			// Update status panel to reflect commit/push changes
+			if (repo) {
+				Logger.debug('Command', `Updating status panel for repository: ${repo.id}`);
+				this.notifyRepositoryChanged(repo.id);
+			}
 
 		} catch (error) {
 			Logger.error('Command', `Failed to commit and push to "${repoName}"`, error);
