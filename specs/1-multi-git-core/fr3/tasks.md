@@ -65,22 +65,22 @@
 ## Phase 3: Commit Message Generation
 
 ### Create CommitMessageService
-- [ ] Create src/services/CommitMessageService.ts
-- [ ] Define CommitMessageSuggestion interface
-- [ ] Implement generateSuggestion() method
-- [ ] Analyze file changes (new, modified, deleted)
-- [ ] Apply rule: single file → "Update [filename]"
-- [ ] Apply rule: 2-3 files → "Update [file1], [file2], [file3]"
-- [ ] Apply rule: 4+ files → "Update [N] files"
-- [ ] Apply rule: only additions → "Add [filename]" or "Add [N] files"
-- [ ] Apply rule: only deletions → "Remove [filename]" or "Remove [N] files"
-- [ ] Keep summary under 50 characters
-- [ ] Handle edge case: empty repository (initial commit)
-- [ ] Handle edge case: renamed files
-- [ ] Handle edge case: binary files
-- [ ] Handle edge case: very long file names (truncate)
-- [ ] Write unit tests for each suggestion rule
-- [ ] Test with various real-world scenarios
+- [x] Create src/services/CommitMessageService.ts
+- [x] Define CommitMessageSuggestion interface
+- [x] Implement generateSuggestion() method
+- [x] Analyze file changes (new, modified, deleted)
+- [x] Apply rule: single file → "Update [filename]"
+- [x] Apply rule: 2-3 files → "Update [file1], [file2], [file3]"
+- [x] Apply rule: 4+ files → "Update [N] files"
+- [x] Apply rule: only additions → "Add [filename]" or "Add [N] files"
+- [x] Apply rule: only deletions → "Remove [filename]" or "Remove [N] files"
+- [x] Keep summary under 50 characters
+- [x] Handle edge case: empty repository (initial commit)
+- [x] Handle edge case: renamed files
+- [x] Handle edge case: binary files
+- [x] Handle edge case: very long file names (truncate)
+- [x] Write unit tests for each suggestion rule
+- [x] Test with various real-world scenarios
 
 ## Phase 4: Repository Picker Modal
 
@@ -309,10 +309,10 @@
 ## Progress Tracking
 
 - [ ] Phase 2: GitCommandService Extensions (25/33 tasks - 76% complete, tests pending)
-- [ ] Phase 3: Commit Message Generation (0/16 tasks)
+- [x] Phase 3: Commit Message Generation (16/16 tasks - 100% complete)
 - [ ] Phase 4: Repository Picker Modal (0/20 tasks)
 - [ ] Phase 5: Commit Message Modal (0/30 tasks)
 - [ ] Phase 6: Command Registration & Orchestration (0/21 tasks)
 - [ ] Phase 7: Documentation & Finalization (0/28 tasks)
 
-**Overall Progress:** 25/148 tasks complete (17%)
+**Overall Progress:** 41/148 tasks complete (28%)
