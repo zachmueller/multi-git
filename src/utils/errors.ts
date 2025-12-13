@@ -120,3 +120,56 @@ export class FetchError extends Error {
         }
     }
 }
+
+/**
+ * Error thrown when git status check fails
+ */
+export class GitStatusError extends RepositoryConfigError {
+    repositoryPath: string;
+
+    constructor(message: string, path: string) {
+        super(message, 'GIT_STATUS_ERROR');
+        this.name = 'GitStatusError';
+        this.repositoryPath = path;
+    }
+}
+
+/**
+ * Error thrown when git commit operation fails
+ */
+export class GitCommitError extends RepositoryConfigError {
+    repositoryPath: string;
+    originalError?: Error;
+
+    constructor(message: string, path: string, originalError?: Error) {
+        super(message, 'GIT_COMMIT_ERROR');
+        this.name = 'GitCommitError';
+        this.repositoryPath = path;
+        this.originalError = originalError;
+
+        // Maintains proper stack trace for where error was thrown (available on V8)
+        if (Error.captureStackTrace) {
+            Error.captureStackTrace(this, GitCommitError);
+        }
+    }
+}
+
+/**
+ * Error thrown when git push operation fails
+ */
+export class GitPushError extends RepositoryConfigError {
+    repositoryPath: string;
+    originalError?: Error;
+
+    constructor(message: string, path: string, originalError?: Error) {
+        super(message, 'GIT_PUSH_ERROR');
+        this.name = 'GitPushError';
+        this.repositoryPath = path;
+        this.originalError = originalError;
+
+        // Maintains proper stack trace for where error was thrown (available on V8)
+        if (Error.captureStackTrace) {
+            Error.captureStackTrace(this, GitPushError);
+        }
+    }
+}

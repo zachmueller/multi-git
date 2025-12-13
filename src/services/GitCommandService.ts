@@ -6,9 +6,16 @@
 import { exec } from 'child_process';
 import { promisify } from 'util';
 import * as os from 'os';
-import { GitRepositoryError, FetchError, FetchErrorCode } from '../utils/errors';
+import {
+    GitRepositoryError,
+    FetchError,
+    FetchErrorCode,
+    GitStatusError,
+    GitCommitError,
+    GitPushError
+} from '../utils/errors';
 import { Logger } from '../utils/logger';
-import { MultiGitSettings } from '../settings/data';
+import { MultiGitSettings, RepositoryStatus } from '../settings/data';
 
 const execPromise = promisify(exec);
 
@@ -601,6 +608,318 @@ export class GitCommandService {
                 `Failed to check remote changes: ${error instanceof Error ? error.message : String(error)}`,
                 repoPath
             );
+        }
+    }
+
+    /**
+     * Get detailed repository status including staged, unstaged, and untracked files
+     * @param repoPath Absolute path to repository
+     * @param repositoryId Repository ID from configuration
+     * @param repositoryName Repository name from configuration
+     * @returns Repository status with detailed file information
+     * @throws GitStatusError if status check fails
+     */
+    async getRepositoryStatus(
+        repoPath: string,
+        repositoryId: string,
+        repositoryName: string
+    ): Promise<RepositoryStatus> {
+        Logger.debug('GitCommand', `Getting repository status for: ${repoPath}`);
+
+        try {
+            // Get current branch
+            const currentBranch = await this.getCurrentBranch(repoPath);
+
+            // Get git status in porcelain format for easy parsing
+            const result = await this.executeGitCommand('status --porcelain', {
+                cwd: repoPath,
+            });
+
+            // Parse status output
+            const stagedFiles: string[] = [];
+            const unstagedFiles: string[] = [];
+            const untrackedFiles: string[] = [];
+
+            const lines = result.stdout.split('\n').filter(line => line.trim() !== '');
+
+            for (const line of lines) {
+                // Git status --porcelain format:
+                // XY filename
+                // X = index status, Y = working tree status
+                // M = modified, A = added, D = deleted, R = renamed, C = copied
+                // ?? = untracked
+                const statusCode = line.substring(0, 2);
+                const filename = line.substring(3);
+
+                const indexStatus = statusCode[0];
+                const workingTreeStatus = statusCode[1];
+
+                // Check index (staged) status
+                if (indexStatus !== ' ' && indexStatus !== '?') {
+                    stagedFiles.push(filename);
+                }
+
+                // Check working tree (unstaged) status
+                if (workingTreeStatus !== ' ' && workingTreeStatus !== '?') {
+                    unstagedFiles.push(filename);
+                }
+
+                // Check for untracked files
+                if (statusCode === '??') {
+                    untrackedFiles.push(filename);
+                }
+            }
+
+            const hasUncommittedChanges =
+                stagedFiles.length > 0 ||
+                unstagedFiles.length > 0 ||
+                untrackedFiles.length > 0;
+
+            const status: RepositoryStatus = {
+                repositoryId,
+                repositoryName,
+                repositoryPath: repoPath,
+                currentBranch,
+                hasUncommittedChanges,
+                stagedFiles,
+                unstagedFiles,
+                untrackedFiles,
+            };
+
+            Logger.debug('GitCommand', `Repository status complete for ${repoPath}`, {
+                branch: currentBranch,
+                hasChanges: hasUncommittedChanges,
+                staged: stagedFiles.length,
+                unstaged: unstagedFiles.length,
+                untracked: untrackedFiles.length,
+            });
+
+            return status;
+        } catch (error) {
+            Logger.error('GitCommand', `Failed to get repository status for ${repoPath}`, error);
+            if (error instanceof GitRepositoryError) {
+                throw new GitStatusError(
+                    `Failed to get repository status: ${error.message}`,
+                    repoPath
+                );
+            }
+            throw new GitStatusError(
+                `Failed to get repository status: ${error instanceof Error ? error.message : String(error)}`,
+                repoPath
+            );
+        }
+    }
+
+    /**
+     * Stage all changes in the repository
+     * @param repoPath Absolute path to repository
+     * @throws GitRepositoryError if staging fails
+     */
+    async stageAllChanges(repoPath: string): Promise<void> {
+        Logger.debug('GitCommand', `Staging all changes for: ${repoPath}`);
+
+        try {
+            await this.executeGitCommand('add -A', {
+                cwd: repoPath,
+            });
+
+            Logger.debug('GitCommand', `Successfully staged all changes for ${repoPath}`);
+        } catch (error) {
+            Logger.error('GitCommand', `Failed to stage changes for ${repoPath}`, error);
+            if (error instanceof GitRepositoryError) {
+                throw error;
+            }
+            throw new GitRepositoryError(
+                `Failed to stage changes: ${error instanceof Error ? error.message : String(error)}`,
+                repoPath
+            );
+        }
+    }
+
+    /**
+     * Create a commit with the given message
+     * @param repoPath Absolute path to repository
+     * @param message Commit message
+     * @throws GitCommitError if commit fails
+     */
+    async createCommit(repoPath: string, message: string): Promise<void> {
+        Logger.debug('GitCommand', `Creating commit for: ${repoPath}`);
+
+        // Validate commit message is not empty
+        if (!message || message.trim() === '') {
+            throw new GitCommitError(
+                'Commit message cannot be empty',
+                repoPath
+            );
+        }
+
+        try {
+            // Use -m flag to provide commit message
+            // Escape message properly for shell
+            const escapedMessage = message.replace(/"/g, '\\"');
+            await this.executeGitCommand(`commit -m "${escapedMessage}"`, {
+                cwd: repoPath,
+            });
+
+            Logger.debug('GitCommand', `Successfully created commit for ${repoPath}`);
+        } catch (error) {
+            Logger.error('GitCommand', `Failed to create commit for ${repoPath}`, error);
+
+            const errorMessage = error instanceof Error ? error.message : String(error);
+            const errorStr = errorMessage.toLowerCase();
+
+            // Check for "nothing to commit" scenario
+            if (errorStr.includes('nothing to commit') || errorStr.includes('no changes added')) {
+                throw new GitCommitError(
+                    'No changes to commit',
+                    repoPath,
+                    error instanceof Error ? error : undefined
+                );
+            }
+
+            // Check for pre-commit hook failure
+            if (errorStr.includes('pre-commit hook') || errorStr.includes('hook failed')) {
+                throw new GitCommitError(
+                    `Pre-commit hook failed: ${errorMessage}`,
+                    repoPath,
+                    error instanceof Error ? error : undefined
+                );
+            }
+
+            if (error instanceof GitRepositoryError) {
+                throw new GitCommitError(
+                    `Commit failed: ${error.message}`,
+                    repoPath,
+                    error
+                );
+            }
+            throw new GitCommitError(
+                `Commit failed: ${errorMessage}`,
+                repoPath,
+                error instanceof Error ? error : undefined
+            );
+        }
+    }
+
+    /**
+     * Push commits to remote repository
+     * @param repoPath Absolute path to repository
+     * @param timeout Timeout in milliseconds (default: 60000ms)
+     * @throws GitPushError if push fails
+     */
+    async pushToRemote(repoPath: string, timeout: number = 60000): Promise<void> {
+        Logger.debug('GitCommand', `Pushing to remote for: ${repoPath}`);
+
+        try {
+            await this.executeGitCommand('push', {
+                cwd: repoPath,
+                timeout,
+            });
+
+            Logger.debug('GitCommand', `Successfully pushed to remote for ${repoPath}`);
+        } catch (error) {
+            Logger.error('GitCommand', `Failed to push to remote for ${repoPath}`, error);
+
+            const errorMessage = error instanceof Error ? error.message : String(error);
+            const errorStr = errorMessage.toLowerCase();
+
+            // Check for authentication errors
+            if (errorStr.includes('authentication failed') ||
+                errorStr.includes('could not read username') ||
+                errorStr.includes('permission denied')) {
+                throw new GitPushError(
+                    'Authentication failed. Please configure git credentials.',
+                    repoPath,
+                    error instanceof Error ? error : undefined
+                );
+            }
+
+            // Check for network errors
+            if (errorStr.includes('could not resolve host') ||
+                errorStr.includes('failed to connect') ||
+                errorStr.includes('network is unreachable')) {
+                throw new GitPushError(
+                    'Network error: Unable to reach remote repository.',
+                    repoPath,
+                    error instanceof Error ? error : undefined
+                );
+            }
+
+            // Check for no upstream branch
+            if (errorStr.includes('no upstream branch') ||
+                errorStr.includes('has no upstream')) {
+                throw new GitPushError(
+                    'No upstream branch configured. Please set up tracking branch.',
+                    repoPath,
+                    error instanceof Error ? error : undefined
+                );
+            }
+
+            // Check for pre-push hook failure
+            if (errorStr.includes('pre-push hook') || errorStr.includes('hook failed')) {
+                throw new GitPushError(
+                    `Pre-push hook failed: ${errorMessage}`,
+                    repoPath,
+                    error instanceof Error ? error : undefined
+                );
+            }
+
+            // Check for timeout
+            if (errorStr.includes('timed out')) {
+                throw new GitPushError(
+                    `Push operation timed out after ${timeout}ms. Changes are committed locally.`,
+                    repoPath,
+                    error instanceof Error ? error : undefined
+                );
+            }
+
+            if (error instanceof GitRepositoryError) {
+                throw new GitPushError(
+                    `Push failed: ${error.message}`,
+                    repoPath,
+                    error
+                );
+            }
+            throw new GitPushError(
+                `Push failed: ${errorMessage}`,
+                repoPath,
+                error instanceof Error ? error : undefined
+            );
+        }
+    }
+
+    /**
+     * Combined operation: stage all changes, commit, and push to remote
+     * @param repoPath Absolute path to repository
+     * @param message Commit message
+     * @param timeout Timeout for push operation in milliseconds (default: 60000ms)
+     * @throws GitCommitError if staging or commit fails
+     * @throws GitPushError if push fails
+     */
+    async commitAndPush(
+        repoPath: string,
+        message: string,
+        timeout: number = 60000
+    ): Promise<void> {
+        Logger.debug('GitCommand', `Starting commit and push workflow for: ${repoPath}`);
+
+        try {
+            // Step 1: Stage all changes
+            await this.stageAllChanges(repoPath);
+            Logger.debug('GitCommand', 'Stage complete, proceeding to commit');
+
+            // Step 2: Create commit
+            await this.createCommit(repoPath, message);
+            Logger.debug('GitCommand', 'Commit complete, proceeding to push');
+
+            // Step 3: Push to remote
+            await this.pushToRemote(repoPath, timeout);
+            Logger.debug('GitCommand', `Commit and push workflow complete for ${repoPath}`);
+        } catch (error) {
+            // Errors are already categorized by the individual methods
+            // Just re-throw them with appropriate context
+            Logger.error('GitCommand', `Commit and push workflow failed for ${repoPath}`, error);
+            throw error;
         }
     }
 }

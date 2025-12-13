@@ -9,6 +9,36 @@
 export type FetchStatus = 'idle' | 'fetching' | 'success' | 'error';
 
 /**
+ * Detailed status of a git repository's working tree
+ * Used for commit and push operations
+ */
+export interface RepositoryStatus {
+    /** Unique identifier for the repository */
+    repositoryId: string;
+
+    /** Human-readable name for the repository */
+    repositoryName: string;
+
+    /** Absolute path to the repository */
+    repositoryPath: string;
+
+    /** Current branch name (null if detached HEAD) */
+    currentBranch: string | null;
+
+    /** Whether the repository has uncommitted changes */
+    hasUncommittedChanges: boolean;
+
+    /** Files that have been staged for commit */
+    stagedFiles: string[];
+
+    /** Files with unstaged modifications */
+    unstagedFiles: string[];
+
+    /** Files that are untracked (new files not in git) */
+    untrackedFiles: string[];
+}
+
+/**
  * Configuration for a single git repository
  */
 export interface RepositoryConfig {
