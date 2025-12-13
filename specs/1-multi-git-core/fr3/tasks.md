@@ -99,29 +99,29 @@
 ## Phase 4: Repository Picker Modal
 
 ### Create RepositoryPickerModal Component
-- [ ] Create src/ui/RepositoryPickerModal.ts
-- [ ] Extend Obsidian Modal class
-- [ ] Define constructor accepting repositories and callback
-- [ ] Implement onOpen() method
-- [ ] Render repository list container
-- [ ] Display repository name, branch, change count per item
-- [ ] Handle empty state (no uncommitted changes)
-- [ ] Implement click-to-select behavior
-- [ ] Implement keyboard navigation (arrow keys)
-- [ ] Implement Enter key to confirm selection
-- [ ] Implement Escape key to cancel
-- [ ] Highlight selected repository
-- [ ] Call callback on selection
-- [ ] Close modal on selection
+- [x] Create src/ui/RepositoryPickerModal.ts
+- [x] Extend Obsidian Modal class
+- [x] Define constructor accepting repositories and callback
+- [x] Implement onOpen() method
+- [x] Render repository list container
+- [x] Display repository name, branch, change count per item
+- [x] Handle empty state (no uncommitted changes)
+- [x] Implement click-to-select behavior
+- [x] Implement keyboard navigation (arrow keys)
+- [x] Implement Enter key to confirm selection
+- [x] Implement Escape key to cancel
+- [x] Highlight selected repository
+- [x] Call callback on selection
+- [x] Close modal on selection
 
 ### Add Modal Styling
-- [ ] Add .multi-git-picker-modal class to styles.css
-- [ ] Style repository list container
-- [ ] Style individual repository items
-- [ ] Add hover state styling
-- [ ] Add selected state styling
-- [ ] Style repository info (name, branch, count)
-- [ ] Style empty state message
+- [x] Add .multi-git-picker-modal class to styles.css
+- [x] Style repository list container
+- [x] Style individual repository items
+- [x] Add hover state styling
+- [x] Add selected state styling
+- [x] Style repository info (name, branch, count)
+- [x] Style empty state message
 - [ ] Test styling in light mode
 - [ ] Test styling in dark mode
 
@@ -324,9 +324,9 @@
 
 - [x] Phase 2: GitCommandService Extensions (33/33 tasks - 100% complete)
 - [x] Phase 3: Commit Message Generation (16/16 tasks - 100% complete)
-- [ ] Phase 4: Repository Picker Modal (0/20 tasks)
+- [ ] Phase 4: Repository Picker Modal (22/27 tasks - 81% complete)
 - [ ] Phase 5: Commit Message Modal (0/30 tasks)
 - [ ] Phase 6: Command Registration & Orchestration (0/21 tasks)
 - [ ] Phase 7: Documentation & Finalization (0/28 tasks)
 
-**Overall Progress:** 61/148 tasks complete (41%)
+**Overall Progress:** 83/148 tasks complete (56%)

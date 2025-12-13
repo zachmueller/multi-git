@@ -189,3 +189,99 @@ button:disabled {
 .multi-git-nested-setting input[type="number"] {
     width: 80px;
 }
+
+/* FR-3: Repository Picker Modal */
+.multi-git-picker-modal {
+    min-width: 400px;
+    max-width: 600px;
+}
+
+.multi-git-picker-title {
+    margin-top: 0;
+    margin-bottom: 1em;
+    font-size: 1.3em;
+    font-weight: 600;
+}
+
+.multi-git-picker-empty {
+    text-align: center;
+    padding: 2em 1em;
+    color: var(--text-muted);
+    font-size: 0.95em;
+}
+
+.multi-git-picker-list {
+    max-height: 400px;
+    overflow-y: auto;
+    margin-bottom: 1em;
+}
+
+.multi-git-picker-item {
+    padding: 1em;
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 6px;
+    margin-bottom: 0.75em;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.multi-git-picker-item:hover {
+    background: var(--background-secondary);
+    border-color: var(--interactive-accent);
+}
+
+.multi-git-picker-item-selected {
+    background: var(--interactive-accent);
+    border-color: var(--interactive-accent);
+    color: var(--text-on-accent);
+}
+
+.multi-git-picker-item-selected:hover {
+    background: var(--interactive-accent-hover);
+    border-color: var(--interactive-accent-hover);
+}
+
+.multi-git-picker-item-name {
+    font-size: 1.05em;
+    font-weight: 600;
+    margin-bottom: 0.5em;
+}
+
+.multi-git-picker-item-info {
+    display: flex;
+    gap: 1em;
+    font-size: 0.9em;
+    color: var(--text-muted);
+}
+
+.multi-git-picker-item-selected .multi-git-picker-item-info {
+    color: var(--text-on-accent);
+    opacity: 0.9;
+}
+
+.multi-git-picker-item-branch {
+    font-family: var(--font-monospace);
+}
+
+.multi-git-picker-item-changes {
+    font-weight: 500;
+}
+
+/* Focus state for keyboard navigation */
+.multi-git-picker-item:focus {
+    outline: 2px solid var(--interactive-accent);
+    outline-offset: 2px;
+}
+
+/* Responsive adjustments for picker modal */
+@media (max-width: 600px) {
+    .multi-git-picker-modal {
+        min-width: auto;
+        width: 100%;
+    }
+
+    .multi-git-picker-item-info {
+        flex-direction: column;
+        gap: 0.3em;
+    }
+}
