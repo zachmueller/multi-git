@@ -168,8 +168,8 @@
 - [x] Style cancel button
 - [x] Add loading spinner styles
 - [x] Style error message display
-- [ ] Test styling in light mode
-- [ ] Test styling in dark mode
+- [x] Test styling in light mode
+- [x] Test styling in dark mode
 
 ### Handle User Interactions
 - [ ] Enter in textarea = submit (prevent default)
@@ -325,8 +325,8 @@
 - [x] Phase 2: GitCommandService Extensions (33/33 tasks - 100% complete)
 - [x] Phase 3: Commit Message Generation (16/16 tasks - 100% complete)
 - [ ] Phase 4: Repository Picker Modal (22/27 tasks - 81% complete)
-- [x] Phase 5: Commit Message Modal (28/30 tasks - 93% complete)
+- [x] Phase 5: Commit Message Modal (30/30 tasks - 100% complete)
 - [ ] Phase 6: Command Registration & Orchestration (0/21 tasks)
 - [ ] Phase 7: Documentation & Finalization (0/28 tasks)
 
-**Overall Progress:** 111/148 tasks complete (75%)
+**Overall Progress:** 113/148 tasks complete (76%)
