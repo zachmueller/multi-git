@@ -8,72 +8,72 @@
 
 ## Phase 1: Settings Model Update
 
-- [ ] Add `customPathEntries: string[]` field to `MultiGitSettings` interface in `src/settings/data.ts`
-- [ ] Add JSDoc documentation for `customPathEntries` field explaining purpose and format
-- [ ] Add default PATH entries to `DEFAULT_SETTINGS` object:
-  - [ ] `~/.cargo/bin`
-  - [ ] `~/.local/bin`
-  - [ ] `/opt/homebrew/bin`
-  - [ ] `/usr/local/bin`
-- [ ] Verify settings model compiles without errors
+- [x] Add `customPathEntries: string[]` field to `MultiGitSettings` interface in `src/settings/data.ts`
+- [x] Add JSDoc documentation for `customPathEntries` field explaining purpose and format
+- [x] Add default PATH entries to `DEFAULT_SETTINGS` object:
+  - [x] `~/.cargo/bin`
+  - [x] `~/.local/bin`
+  - [x] `/opt/homebrew/bin`
+  - [x] `/usr/local/bin`
+- [x] Verify settings model compiles without errors
 
 ## Phase 2: GitCommandService Enhancement
 
-- [ ] Import `os` module at top of `src/services/GitCommandService.ts`
-- [ ] Add `buildEnhancedPath()` private method to `GitCommandService`:
-  - [ ] Accept `systemPath: string | undefined` and `customEntries: string[]` parameters
-  - [ ] Implement tilde expansion using `os.homedir()`
-  - [ ] Implement path validation (absolute paths, no shell metacharacters)
-  - [ ] Filter out invalid paths with debug logging
-  - [ ] Merge custom and system paths
-  - [ ] Remove duplicate paths while preserving order
-  - [ ] Determine correct path separator for platform (`:` or `;`)
-  - [ ] Return joined path string
-- [ ] Add `settings` private field to `GitCommandService` class
-- [ ] Update `GitCommandService` constructor to accept `settings: MultiGitSettings` parameter
-- [ ] Modify `executeGitCommand()` method:
-  - [ ] Call `buildEnhancedPath()` before executing command
-  - [ ] Pass enhanced PATH in `env` option to `execPromise`
-  - [ ] Preserve all other environment variables using spread operator
-- [ ] Add debug logging for effective PATH when debug mode enabled
-- [ ] Verify service compiles without errors
+- [x] Import `os` module at top of `src/services/GitCommandService.ts`
+- [x] Add `buildEnhancedPath()` private method to `GitCommandService`:
+  - [x] Accept `systemPath: string | undefined` and `customEntries: string[]` parameters
+  - [x] Implement tilde expansion using `os.homedir()`
+  - [x] Implement path validation (absolute paths, no shell metacharacters)
+  - [x] Filter out invalid paths with debug logging
+  - [x] Merge custom and system paths
+  - [x] Remove duplicate paths while preserving order
+  - [x] Determine correct path separator for platform (`:` or `;`)
+  - [x] Return joined path string
+- [x] Add `settings` private field to `GitCommandService` class
+- [x] Update `GitCommandService` constructor to accept `settings: MultiGitSettings` parameter
+- [x] Modify `executeGitCommand()` method:
+  - [x] Call `buildEnhancedPath()` before executing command
+  - [x] Pass enhanced PATH in `env` option to `execPromise`
+  - [x] Preserve all other environment variables using spread operator
+- [x] Add debug logging for effective PATH when debug mode enabled
+- [x] Verify service compiles without errors
 
 ## Phase 3: Dependency Injection
 
-- [ ] Update `src/main.ts` to pass settings to `GitCommandService`:
-  - [ ] Locate `GitCommandService` instantiation
-  - [ ] Pass `this.settings` as constructor argument
-  - [ ] Verify settings are loaded before service instantiation
-- [ ] Update all other service instantiations if they create `GitCommandService`:
-  - [ ] Check `FetchSchedulerService` instantiation
-  - [ ] Check `RepositoryConfigService` instantiation
-  - [ ] Update any other services that depend on `GitCommandService`
-- [ ] Verify plugin loads and initializes without errors
+- [x] Update `src/main.ts` to pass settings to `GitCommandService`:
+  - [x] Locate `GitCommandService` instantiation
+  - [x] Pass `this.settings` as constructor argument
+  - [x] Verify settings are loaded before service instantiation
+- [x] Update all other service instantiations if they create `GitCommandService`:
+  - [x] Check `FetchSchedulerService` instantiation
+  - [x] Check `RepositoryConfigService` instantiation
+  - [x] Update any other services that depend on `GitCommandService`
+- [x] Verify plugin loads and initializes without errors
 
 ## Phase 4: Settings UI
 
-- [ ] Add PATH configuration UI to `src/settings/SettingTab.ts`:
-  - [ ] Add new `Setting` after existing repository settings
-  - [ ] Set name to "Custom PATH entries"
-  - [ ] Create description fragment with:
-    - [ ] Explanation of when this is needed (credential helpers, custom git)
-    - [ ] Format instructions (one absolute path per line)
-    - [ ] Note about tilde expansion support
-    - [ ] Example usage
-  - [ ] Add `TextAreaComponent` with:
-    - [ ] Placeholder showing example paths
-    - [ ] Value populated from `this.plugin.settings.customPathEntries.join('\n')`
-    - [ ] `onChange` handler that:
-      - [ ] Splits value by newlines
-      - [ ] Trims each line
-      - [ ] Filters empty lines
-      - [ ] Updates `this.plugin.settings.customPathEntries`
-      - [ ] Calls `this.plugin.saveSettings()`
-- [ ] Add basic path validation (optional):
-  - [ ] Warn if paths aren't absolute
-  - [ ] Warn if paths contain shell metacharacters
-- [ ] Test settings UI loads and displays correctly
-- [ ] Test settings can be modified and saved
+- [x] Add PATH configuration UI to `src/settings/SettingTab.ts`:
+  - [x] Add new `Setting` after existing repository settings
+  - [x] Set name to "Custom PATH entries"
+  - [x] Create description fragment with:
+    - [x] Explanation of when this is needed (credential helpers, custom git)
+    - [x] Format instructions (one absolute path per line)
+    - [x] Note about tilde expansion support
+    - [x] Example usage
+  - [x] Add `TextAreaComponent` with:
+    - [x] Placeholder showing example paths
+    - [x] Value populated from `this.plugin.settings.customPathEntries.join('\n')`
+    - [x] `onChange` handler that:
+      - [x] Splits value by newlines
+      - [x] Trims each line
+      - [x] Filters empty lines
+      - [x] Updates `this.plugin.settings.customPathEntries`
+      - [x] Calls `this.plugin.saveSettings()`
+- [x] Add basic path validation (optional):
+  - [x] Warn if paths aren't absolute
+  - [x] Warn if paths contain shell metacharacters
+- [x] Test settings UI loads and displays correctly
+- [x] Test settings can be modified and saved
 
 ## Phase 5: Testing
 

@@ -87,6 +87,25 @@ export class MultiGitSettingTab extends PluginSettingTab {
                 })
             );
 
+        // Custom PATH entries
+        new Setting(containerEl)
+            .setName('Custom PATH entries')
+            .setDesc(this.createPathConfigDescription())
+            .addTextArea(text => {
+                text
+                    .setPlaceholder('~/.cargo/bin\n~/.local/bin\n/opt/homebrew/bin\n/usr/local/bin')
+                    .setValue(this.plugin.settings.customPathEntries.join('\n'))
+                    .onChange(async (value) => {
+                        this.plugin.settings.customPathEntries = value
+                            .split('\n')
+                            .map(line => line.trim())
+                            .filter(line => line.length > 0);
+                        await this.plugin.saveSettings();
+                    });
+                text.inputEl.rows = 6;
+                text.inputEl.cols = 50;
+            });
+
         // Manual fetch all button with last fetch time
         const fetchAllSetting = new Setting(containerEl)
             .setName('Manual Fetch')
@@ -100,6 +119,23 @@ export class MultiGitSettingTab extends PluginSettingTab {
             })
             .setTooltip('Manually fetch all enabled repositories now')
         );
+    }
+
+    /**
+     * Create description for PATH configuration setting
+     */
+    private createPathConfigDescription(): DocumentFragment {
+        const frag = document.createDocumentFragment();
+
+        frag.appendText('Additional directories to include in PATH when executing git commands. ');
+        frag.appendText('Useful for credential helpers (e.g., git-remote-codecommit) or custom git installations.');
+        frag.createEl('br');
+        frag.createEl('br');
+        frag.appendText('Enter one absolute path per line. Tilde (~) expands to your home directory.');
+        frag.createEl('br');
+        frag.appendText('Example: ~/.cargo/bin');
+
+        return frag;
     }
 
     /**

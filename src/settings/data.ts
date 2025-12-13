@@ -78,6 +78,15 @@ export interface MultiGitSettings {
      * @default false
      */
     debugLogging: boolean;
+
+    /**
+     * Custom PATH entries to prepend when executing git commands
+     * Useful for credential helpers (e.g., git-remote-codecommit) or custom git installations
+     * Supports tilde expansion (~) for home directory
+     * One path per array entry
+     * @default ['~/.cargo/bin', '~/.local/bin', '/opt/homebrew/bin', '/usr/local/bin']
+     */
+    customPathEntries: string[];
 }
 
 /**
@@ -91,4 +100,10 @@ export const DEFAULT_SETTINGS: MultiGitSettings = {
     fetchOnStartup: true,
     notifyOnRemoteChanges: true,
     debugLogging: false, // Hidden setting for troubleshooting
+    customPathEntries: [
+        '~/.cargo/bin',      // Rust/cargo installations (e.g., git-remote-codecommit)
+        '~/.local/bin',      // Python pip --user installs, other local tools
+        '/opt/homebrew/bin', // Homebrew on Apple Silicon Macs
+        '/usr/local/bin',    // Homebrew on Intel Macs, common Linux installs
+    ],
 };

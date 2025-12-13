@@ -33,8 +33,8 @@ export default class MultiGitPlugin extends Plugin {
 		Logger.debug('Plugin', 'Multi-Git plugin loading');
 
 		// Initialize services
-		this.gitCommandService = new GitCommandService();
-		this.repositoryConfigService = new RepositoryConfigService(this);
+		this.gitCommandService = new GitCommandService(this.settings);
+		this.repositoryConfigService = new RepositoryConfigService(this, this.gitCommandService);
 		this.notificationService = new NotificationService(this.settings);
 		this.fetchSchedulerService = new FetchSchedulerService(
 			this.repositoryConfigService,

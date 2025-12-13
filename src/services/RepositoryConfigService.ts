@@ -15,9 +15,9 @@ export class RepositoryConfigService {
     private plugin: MultiGitPlugin;
     private gitService: GitCommandService;
 
-    constructor(plugin: MultiGitPlugin) {
+    constructor(plugin: MultiGitPlugin, gitService: GitCommandService) {
         this.plugin = plugin;
-        this.gitService = new GitCommandService();
+        this.gitService = gitService;
     }
 
     /**

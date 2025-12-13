@@ -5,8 +5,10 @@
 
 import { exec } from 'child_process';
 import { promisify } from 'util';
+import * as os from 'os';
 import { GitRepositoryError, FetchError, FetchErrorCode } from '../utils/errors';
 import { Logger } from '../utils/logger';
+import { MultiGitSettings } from '../settings/data';
 
 const execPromise = promisify(exec);
 
@@ -43,6 +45,68 @@ export interface RemoteChangeStatus {
  */
 export class GitCommandService {
     private readonly defaultTimeout = 10000; // 10 seconds
+    private readonly settings: MultiGitSettings;
+
+    /**
+     * Create a new GitCommandService
+     * @param settings Plugin settings containing PATH configuration
+     */
+    constructor(settings: MultiGitSettings) {
+        this.settings = settings;
+    }
+
+    /**
+     * Build enhanced PATH with custom entries prepended to system PATH
+     * @param systemPath Current system PATH (from process.env.PATH)
+     * @param customEntries Custom PATH entries from settings
+     * @returns Enhanced PATH string with proper separator for platform
+     */
+    private buildEnhancedPath(systemPath: string | undefined, customEntries: string[]): string {
+        // Determine platform-specific path separator
+        const pathSeparator = process.platform === 'win32' ? ';' : ':';
+
+        // Expand tildes and validate custom entries
+        const expandedEntries = customEntries
+            .map(entry => {
+                // Expand tilde to home directory
+                if (entry.startsWith('~')) {
+                    return entry.replace(/^~/, os.homedir());
+                }
+                return entry;
+            })
+            .filter(path => {
+                // Validate path is absolute
+                if (!path.startsWith('/') && !(process.platform === 'win32' && /^[A-Za-z]:/.test(path))) {
+                    Logger.debug('GitCommand', `Skipping relative path in customPathEntries: ${path}`);
+                    return false;
+                }
+
+                // Validate no shell metacharacters for security
+                if (/[;&|`$()]/.test(path)) {
+                    Logger.debug('GitCommand', `Skipping path with shell metacharacters: ${path}`);
+                    return false;
+                }
+
+                return true;
+            });
+
+        // Split system PATH into array, handling undefined
+        const systemPaths = systemPath ? systemPath.split(pathSeparator) : [];
+
+        // Prepend custom paths to system paths
+        const allPaths = [...expandedEntries, ...systemPaths];
+
+        // Remove duplicates while preserving order (keep first occurrence)
+        const uniquePaths = Array.from(new Set(allPaths));
+
+        // Join with appropriate separator
+        const enhancedPath = uniquePaths.join(pathSeparator);
+
+        // Log enhanced PATH in debug mode
+        Logger.debug('GitCommand', `Enhanced PATH: ${enhancedPath}`);
+
+        return enhancedPath;
+    }
 
     /**
      * Check if a directory is a valid git repository
@@ -113,12 +177,20 @@ export class GitCommandService {
 
         const startTime = Date.now();
 
+        // Build enhanced PATH with custom entries
+        const enhancedPath = this.buildEnhancedPath(process.env.PATH, this.settings.customPathEntries);
+
         try {
             const { stdout, stderr } = await execPromise(fullCommand, {
                 cwd,
                 timeout,
                 // Set max buffer to prevent memory issues with large outputs
                 maxBuffer: 10 * 1024 * 1024, // 10MB
+                // Pass enhanced PATH while preserving other environment variables
+                env: {
+                    ...process.env,
+                    PATH: enhancedPath,
+                },
             });
 
             const duration = Date.now() - startTime;
