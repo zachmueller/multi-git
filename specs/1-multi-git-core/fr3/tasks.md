@@ -194,37 +194,37 @@
 ## Phase 6: Command Registration & Orchestration
 
 ### Register Command
-- [ ] Add command registration to main.ts onload()
-- [ ] Use command ID: 'multi-git:commit-push'
-- [ ] Set command name: 'Commit and push changes'
-- [ ] Implement command callback
+- [x] Add command registration to main.ts onload()
+- [x] Use command ID: 'multi-git:commit-push'
+- [x] Set command name: 'Commit and push changes'
+- [x] Implement command callback
 
 ### Implement Workflow Orchestration
-- [ ] Get all enabled repositories from RepositoryConfigService
-- [ ] Call getRepositoryStatus() for each repository
-- [ ] Filter repositories with uncommitted changes
-- [ ] Handle case: no repositories with changes (show Notice, exit)
-- [ ] Handle case: single repository (skip picker, go to commit)
-- [ ] Handle case: multiple repositories (show picker)
-- [ ] Instantiate RepositoryPickerModal with filtered repos
-- [ ] Handle picker selection
-- [ ] Instantiate CommitMessageService
-- [ ] Generate commit message suggestion
-- [ ] Instantiate CommitMessageModal with suggestion
-- [ ] Handle commit modal confirmation
-- [ ] Execute commitAndPush() operation
-- [ ] Show success Notice on completion
-- [ ] Handle errors at each step
+- [x] Get all enabled repositories from RepositoryConfigService
+- [x] Call getRepositoryStatus() for each repository
+- [x] Filter repositories with uncommitted changes
+- [x] Handle case: no repositories with changes (show Notice, exit)
+- [x] Handle case: single repository (skip picker, go to commit)
+- [x] Handle case: multiple repositories (show picker)
+- [x] Instantiate RepositoryPickerModal with filtered repos
+- [x] Handle picker selection
+- [x] Instantiate CommitMessageService
+- [x] Generate commit message suggestion
+- [x] Instantiate CommitMessageModal with suggestion
+- [x] Handle commit modal confirmation
+- [x] Execute commitAndPush() operation
+- [x] Show success Notice on completion
+- [x] Handle errors at each step
 
 ### Error Handling
-- [ ] Map GitCommandService errors to user messages
-- [ ] Handle network errors: "Check your connection"
-- [ ] Handle auth errors: "Configure git credentials"
-- [ ] Handle pre-commit failures: show hook output
-- [ ] Handle pre-push failures: show hook output
-- [ ] Handle timeout: "Operation timed out, changes committed locally"
-- [ ] Log all errors for debugging (when debug mode enabled)
-- [ ] Display repository name in error messages
+- [x] Map GitCommandService errors to user messages
+- [x] Handle network errors: "Check your connection"
+- [x] Handle auth errors: "Configure git credentials"
+- [x] Handle pre-commit failures: show hook output
+- [x] Handle pre-push failures: show hook output
+- [x] Handle timeout: "Operation timed out, changes committed locally"
+- [x] Log all errors for debugging (when debug mode enabled)
+- [x] Display repository name in error messages
 
 ### Add Settings UI (Optional)
 - [ ] Add note in settings about hotkey configuration
@@ -326,7 +326,7 @@
 - [x] Phase 3: Commit Message Generation (16/16 tasks - 100% complete)
 - [ ] Phase 4: Repository Picker Modal (22/27 tasks - 81% complete)
 - [x] Phase 5: Commit Message Modal (30/30 tasks - 100% complete)
-- [ ] Phase 6: Command Registration & Orchestration (0/21 tasks)
+- [x] Phase 6: Command Registration & Orchestration (21/21 tasks - 100% complete)
 - [ ] Phase 7: Documentation & Finalization (0/28 tasks)
 
-**Overall Progress:** 113/148 tasks complete (76%)
+**Overall Progress:** 134/148 tasks complete (91%)
