@@ -746,6 +746,48 @@ button:disabled {
     outline-offset: 2px;
 }
 
+/* Error content with retry button */
+.multi-git-error-content {
+    display: flex;
+    align-items: center;
+    gap: 0.75em;
+    flex: 1;
+}
+
+.multi-git-retry-button {
+    padding: 0.25em 0.75em;
+    font-size: 0.85em;
+    background: var(--interactive-accent);
+    color: var(--text-on-accent);
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.multi-git-retry-button:hover {
+    background: var(--interactive-accent-hover);
+    transform: translateY(-1px);
+}
+
+.multi-git-retry-button:active {
+    transform: translateY(0);
+}
+
+.multi-git-retry-button:focus {
+    outline: 2px solid var(--interactive-accent);
+    outline-offset: 2px;
+}
+
+/* Enhanced error state visibility */
+.multi-git-status-indicator.multi-git-error {
+    background: var(--background-modifier-error-rgb);
+    padding: 0.5em;
+    border-radius: 4px;
+}
+
 /* Theme compatibility - ensure colors work in both light and dark modes */
 .theme-light .multi-git-status-indicator.multi-git-uncommitted {
     color: #d97706;
@@ -765,4 +807,24 @@ button:disabled {
 
 .theme-light .multi-git-status-indicator.multi-git-error {
     color: #dc2626;
+}
+
+/* Enhanced focus states for keyboard navigation (accessibility) */
+.multi-git-repository-item:focus-within {
+    box-shadow: 0 0 0 2px var(--interactive-accent);
+    outline: none;
+}
+
+button:focus-visible {
+    outline: 2px solid var(--interactive-accent);
+    outline-offset: 2px;
+}
+
+/* Ensure sufficient color contrast in both themes (WCAG AA compliance) */
+.theme-dark .multi-git-status-indicator.multi-git-error {
+    background: rgba(220, 38, 38, 0.15);
+}
+
+.theme-light .multi-git-status-indicator.multi-git-error {
+    background: rgba(220, 38, 38, 0.1);
 }

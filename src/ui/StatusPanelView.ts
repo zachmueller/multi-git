@@ -18,6 +18,8 @@ interface StatusPanelState {
     isRefreshing: boolean;
     /** Timestamp of last refresh */
     lastRefreshTime: number;
+    /** Pending refresh request queued during active refresh */
+    hasPendingRefresh: boolean;
 }
 
 /**
@@ -55,7 +57,8 @@ export class StatusPanelView extends ItemView {
         this.state = {
             statuses: new Map(),
             isRefreshing: false,
-            lastRefreshTime: 0
+            lastRefreshTime: 0,
+            hasPendingRefresh: false
         };
 
         Logger.debug('StatusPanel', 'StatusPanelView instance created');
@@ -149,6 +152,7 @@ export class StatusPanelView extends ItemView {
         this.state.statuses.clear();
         this.state.isRefreshing = false;
         this.state.lastRefreshTime = 0;
+        this.state.hasPendingRefresh = false;
 
         // Clear DOM references
         this.headerEl = null;
@@ -205,16 +209,23 @@ export class StatusPanelView extends ItemView {
     /**
      * Refresh all repository statuses
      * Updates cache and triggers UI re-render
+     * Implements debouncing to prevent overlapping refreshes
      */
     async refreshAll(): Promise<void> {
-        // Prevent overlapping refreshes
+        // Prevent overlapping refreshes - queue at most one pending refresh
         if (this.state.isRefreshing) {
-            Logger.debug('StatusPanel', 'Refresh already in progress, skipping');
+            if (!this.state.hasPendingRefresh) {
+                Logger.debug('StatusPanel', 'Refresh in progress, queuing pending refresh');
+                this.state.hasPendingRefresh = true;
+            } else {
+                Logger.debug('StatusPanel', 'Refresh in progress and one already queued, ignoring request');
+            }
             return;
         }
 
         Logger.debug('StatusPanel', 'Starting refresh of all repository statuses');
         this.state.isRefreshing = true;
+        this.state.hasPendingRefresh = false;
 
         // Update UI to show loading state
         this.renderStatuses();
@@ -225,15 +236,13 @@ export class StatusPanelView extends ItemView {
 
             if (repositories.length === 0) {
                 Logger.debug('StatusPanel', 'No repositories configured');
-                this.state.isRefreshing = false;
-                this.renderStatuses();
                 return;
             }
 
             Logger.debug('StatusPanel', `Refreshing status for ${repositories.length} repositories`);
 
             // Refresh each repository with extended status
-            for (const repo of repositories) {
+            const refreshPromises = repositories.map(async (repo: { id: string; name: string; path: string; lastFetchTime?: number; lastFetchStatus?: string; lastFetchError?: string }) => {
                 try {
                     // Get extended status including remote tracking info
                     const status = await this.plugin.gitCommandService.getExtendedRepositoryStatus(
@@ -251,9 +260,25 @@ export class StatusPanelView extends ItemView {
                     Logger.debug('StatusPanel', `Updated status for repository: ${repo.name}`);
                 } catch (error) {
                     Logger.error('StatusPanel', `Failed to get status for repository: ${repo.name}`, error);
-                    // Continue with other repositories
+                    // Store error state in cache for display
+                    const errorStatus: RepositoryStatus = {
+                        repositoryId: repo.id,
+                        repositoryName: repo.name,
+                        repositoryPath: repo.path,
+                        currentBranch: null,
+                        hasUncommittedChanges: false,
+                        stagedFiles: [],
+                        unstagedFiles: [],
+                        untrackedFiles: [],
+                        fetchStatus: 'error',
+                        lastFetchError: error instanceof Error ? error.message : 'Unknown error'
+                    };
+                    this.state.statuses.set(repo.id, errorStatus);
                 }
-            }
+            });
+
+            // Wait for all refreshes to complete
+            await Promise.all(refreshPromises);
 
             // Update last refresh time
             this.state.lastRefreshTime = Date.now();
@@ -266,6 +291,14 @@ export class StatusPanelView extends ItemView {
 
             // Update UI with new data
             this.renderStatuses();
+
+            // Execute queued refresh if one was requested
+            if (this.state.hasPendingRefresh) {
+                Logger.debug('StatusPanel', 'Executing queued refresh');
+                this.state.hasPendingRefresh = false;
+                // Use setTimeout to avoid blocking the current execution
+                setTimeout(() => this.refreshAll(), 0);
+            }
         }
     }
 
@@ -363,7 +396,13 @@ export class StatusPanelView extends ItemView {
      * @param container - Parent element to render into
      */
     private renderRepositoryStatus(status: RepositoryStatus, container: HTMLElement): void {
-        const itemEl = container.createDiv({ cls: 'multi-git-repository-item' });
+        const itemEl = container.createDiv({
+            cls: 'multi-git-repository-item',
+            attr: {
+                'role': 'article',
+                'aria-label': `Repository: ${status.repositoryName}`
+            }
+        });
 
         // Repository name header
         const headerEl = itemEl.createDiv({ cls: 'multi-git-repo-header' });
@@ -374,32 +413,73 @@ export class StatusPanelView extends ItemView {
 
         // Branch information
         const branchEl = itemEl.createDiv({ cls: 'multi-git-repo-branch' });
-        const branchIcon = branchEl.createSpan({ cls: 'multi-git-branch-icon' });
+        const branchIcon = branchEl.createSpan({
+            cls: 'multi-git-branch-icon',
+            attr: { 'aria-hidden': 'true' }
+        });
         setIcon(branchIcon, 'git-branch');
         branchEl.createSpan({
             text: status.currentBranch || 'detached HEAD',
-            cls: status.currentBranch ? 'multi-git-branch-name' : 'multi-git-branch-name multi-git-detached'
+            cls: status.currentBranch ? 'multi-git-branch-name' : 'multi-git-branch-name multi-git-detached',
+            attr: {
+                'aria-label': `Branch: ${status.currentBranch || 'detached HEAD'}`
+            }
         });
 
         // Status indicators container
-        const statusEl = itemEl.createDiv({ cls: 'multi-git-repo-status' });
+        const statusEl = itemEl.createDiv({
+            cls: 'multi-git-repo-status',
+            attr: { 'role': 'list', 'aria-label': 'Repository status indicators' }
+        });
 
         // Error state (highest priority)
         if (status.fetchStatus === 'error' && status.lastFetchError) {
-            const errorEl = statusEl.createDiv({ cls: 'multi-git-status-indicator multi-git-error' });
-            const icon = errorEl.createSpan({ cls: 'multi-git-status-icon' });
+            const errorEl = statusEl.createDiv({
+                cls: 'multi-git-status-indicator multi-git-error',
+                attr: { 'role': 'listitem' }
+            });
+            const icon = errorEl.createSpan({
+                cls: 'multi-git-status-icon',
+                attr: { 'aria-hidden': 'true' }
+            });
             setIcon(icon, 'alert-circle');
-            errorEl.createSpan({
-                text: 'Fetch error',
+
+            const errorTextEl = errorEl.createDiv({ cls: 'multi-git-error-content' });
+            errorTextEl.createSpan({
+                text: this.formatErrorMessage(status.lastFetchError),
                 cls: 'multi-git-status-text',
-                attr: { 'aria-label': status.lastFetchError, 'title': status.lastFetchError }
+                attr: {
+                    'aria-label': `Error: ${status.lastFetchError}`,
+                    'title': status.lastFetchError
+                }
+            });
+
+            // Add retry button for errors
+            const retryButton = errorTextEl.createEl('button', {
+                cls: 'multi-git-retry-button',
+                text: 'Retry',
+                attr: {
+                    'aria-label': `Retry fetching status for ${status.repositoryName}`,
+                    'type': 'button'
+                }
+            });
+            retryButton.addEventListener('click', async (e) => {
+                e.stopPropagation();
+                Logger.debug('StatusPanel', `Retrying status fetch for repository: ${status.repositoryName}`);
+                await this.refreshRepository(status.repositoryId);
             });
         }
 
         // Uncommitted changes
         if (status.hasUncommittedChanges) {
-            const changesEl = statusEl.createDiv({ cls: 'multi-git-status-indicator multi-git-uncommitted' });
-            const icon = changesEl.createSpan({ cls: 'multi-git-status-icon' });
+            const changesEl = statusEl.createDiv({
+                cls: 'multi-git-status-indicator multi-git-uncommitted',
+                attr: { 'role': 'listitem' }
+            });
+            const icon = changesEl.createSpan({
+                cls: 'multi-git-status-icon',
+                attr: { 'aria-hidden': 'true' }
+            });
             setIcon(icon, 'circle-dot');
             const totalChanges = status.stagedFiles.length + status.unstagedFiles.length + status.untrackedFiles.length;
             changesEl.createSpan({
@@ -411,8 +491,14 @@ export class StatusPanelView extends ItemView {
 
         // Unpushed commits
         if (status.unpushedCommits && status.unpushedCommits > 0) {
-            const unpushedEl = statusEl.createDiv({ cls: 'multi-git-status-indicator multi-git-unpushed' });
-            const icon = unpushedEl.createSpan({ cls: 'multi-git-status-icon' });
+            const unpushedEl = statusEl.createDiv({
+                cls: 'multi-git-status-indicator multi-git-unpushed',
+                attr: { 'role': 'listitem' }
+            });
+            const icon = unpushedEl.createSpan({
+                cls: 'multi-git-status-icon',
+                attr: { 'aria-hidden': 'true' }
+            });
             setIcon(icon, 'arrow-up');
             unpushedEl.createSpan({
                 text: `${status.unpushedCommits} to push`,
@@ -423,8 +509,14 @@ export class StatusPanelView extends ItemView {
 
         // Remote changes
         if (status.remoteChanges && status.remoteChanges > 0) {
-            const remoteEl = statusEl.createDiv({ cls: 'multi-git-status-indicator multi-git-remote-changes' });
-            const icon = remoteEl.createSpan({ cls: 'multi-git-status-icon' });
+            const remoteEl = statusEl.createDiv({
+                cls: 'multi-git-status-indicator multi-git-remote-changes',
+                attr: { 'role': 'listitem' }
+            });
+            const icon = remoteEl.createSpan({
+                cls: 'multi-git-status-icon',
+                attr: { 'aria-hidden': 'true' }
+            });
             setIcon(icon, 'arrow-down');
             remoteEl.createSpan({
                 text: `${status.remoteChanges} to pull`,
@@ -438,8 +530,14 @@ export class StatusPanelView extends ItemView {
             (!status.unpushedCommits || status.unpushedCommits === 0) &&
             (!status.remoteChanges || status.remoteChanges === 0) &&
             status.fetchStatus !== 'error') {
-            const cleanEl = statusEl.createDiv({ cls: 'multi-git-status-indicator multi-git-clean' });
-            const icon = cleanEl.createSpan({ cls: 'multi-git-status-icon' });
+            const cleanEl = statusEl.createDiv({
+                cls: 'multi-git-status-indicator multi-git-clean',
+                attr: { 'role': 'listitem' }
+            });
+            const icon = cleanEl.createSpan({
+                cls: 'multi-git-status-icon',
+                attr: { 'aria-hidden': 'true' }
+            });
             setIcon(icon, 'check-circle');
             cleanEl.createSpan({
                 text: 'Up to date',
@@ -447,6 +545,39 @@ export class StatusPanelView extends ItemView {
                 attr: { 'aria-label': 'Repository is clean and up to date' }
             });
         }
+    }
+
+    /**
+     * Format error message for display
+     * Provides user-friendly error messages instead of raw git output
+     * @param error - The error message to format
+     * @returns Formatted user-friendly error message
+     */
+    private formatErrorMessage(error: string): string {
+        // Check for common error patterns and provide clearer messages
+        if (error.includes('Authentication failed') || error.includes('auth')) {
+            return 'Authentication error';
+        }
+        if (error.includes('Could not resolve host') || error.includes('network')) {
+            return 'Network error';
+        }
+        if (error.includes('Permission denied')) {
+            return 'Permission denied';
+        }
+        if (error.includes('not a git repository')) {
+            return 'Not a git repository';
+        }
+        if (error.includes('timeout')) {
+            return 'Connection timeout';
+        }
+
+        // If message is short enough, show it directly
+        if (error.length <= 50) {
+            return error;
+        }
+
+        // Otherwise, show truncated version
+        return error.substring(0, 47) + '...';
     }
 
     /**
