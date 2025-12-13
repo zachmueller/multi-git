@@ -814,4 +814,617 @@ describe('GitCommandService', () => {
             });
         });
     });
+
+    describe('FR-3: Commit and Push Operations', () => {
+        let commitRepoPath: string;
+
+        beforeAll(async () => {
+            // Create a separate test repository for commit operations
+            const tmpDir = os.tmpdir();
+            commitRepoPath = path.join(tmpDir, `commit-repo-${Date.now()}`);
+
+            fs.mkdirSync(commitRepoPath, { recursive: true });
+            await execPromise('git init', { cwd: commitRepoPath });
+            await execPromise('git config user.email "test@example.com"', { cwd: commitRepoPath });
+            await execPromise('git config user.name "Test User"', { cwd: commitRepoPath });
+
+            // Create initial commit
+            fs.writeFileSync(path.join(commitRepoPath, 'README.md'), '# Test Repository');
+            await execPromise('git add README.md', { cwd: commitRepoPath });
+            await execPromise('git commit -m "Initial commit"', { cwd: commitRepoPath });
+        });
+
+        afterAll(async () => {
+            try {
+                fs.rmSync(commitRepoPath, { recursive: true, force: true });
+            } catch (error) {
+                // Ignore cleanup errors
+            }
+        });
+
+        describe('getRepositoryStatus', () => {
+            it('should return status with no changes when repository is clean', async () => {
+                const status = await service.getRepositoryStatus(
+                    commitRepoPath,
+                    'test-repo-id',
+                    'Test Repository'
+                );
+
+                expect(status.repositoryId).toBe('test-repo-id');
+                expect(status.repositoryName).toBe('Test Repository');
+                expect(status.repositoryPath).toBe(commitRepoPath);
+                expect(status.currentBranch).toMatch(/^(main|master)$/);
+                expect(status.hasUncommittedChanges).toBe(false);
+                expect(status.stagedFiles).toEqual([]);
+                expect(status.unstagedFiles).toEqual([]);
+                expect(status.untrackedFiles).toEqual([]);
+            });
+
+            it('should detect unstaged changes', async () => {
+                // Modify existing file
+                fs.writeFileSync(path.join(commitRepoPath, 'README.md'), '# Modified');
+
+                const status = await service.getRepositoryStatus(
+                    commitRepoPath,
+                    'test-repo-id',
+                    'Test Repository'
+                );
+
+                expect(status.hasUncommittedChanges).toBe(true);
+                expect(status.unstagedFiles).toContain('README.md');
+                expect(status.stagedFiles).toEqual([]);
+
+                // Clean up
+                await execPromise('git checkout README.md', { cwd: commitRepoPath });
+            });
+
+            it('should detect staged changes', async () => {
+                // Create and stage new file
+                fs.writeFileSync(path.join(commitRepoPath, 'new-file.txt'), 'content');
+                await execPromise('git add new-file.txt', { cwd: commitRepoPath });
+
+                const status = await service.getRepositoryStatus(
+                    commitRepoPath,
+                    'test-repo-id',
+                    'Test Repository'
+                );
+
+                expect(status.hasUncommittedChanges).toBe(true);
+                expect(status.stagedFiles).toContain('new-file.txt');
+                expect(status.unstagedFiles).toEqual([]);
+
+                // Clean up
+                await execPromise('git reset HEAD new-file.txt', { cwd: commitRepoPath });
+                fs.unlinkSync(path.join(commitRepoPath, 'new-file.txt'));
+            });
+
+            it('should detect untracked files', async () => {
+                // Create untracked file
+                fs.writeFileSync(path.join(commitRepoPath, 'untracked.txt'), 'content');
+
+                const status = await service.getRepositoryStatus(
+                    commitRepoPath,
+                    'test-repo-id',
+                    'Test Repository'
+                );
+
+                expect(status.hasUncommittedChanges).toBe(true);
+                expect(status.untrackedFiles).toContain('untracked.txt');
+                expect(status.stagedFiles).toEqual([]);
+                expect(status.unstagedFiles).toEqual([]);
+
+                // Clean up
+                fs.unlinkSync(path.join(commitRepoPath, 'untracked.txt'));
+            });
+
+            it('should detect mix of staged, unstaged, and untracked files', async () => {
+                // Create various file states
+                fs.writeFileSync(path.join(commitRepoPath, 'staged.txt'), 'staged content');
+                await execPromise('git add staged.txt', { cwd: commitRepoPath });
+
+                fs.writeFileSync(path.join(commitRepoPath, 'README.md'), '# Modified unstaged');
+
+                fs.writeFileSync(path.join(commitRepoPath, 'untracked.txt'), 'untracked content');
+
+                const status = await service.getRepositoryStatus(
+                    commitRepoPath,
+                    'test-repo-id',
+                    'Test Repository'
+                );
+
+                expect(status.hasUncommittedChanges).toBe(true);
+                expect(status.stagedFiles).toContain('staged.txt');
+                expect(status.unstagedFiles).toContain('README.md');
+                expect(status.untrackedFiles).toContain('untracked.txt');
+
+                // Clean up
+                await execPromise('git reset HEAD staged.txt', { cwd: commitRepoPath });
+                fs.unlinkSync(path.join(commitRepoPath, 'staged.txt'));
+                await execPromise('git checkout README.md', { cwd: commitRepoPath });
+                fs.unlinkSync(path.join(commitRepoPath, 'untracked.txt'));
+            });
+
+            it('should handle deleted files', async () => {
+                // Create and commit a file
+                fs.writeFileSync(path.join(commitRepoPath, 'to-delete.txt'), 'content');
+                await execPromise('git add to-delete.txt', { cwd: commitRepoPath });
+                await execPromise('git commit -m "Add file to delete"', { cwd: commitRepoPath });
+
+                // Delete the file
+                fs.unlinkSync(path.join(commitRepoPath, 'to-delete.txt'));
+
+                const status = await service.getRepositoryStatus(
+                    commitRepoPath,
+                    'test-repo-id',
+                    'Test Repository'
+                );
+
+                expect(status.hasUncommittedChanges).toBe(true);
+                expect(status.unstagedFiles).toContain('to-delete.txt');
+
+                // Clean up
+                await execPromise('git checkout to-delete.txt', { cwd: commitRepoPath });
+                await execPromise('git rm to-delete.txt', { cwd: commitRepoPath });
+                await execPromise('git commit -m "Remove test file"', { cwd: commitRepoPath });
+            });
+
+            it('should return null branch for detached HEAD', async () => {
+                // Get current commit hash
+                const { stdout: commitHash } = await execPromise('git rev-parse HEAD', { cwd: commitRepoPath });
+
+                // Checkout detached HEAD
+                await execPromise(`git checkout ${commitHash.trim()}`, { cwd: commitRepoPath });
+
+                const status = await service.getRepositoryStatus(
+                    commitRepoPath,
+                    'test-repo-id',
+                    'Test Repository'
+                );
+
+                expect(status.currentBranch).toBeNull();
+
+                // Return to main branch
+                await execPromise('git checkout main || git checkout master', { cwd: commitRepoPath });
+            });
+
+            it('should throw GitStatusError for non-git directory', async () => {
+                const { GitStatusError } = await import('../../src/utils/errors');
+                await expect(
+                    service.getRepositoryStatus(nonGitPath, 'test-id', 'Test')
+                ).rejects.toThrow(GitStatusError);
+            });
+
+            it('should throw GitStatusError for non-existent path', async () => {
+                const { GitStatusError } = await import('../../src/utils/errors');
+                const invalidPath = path.join(os.tmpdir(), 'non-existent-path-99999');
+                await expect(
+                    service.getRepositoryStatus(invalidPath, 'test-id', 'Test')
+                ).rejects.toThrow(GitStatusError);
+            });
+        });
+
+        describe('stageAllChanges', () => {
+            it('should stage all changes successfully', async () => {
+                // Create multiple files
+                fs.writeFileSync(path.join(commitRepoPath, 'file1.txt'), 'content 1');
+                fs.writeFileSync(path.join(commitRepoPath, 'file2.txt'), 'content 2');
+                fs.writeFileSync(path.join(commitRepoPath, 'README.md'), '# Modified');
+
+                await service.stageAllChanges(commitRepoPath);
+
+                // Verify all files are staged
+                const { stdout } = await execPromise('git diff --name-only --cached', { cwd: commitRepoPath });
+                const stagedFiles = stdout.trim().split('\n').filter(f => f);
+
+                expect(stagedFiles).toContain('file1.txt');
+                expect(stagedFiles).toContain('file2.txt');
+                expect(stagedFiles).toContain('README.md');
+
+                // Clean up
+                await execPromise('git reset HEAD', { cwd: commitRepoPath });
+                fs.unlinkSync(path.join(commitRepoPath, 'file1.txt'));
+                fs.unlinkSync(path.join(commitRepoPath, 'file2.txt'));
+                await execPromise('git checkout README.md', { cwd: commitRepoPath });
+            });
+
+            it('should handle files with special characters in names', async () => {
+                // Create files with special characters
+                const specialFiles = [
+                    'file with spaces.txt',
+                    'file-with-dashes.txt',
+                    'file_with_underscores.txt',
+                    'file.multiple.dots.txt',
+                ];
+
+                for (const filename of specialFiles) {
+                    fs.writeFileSync(path.join(commitRepoPath, filename), 'content');
+                }
+
+                await service.stageAllChanges(commitRepoPath);
+
+                // Verify all files are staged
+                const { stdout } = await execPromise('git diff --name-only --cached', { cwd: commitRepoPath });
+                const stagedFiles = stdout.trim().split('\n').filter(f => f);
+
+                for (const filename of specialFiles) {
+                    expect(stagedFiles).toContain(filename);
+                }
+
+                // Clean up
+                await execPromise('git reset HEAD', { cwd: commitRepoPath });
+                for (const filename of specialFiles) {
+                    fs.unlinkSync(path.join(commitRepoPath, filename));
+                }
+            });
+
+            it('should succeed when there are no changes', async () => {
+                // Should not throw when repository is clean
+                await expect(service.stageAllChanges(commitRepoPath)).resolves.not.toThrow();
+            });
+
+            it('should throw GitRepositoryError for non-git directory', async () => {
+                await expect(service.stageAllChanges(nonGitPath)).rejects.toThrow(GitRepositoryError);
+            });
+
+            it('should throw GitRepositoryError for non-existent path', async () => {
+                const invalidPath = path.join(os.tmpdir(), 'non-existent-path-88888');
+                await expect(service.stageAllChanges(invalidPath)).rejects.toThrow(GitRepositoryError);
+            });
+        });
+
+        describe('createCommit', () => {
+            it('should create commit with simple message', async () => {
+                // Create and stage a file
+                fs.writeFileSync(path.join(commitRepoPath, 'test-commit.txt'), 'content');
+                await execPromise('git add test-commit.txt', { cwd: commitRepoPath });
+
+                await service.createCommit(commitRepoPath, 'Test commit message');
+
+                // Verify commit was created
+                const { stdout } = await execPromise('git log -1 --pretty=%B', { cwd: commitRepoPath });
+                expect(stdout.trim()).toBe('Test commit message');
+            });
+
+            it('should handle commit messages with quotes', async () => {
+                // Create and stage a file
+                fs.writeFileSync(path.join(commitRepoPath, 'quote-test.txt'), 'content');
+                await execPromise('git add quote-test.txt', { cwd: commitRepoPath });
+
+                const message = 'Test commit with "quotes" in it';
+                await service.createCommit(commitRepoPath, message);
+
+                // Verify commit message preserved quotes
+                const { stdout } = await execPromise('git log -1 --pretty=%B', { cwd: commitRepoPath });
+                expect(stdout.trim()).toBe(message);
+            });
+
+            it('should handle multiline commit messages', async () => {
+                // Create and stage a file
+                fs.writeFileSync(path.join(commitRepoPath, 'multiline-test.txt'), 'content');
+                await execPromise('git add multiline-test.txt', { cwd: commitRepoPath });
+
+                const message = 'First line\n\nSecond line with details';
+                await service.createCommit(commitRepoPath, message);
+
+                // Verify multiline message
+                const { stdout } = await execPromise('git log -1 --pretty=%B', { cwd: commitRepoPath });
+                expect(stdout.trim()).toContain('First line');
+                expect(stdout.trim()).toContain('Second line with details');
+            });
+
+            it('should handle commit messages with special characters', async () => {
+                // Create and stage a file
+                fs.writeFileSync(path.join(commitRepoPath, 'special-test.txt'), 'content');
+                await execPromise('git add special-test.txt', { cwd: commitRepoPath });
+
+                const message = 'Update: Fix bug #123 & improve performance (10%)';
+                await service.createCommit(commitRepoPath, message);
+
+                // Verify message with special characters
+                const { stdout } = await execPromise('git log -1 --pretty=%B', { cwd: commitRepoPath });
+                expect(stdout.trim()).toBe(message);
+            });
+
+            it('should throw GitCommitError for empty message', async () => {
+                const { GitCommitError } = await import('../../src/utils/errors');
+
+                await expect(service.createCommit(commitRepoPath, '')).rejects.toThrow(GitCommitError);
+                await expect(service.createCommit(commitRepoPath, '   ')).rejects.toThrow(GitCommitError);
+            });
+
+            it('should throw GitCommitError when nothing to commit', async () => {
+                const { GitCommitError } = await import('../../src/utils/errors');
+
+                // Repository is clean, no changes to commit
+                await expect(
+                    service.createCommit(commitRepoPath, 'Nothing to commit')
+                ).rejects.toThrow(GitCommitError);
+            });
+
+            it('should throw GitCommitError for non-git directory', async () => {
+                const { GitCommitError } = await import('../../src/utils/errors');
+                await expect(
+                    service.createCommit(nonGitPath, 'Test message')
+                ).rejects.toThrow(GitCommitError);
+            });
+        });
+
+        describe('pushToRemote', () => {
+            let pushRepoPath: string;
+            let bareRepoPath: string;
+
+            beforeAll(async () => {
+                // Create a bare repository to push to
+                const tmpDir = os.tmpdir();
+                bareRepoPath = path.join(tmpDir, `bare-repo-${Date.now()}`);
+                pushRepoPath = path.join(tmpDir, `push-repo-${Date.now()}`);
+
+                // Initialize bare repository
+                fs.mkdirSync(bareRepoPath, { recursive: true });
+                await execPromise('git init --bare', { cwd: bareRepoPath });
+
+                // Clone bare repository
+                await execPromise(`git clone "${bareRepoPath}" "${pushRepoPath}"`);
+                await execPromise('git config user.email "test@example.com"', { cwd: pushRepoPath });
+                await execPromise('git config user.name "Test User"', { cwd: pushRepoPath });
+
+                // Create initial commit
+                fs.writeFileSync(path.join(pushRepoPath, 'README.md'), '# Push Test');
+                await execPromise('git add README.md', { cwd: pushRepoPath });
+                await execPromise('git commit -m "Initial commit"', { cwd: pushRepoPath });
+                await execPromise('git push -u origin main || git push -u origin master', { cwd: pushRepoPath });
+            });
+
+            afterAll(async () => {
+                try {
+                    fs.rmSync(pushRepoPath, { recursive: true, force: true });
+                    fs.rmSync(bareRepoPath, { recursive: true, force: true });
+                } catch (error) {
+                    // Ignore cleanup errors
+                }
+            });
+
+            it('should push commits successfully', async () => {
+                // Create a commit
+                fs.writeFileSync(path.join(pushRepoPath, 'push-test.txt'), 'content');
+                await execPromise('git add push-test.txt', { cwd: pushRepoPath });
+                await execPromise('git commit -m "Test push"', { cwd: pushRepoPath });
+
+                // Push using service
+                await service.pushToRemote(pushRepoPath);
+
+                // Verify push succeeded by checking remote
+                const { stdout: localCommit } = await execPromise('git rev-parse HEAD', { cwd: pushRepoPath });
+                const { stdout: remoteCommit } = await execPromise('git rev-parse main || git rev-parse master', { cwd: bareRepoPath });
+
+                expect(localCommit.trim()).toBe(remoteCommit.trim());
+            });
+
+            it('should respect custom timeout', async () => {
+                // Create another commit
+                fs.writeFileSync(path.join(pushRepoPath, 'timeout-test.txt'), 'content');
+                await execPromise('git add timeout-test.txt', { cwd: pushRepoPath });
+                await execPromise('git commit -m "Timeout test"', { cwd: pushRepoPath });
+
+                // Push with custom timeout
+                await service.pushToRemote(pushRepoPath, 120000);
+
+                // Verify push succeeded
+                const { stdout: localCommit } = await execPromise('git rev-parse HEAD', { cwd: pushRepoPath });
+                const { stdout: remoteCommit } = await execPromise('git rev-parse main || git rev-parse master', { cwd: bareRepoPath });
+
+                expect(localCommit.trim()).toBe(remoteCommit.trim());
+            });
+
+            it('should succeed when nothing to push', async () => {
+                // No new commits, push should still succeed
+                await expect(service.pushToRemote(pushRepoPath)).resolves.not.toThrow();
+            });
+
+            it('should throw GitPushError when no upstream branch configured', async () => {
+                const { GitPushError } = await import('../../src/utils/errors');
+
+                // Create a new branch without upstream
+                await execPromise('git checkout -b no-upstream-branch', { cwd: pushRepoPath });
+                fs.writeFileSync(path.join(pushRepoPath, 'no-upstream.txt'), 'content');
+                await execPromise('git add no-upstream.txt', { cwd: pushRepoPath });
+                await execPromise('git commit -m "No upstream commit"', { cwd: pushRepoPath });
+
+                await expect(service.pushToRemote(pushRepoPath)).rejects.toThrow(GitPushError);
+
+                // Clean up
+                await execPromise('git checkout main || git checkout master', { cwd: pushRepoPath });
+                await execPromise('git branch -D no-upstream-branch', { cwd: pushRepoPath });
+            });
+
+            it('should throw GitPushError for non-git directory', async () => {
+                const { GitPushError } = await import('../../src/utils/errors');
+                await expect(service.pushToRemote(nonGitPath)).rejects.toThrow(GitPushError);
+            });
+        });
+
+        describe('commitAndPush', () => {
+            let cpRepoPath: string;
+            let cpBareRepoPath: string;
+
+            beforeAll(async () => {
+                // Create a bare repository and clone it
+                const tmpDir = os.tmpdir();
+                cpBareRepoPath = path.join(tmpDir, `cp-bare-repo-${Date.now()}`);
+                cpRepoPath = path.join(tmpDir, `cp-repo-${Date.now()}`);
+
+                fs.mkdirSync(cpBareRepoPath, { recursive: true });
+                await execPromise('git init --bare', { cwd: cpBareRepoPath });
+
+                await execPromise(`git clone "${cpBareRepoPath}" "${cpRepoPath}"`);
+                await execPromise('git config user.email "test@example.com"', { cwd: cpRepoPath });
+                await execPromise('git config user.name "Test User"', { cwd: cpRepoPath });
+
+                // Create initial commit
+                fs.writeFileSync(path.join(cpRepoPath, 'README.md'), '# Test');
+                await execPromise('git add README.md', { cwd: cpRepoPath });
+                await execPromise('git commit -m "Initial commit"', { cwd: cpRepoPath });
+                await execPromise('git push -u origin main || git push -u origin master', { cwd: cpRepoPath });
+            });
+
+            afterAll(async () => {
+                try {
+                    fs.rmSync(cpRepoPath, { recursive: true, force: true });
+                    fs.rmSync(cpBareRepoPath, { recursive: true, force: true });
+                } catch (error) {
+                    // Ignore cleanup errors
+                }
+            });
+
+            it('should successfully commit and push changes', async () => {
+                // Create changes
+                fs.writeFileSync(path.join(cpRepoPath, 'file1.txt'), 'content 1');
+                fs.writeFileSync(path.join(cpRepoPath, 'file2.txt'), 'content 2');
+                fs.writeFileSync(path.join(cpRepoPath, 'README.md'), '# Modified');
+
+                // Execute commit and push
+                await service.commitAndPush(cpRepoPath, 'Test commit and push');
+
+                // Verify commit was created
+                const { stdout: commitMsg } = await execPromise('git log -1 --pretty=%B', { cwd: cpRepoPath });
+                expect(commitMsg.trim()).toBe('Test commit and push');
+
+                // Verify push succeeded
+                const { stdout: localCommit } = await execPromise('git rev-parse HEAD', { cwd: cpRepoPath });
+                const { stdout: remoteCommit } = await execPromise(
+                    'git rev-parse main || git rev-parse master',
+                    { cwd: cpBareRepoPath }
+                );
+                expect(localCommit.trim()).toBe(remoteCommit.trim());
+            });
+
+            it('should handle custom push timeout', async () => {
+                // Create changes
+                fs.writeFileSync(path.join(cpRepoPath, 'timeout-file.txt'), 'content');
+
+                await service.commitAndPush(cpRepoPath, 'Test with timeout', 120000);
+
+                // Verify success
+                const { stdout: commitMsg } = await execPromise('git log -1 --pretty=%B', { cwd: cpRepoPath });
+                expect(commitMsg.trim()).toBe('Test with timeout');
+            });
+
+            it('should stop on staging error', async () => {
+                // This would require permission errors which are hard to test reliably
+                // Testing via non-git directory instead
+                await expect(
+                    service.commitAndPush(nonGitPath, 'Test message')
+                ).rejects.toThrow(GitRepositoryError);
+            });
+
+            it('should stop on commit error when empty message', async () => {
+                const { GitCommitError } = await import('../../src/utils/errors');
+
+                // Create changes but use empty message
+                fs.writeFileSync(path.join(cpRepoPath, 'empty-msg-test.txt'), 'content');
+
+                await expect(
+                    service.commitAndPush(cpRepoPath, '')
+                ).rejects.toThrow(GitCommitError);
+
+                // Clean up
+                fs.unlinkSync(path.join(cpRepoPath, 'empty-msg-test.txt'));
+            });
+
+            it('should stop on commit error when nothing to commit', async () => {
+                const { GitCommitError } = await import('../../src/utils/errors');
+
+                // No changes, commit should fail
+                await expect(
+                    service.commitAndPush(cpRepoPath, 'Nothing to commit')
+                ).rejects.toThrow(GitCommitError);
+            });
+
+            it('should stop on push error when no upstream configured', async () => {
+                const { GitPushError } = await import('../../src/utils/errors');
+
+                // Create branch without upstream
+                await execPromise('git checkout -b no-upstream-test', { cwd: cpRepoPath });
+                fs.writeFileSync(path.join(cpRepoPath, 'no-upstream-file.txt'), 'content');
+
+                // This should fail at push step
+                await expect(
+                    service.commitAndPush(cpRepoPath, 'Test no upstream')
+                ).rejects.toThrow(GitPushError);
+
+                // Clean up
+                await execPromise('git checkout main || git checkout master', { cwd: cpRepoPath });
+                await execPromise('git branch -D no-upstream-test', { cwd: cpRepoPath });
+            });
+
+            it('should properly sequence operations', async () => {
+                // Create changes
+                fs.writeFileSync(path.join(cpRepoPath, 'sequence-test.txt'), 'content');
+
+                // Execute full workflow
+                await service.commitAndPush(cpRepoPath, 'Test operation sequence');
+
+                // Verify the file is in the remote repository
+                const { stdout: remoteFiles } = await execPromise(
+                    'git ls-tree --name-only main || git ls-tree --name-only master',
+                    { cwd: cpBareRepoPath }
+                );
+
+                expect(remoteFiles).toContain('sequence-test.txt');
+            });
+        });
+
+        describe('New Error Classes', () => {
+            it('should create GitStatusError with correct properties', async () => {
+                const { GitStatusError } = await import('../../src/utils/errors');
+
+                const error = new GitStatusError('Test error message', '/test/path');
+
+                expect(error).toBeInstanceOf(Error);
+                expect(error.name).toBe('GitStatusError');
+                expect(error.message).toBe('Test error message');
+                expect(error.repositoryPath).toBe('/test/path');
+            });
+
+            it('should create GitCommitError with correct properties', async () => {
+                const { GitCommitError } = await import('../../src/utils/errors');
+
+                const error = new GitCommitError('Commit failed', '/test/path');
+
+                expect(error).toBeInstanceOf(Error);
+                expect(error.name).toBe('GitCommitError');
+                expect(error.message).toBe('Commit failed');
+                expect(error.repositoryPath).toBe('/test/path');
+            });
+
+            it('should create GitPushError with correct properties', async () => {
+                const { GitPushError } = await import('../../src/utils/errors');
+
+                const error = new GitPushError('Push failed', '/test/path');
+
+                expect(error).toBeInstanceOf(Error);
+                expect(error.name).toBe('GitPushError');
+                expect(error.message).toBe('Push failed');
+                expect(error.repositoryPath).toBe('/test/path');
+            });
+
+            it('should preserve error cause chain for GitCommitError', async () => {
+                const { GitCommitError } = await import('../../src/utils/errors');
+
+                const originalError = new Error('Original error');
+                const error = new GitCommitError('Wrapped error', '/test/path', originalError);
+
+                expect(error.cause).toBe(originalError);
+            });
+
+            it('should preserve error cause chain for GitPushError', async () => {
+                const { GitPushError } = await import('../../src/utils/errors');
+
+                const originalError = new Error('Network error');
+                const error = new GitPushError('Push failed due to network', '/test/path', originalError);
+
+                expect(error.cause).toBe(originalError);
+            });
+        });
+    });
 });

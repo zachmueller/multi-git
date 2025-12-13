@@ -13,16 +13,16 @@
 - [x] Categorize files into staged/unstaged/untracked arrays
 - [x] Get current branch name using getCurrentBranch()
 - [x] Handle edge cases (empty repo, detached HEAD, etc.)
-- [ ] Write unit tests for getRepositoryStatus()
-- [ ] Write integration tests with real git repo
+- [x] Write unit tests for getRepositoryStatus()
+- [x] Write integration tests with real git repo
 
 ### Add stageAllChanges() Method
 - [x] Implement stageAllChanges() method
 - [x] Execute `git add -A` command
 - [x] Handle permission errors
 - [x] Handle non-git directory errors
-- [ ] Write unit tests for stageAllChanges()
-- [ ] Test with files containing special characters
+- [x] Write unit tests for stageAllChanges()
+- [x] Test with files containing special characters
 
 ### Add createCommit() Method
 - [x] Implement createCommit() method
@@ -31,8 +31,8 @@
 - [x] Handle "nothing to commit" scenarios
 - [x] Handle pre-commit hook failures
 - [x] Capture and return hook output on failure
-- [ ] Write unit tests for createCommit()
-- [ ] Test with various commit message formats
+- [x] Write unit tests for createCommit()
+- [x] Test with various commit message formats
 
 ### Add pushToRemote() Method
 - [x] Implement pushToRemote() method
@@ -42,8 +42,8 @@
 - [x] Handle network errors
 - [x] Handle "no upstream branch" errors
 - [x] Handle pre-push hook failures
-- [ ] Write unit tests for pushToRemote()
-- [ ] Test timeout behavior
+- [x] Write unit tests for pushToRemote()
+- [x] Test timeout behavior
 
 ### Add commitAndPush() Method
 - [x] Implement commitAndPush() orchestration method
@@ -51,16 +51,16 @@
 - [x] Call createCommit()
 - [x] Call pushToRemote()
 - [x] Stop on first error with clear context
-- [ ] Write unit tests for commitAndPush()
-- [ ] Test error handling at each step
-- [ ] Test end-to-end success scenario
+- [x] Write unit tests for commitAndPush()
+- [x] Test error handling at each step
+- [x] Test end-to-end success scenario
 
 ### Add New Error Classes
 - [x] Create GitCommitError in errors.ts
 - [x] Create GitPushError in errors.ts
 - [x] Create GitStatusError in errors.ts
 - [x] Add appropriate error codes
-- [ ] Write unit tests for new error classes
+- [x] Write unit tests for new error classes
 
 ## Phase 3: Commit Message Generation
 
@@ -81,6 +81,20 @@
 - [x] Handle edge case: very long file names (truncate)
 - [x] Write unit tests for each suggestion rule
 - [x] Test with various real-world scenarios
+
+### Write Phase 2 Unit and Integration Tests
+- [x] Write unit tests for getRepositoryStatus()
+- [x] Write integration tests with real git repo for getRepositoryStatus()
+- [x] Write unit tests for stageAllChanges()
+- [x] Test stageAllChanges() with files containing special characters
+- [x] Write unit tests for createCommit()
+- [x] Test createCommit() with various commit message formats
+- [x] Write unit tests for pushToRemote()
+- [x] Test pushToRemote() timeout behavior
+- [x] Write unit tests for commitAndPush()
+- [x] Test commitAndPush() error handling at each step
+- [x] Test commitAndPush() end-to-end success scenario
+- [x] Write unit tests for new error classes (GitStatusError, GitCommitError, GitPushError)
 
 ## Phase 4: Repository Picker Modal
 
@@ -308,11 +322,11 @@
 
 ## Progress Tracking
 
-- [ ] Phase 2: GitCommandService Extensions (25/33 tasks - 76% complete, tests pending)
+- [x] Phase 2: GitCommandService Extensions (33/33 tasks - 100% complete)
 - [x] Phase 3: Commit Message Generation (16/16 tasks - 100% complete)
 - [ ] Phase 4: Repository Picker Modal (0/20 tasks)
 - [ ] Phase 5: Commit Message Modal (0/30 tasks)
 - [ ] Phase 6: Command Registration & Orchestration (0/21 tasks)
 - [ ] Phase 7: Documentation & Finalization (0/28 tasks)
 
-**Overall Progress:** 41/148 tasks complete (28%)
+**Overall Progress:** 61/148 tasks complete (41%)
