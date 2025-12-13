@@ -486,3 +486,283 @@ button:disabled {
         gap: 0.3em;
     }
 }
+
+/* FR-4: Status Panel Styles */
+
+/* Status panel container */
+.multi-git-status-panel {
+    padding: 1em;
+    height: 100%;
+    overflow-y: auto;
+}
+
+/* Status panel header */
+.multi-git-status-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 1.5em;
+    padding-bottom: 1em;
+    border-bottom: 1px solid var(--background-modifier-border);
+}
+
+.multi-git-status-title-container {
+    flex: 1;
+}
+
+.multi-git-status-title {
+    margin: 0 0 0.3em 0;
+    font-size: 1.2em;
+    font-weight: 600;
+    color: var(--text-normal);
+}
+
+.multi-git-status-last-refresh {
+    display: block;
+    font-size: 0.8em;
+    color: var(--text-faint);
+    font-weight: normal;
+}
+
+.multi-git-status-refresh-button {
+    background: var(--background-secondary);
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 4px;
+    padding: 0.5em;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-muted);
+}
+
+.multi-git-status-refresh-button:hover {
+    background: var(--background-secondary-alt);
+    border-color: var(--interactive-accent);
+    color: var(--text-normal);
+}
+
+.multi-git-status-refresh-button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.multi-git-status-refresh-button svg {
+    width: 16px;
+    height: 16px;
+}
+
+/* Loading state */
+.multi-git-loading {
+    text-align: center;
+    padding: 2em 1em;
+    color: var(--text-muted);
+}
+
+.multi-git-loading p {
+    margin: 0;
+}
+
+/* Empty state (already defined above, adding FR-4 specific) */
+.multi-git-empty-state-hint {
+    font-size: 0.9em;
+    color: var(--text-faint);
+    margin-top: 0.5em;
+}
+
+/* Repository list in status panel */
+.multi-git-repository-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1em;
+}
+
+/* Repository item card */
+.multi-git-repository-item {
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 6px;
+    padding: 1em;
+    background: var(--background-secondary);
+    transition: all 0.15s ease;
+}
+
+.multi-git-repository-item:hover {
+    background: var(--background-secondary-alt);
+    border-color: var(--interactive-accent);
+}
+
+/* Repository header (name) */
+.multi-git-repo-header {
+    margin-bottom: 0.75em;
+}
+
+.multi-git-repo-name {
+    margin: 0;
+    font-size: 1em;
+    font-weight: 600;
+    color: var(--text-normal);
+}
+
+/* Branch information */
+.multi-git-repo-branch {
+    display: flex;
+    align-items: center;
+    gap: 0.5em;
+    margin-bottom: 0.75em;
+    padding-bottom: 0.75em;
+    border-bottom: 1px solid var(--background-modifier-border);
+}
+
+.multi-git-branch-icon {
+    display: flex;
+    align-items: center;
+    color: var(--text-muted);
+}
+
+.multi-git-branch-icon svg {
+    width: 14px;
+    height: 14px;
+}
+
+.multi-git-branch-name {
+    font-family: var(--font-monospace);
+    font-size: 0.9em;
+    color: var(--text-normal);
+}
+
+.multi-git-branch-name.multi-git-detached {
+    color: var(--text-muted);
+    font-style: italic;
+}
+
+/* Status indicators container */
+.multi-git-repo-status {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5em;
+}
+
+/* Individual status indicator */
+.multi-git-status-indicator {
+    display: flex;
+    align-items: center;
+    gap: 0.5em;
+    font-size: 0.9em;
+}
+
+.multi-git-status-icon {
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
+}
+
+.multi-git-status-icon svg {
+    width: 14px;
+    height: 14px;
+}
+
+.multi-git-status-text {
+    flex: 1;
+}
+
+/* Error status */
+.multi-git-status-indicator.multi-git-error {
+    color: var(--text-error);
+}
+
+.multi-git-status-indicator.multi-git-error .multi-git-status-icon {
+    color: var(--text-error);
+}
+
+/* Uncommitted changes status */
+.multi-git-status-indicator.multi-git-uncommitted {
+    color: var(--color-orange);
+}
+
+.multi-git-status-indicator.multi-git-uncommitted .multi-git-status-icon {
+    color: var(--color-orange);
+}
+
+/* Unpushed commits status */
+.multi-git-status-indicator.multi-git-unpushed {
+    color: var(--text-accent);
+}
+
+.multi-git-status-indicator.multi-git-unpushed .multi-git-status-icon {
+    color: var(--text-accent);
+}
+
+/* Remote changes status */
+.multi-git-status-indicator.multi-git-remote-changes {
+    color: var(--color-cyan);
+}
+
+.multi-git-status-indicator.multi-git-remote-changes .multi-git-status-icon {
+    color: var(--color-cyan);
+}
+
+/* Clean status (all up to date) */
+.multi-git-status-indicator.multi-git-clean {
+    color: var(--color-green);
+}
+
+.multi-git-status-indicator.multi-git-clean .multi-git-status-icon {
+    color: var(--color-green);
+}
+
+/* Responsive adjustments for status panel */
+@media (max-width: 400px) {
+    .multi-git-status-panel {
+        padding: 0.75em;
+    }
+
+    .multi-git-status-header {
+        flex-direction: column;
+        gap: 0.75em;
+    }
+
+    .multi-git-status-refresh-button {
+        width: 100%;
+    }
+
+    .multi-git-repository-item {
+        padding: 0.75em;
+    }
+
+    .multi-git-repo-status {
+        font-size: 0.85em;
+    }
+}
+
+/* Accessibility improvements for status panel */
+.multi-git-status-refresh-button:focus {
+    outline: 2px solid var(--interactive-accent);
+    outline-offset: 2px;
+}
+
+.multi-git-repository-item:focus-within {
+    outline: 2px solid var(--interactive-accent);
+    outline-offset: 2px;
+}
+
+/* Theme compatibility - ensure colors work in both light and dark modes */
+.theme-light .multi-git-status-indicator.multi-git-uncommitted {
+    color: #d97706;
+}
+
+.theme-light .multi-git-status-indicator.multi-git-unpushed {
+    color: #6366f1;
+}
+
+.theme-light .multi-git-status-indicator.multi-git-remote-changes {
+    color: #0891b2;
+}
+
+.theme-light .multi-git-status-indicator.multi-git-clean {
+    color: #059669;
+}
+
+.theme-light .multi-git-status-indicator.multi-git-error {
+    color: #dc2626;
+}

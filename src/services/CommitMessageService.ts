@@ -52,7 +52,7 @@ export class CommitMessageService {
         const analysis = this.analyzeChanges(status);
 
         // Handle empty repository (initial commit)
-        if (this.isInitialCommit(status, analysis)) {
+        if (this.isInitialCommit(analysis)) {
             return {
                 summary: 'Initial commit',
             };
@@ -146,11 +146,10 @@ export class CommitMessageService {
     /**
      * Check if this is an initial commit (empty repository)
      * 
-     * @param status - Repository status
      * @param analysis - File change analysis
      * @returns True if this is an initial commit
      */
-    private isInitialCommit(status: RepositoryStatus, analysis: FileChangeAnalysis): boolean {
+    private isInitialCommit(analysis: FileChangeAnalysis): boolean {
         // Initial commit if:
         // 1. All changes are additions (no modifications or deletions)
         // 2. Three or more files being added (suggests initial project setup)

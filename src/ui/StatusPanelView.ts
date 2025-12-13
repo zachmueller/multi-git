@@ -107,7 +107,7 @@ export class StatusPanelView extends ItemView {
         });
 
         // Add last refresh time display
-        const lastRefreshEl = titleContainer.createEl('span', {
+        titleContainer.createEl('span', {
             cls: 'multi-git-status-last-refresh',
             text: 'Never refreshed'
         });
@@ -232,14 +232,19 @@ export class StatusPanelView extends ItemView {
 
             Logger.debug('StatusPanel', `Refreshing status for ${repositories.length} repositories`);
 
-            // Refresh each repository (future: will call getExtendedRepositoryStatus)
-            // For now, use basic getRepositoryStatus
+            // Refresh each repository with extended status
             for (const repo of repositories) {
                 try {
-                    const status = await this.plugin.gitCommandService.getRepositoryStatus(
+                    // Get extended status including remote tracking info
+                    const status = await this.plugin.gitCommandService.getExtendedRepositoryStatus(
                         repo.path,
                         repo.id,
-                        repo.name
+                        repo.name,
+                        {
+                            lastFetchTime: repo.lastFetchTime,
+                            lastFetchStatus: repo.lastFetchStatus,
+                            lastFetchError: repo.lastFetchError
+                        }
                     );
 
                     this.state.statuses.set(repo.id, status);
@@ -282,11 +287,16 @@ export class StatusPanelView extends ItemView {
                 return;
             }
 
-            // Get updated status
-            const status = await this.plugin.gitCommandService.getRepositoryStatus(
+            // Get extended status including remote tracking info
+            const status = await this.plugin.gitCommandService.getExtendedRepositoryStatus(
                 repo.path,
                 repo.id,
-                repo.name
+                repo.name,
+                {
+                    lastFetchTime: repo.lastFetchTime,
+                    lastFetchStatus: repo.lastFetchStatus,
+                    lastFetchError: repo.lastFetchError
+                }
             );
 
             // Update cache
@@ -368,11 +378,23 @@ export class StatusPanelView extends ItemView {
         setIcon(branchIcon, 'git-branch');
         branchEl.createSpan({
             text: status.currentBranch || 'detached HEAD',
-            cls: 'multi-git-branch-name'
+            cls: status.currentBranch ? 'multi-git-branch-name' : 'multi-git-branch-name multi-git-detached'
         });
 
-        // Status indicators
+        // Status indicators container
         const statusEl = itemEl.createDiv({ cls: 'multi-git-repo-status' });
+
+        // Error state (highest priority)
+        if (status.fetchStatus === 'error' && status.lastFetchError) {
+            const errorEl = statusEl.createDiv({ cls: 'multi-git-status-indicator multi-git-error' });
+            const icon = errorEl.createSpan({ cls: 'multi-git-status-icon' });
+            setIcon(icon, 'alert-circle');
+            errorEl.createSpan({
+                text: 'Fetch error',
+                cls: 'multi-git-status-text',
+                attr: { 'aria-label': status.lastFetchError, 'title': status.lastFetchError }
+            });
+        }
 
         // Uncommitted changes
         if (status.hasUncommittedChanges) {
@@ -381,13 +403,50 @@ export class StatusPanelView extends ItemView {
             setIcon(icon, 'circle-dot');
             const totalChanges = status.stagedFiles.length + status.unstagedFiles.length + status.untrackedFiles.length;
             changesEl.createSpan({
-                text: `${totalChanges} uncommitted change${totalChanges !== 1 ? 's' : ''}`,
-                cls: 'multi-git-status-text'
+                text: `${totalChanges} uncommitted`,
+                cls: 'multi-git-status-text',
+                attr: { 'aria-label': `${totalChanges} uncommitted change${totalChanges !== 1 ? 's' : ''}` }
             });
         }
 
-        // Last commit message will be added in Phase 2 (DATA-001)
-        // when RepositoryStatus is extended with lastCommitMessage field
+        // Unpushed commits
+        if (status.unpushedCommits && status.unpushedCommits > 0) {
+            const unpushedEl = statusEl.createDiv({ cls: 'multi-git-status-indicator multi-git-unpushed' });
+            const icon = unpushedEl.createSpan({ cls: 'multi-git-status-icon' });
+            setIcon(icon, 'arrow-up');
+            unpushedEl.createSpan({
+                text: `${status.unpushedCommits} to push`,
+                cls: 'multi-git-status-text',
+                attr: { 'aria-label': `${status.unpushedCommits} commit${status.unpushedCommits !== 1 ? 's' : ''} to push` }
+            });
+        }
+
+        // Remote changes
+        if (status.remoteChanges && status.remoteChanges > 0) {
+            const remoteEl = statusEl.createDiv({ cls: 'multi-git-status-indicator multi-git-remote-changes' });
+            const icon = remoteEl.createSpan({ cls: 'multi-git-status-icon' });
+            setIcon(icon, 'arrow-down');
+            remoteEl.createSpan({
+                text: `${status.remoteChanges} to pull`,
+                cls: 'multi-git-status-text',
+                attr: { 'aria-label': `${status.remoteChanges} commit${status.remoteChanges !== 1 ? 's' : ''} available from remote` }
+            });
+        }
+
+        // If everything is clean and up to date, show a status message
+        if (!status.hasUncommittedChanges &&
+            (!status.unpushedCommits || status.unpushedCommits === 0) &&
+            (!status.remoteChanges || status.remoteChanges === 0) &&
+            status.fetchStatus !== 'error') {
+            const cleanEl = statusEl.createDiv({ cls: 'multi-git-status-indicator multi-git-clean' });
+            const icon = cleanEl.createSpan({ cls: 'multi-git-status-icon' });
+            setIcon(icon, 'check-circle');
+            cleanEl.createSpan({
+                text: 'Up to date',
+                cls: 'multi-git-status-text',
+                attr: { 'aria-label': 'Repository is clean and up to date' }
+            });
+        }
     }
 
     /**
@@ -412,19 +471,6 @@ export class StatusPanelView extends ItemView {
                 lastRefreshEl.textContent = `Updated ${minutes}m ago`;
             }
         }
-    }
-
-    /**
-     * Truncate long commit messages for display
-     * @param message - Full commit message
-     * @returns Truncated message
-     */
-    private truncateCommitMessage(message: string): string {
-        const maxLength = 60;
-        if (message.length <= maxLength) {
-            return message;
-        }
-        return message.substring(0, maxLength) + '...';
     }
 
     /**
