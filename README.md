@@ -14,7 +14,9 @@ A powerful Obsidian plugin for managing multiple git repositories from within yo
 - 🔔 **Smart Notifications** - Get notified only when remote changes require your attention
 - ⚡ **Manual Fetch** - Trigger immediate fetch for any repository with one click
 - 📊 **Fetch Status** - See last fetch time and remote change indicators for each repository
-- 🚀 **Hotkey-Driven Push** - Quickly commit and push changes with a single hotkey
+- � **Status Panel** - Dedicated sidebar panel showing all repository statuses at a glance
+- 🔄 **Real-Time Updates** - Status automatically refreshes every 30 seconds and after git operations
+- �🚀 **Hotkey-Driven Push** - Quickly commit and push changes with a single hotkey
 - 💬 **Smart Commit Messages** - Auto-generated commit message suggestions based on changed files
 - 📝 **Repository Picker** - Select from multiple repositories with uncommitted changes
 
@@ -389,14 +391,65 @@ The plugin provides a streamlined workflow for committing and pushing changes:
 [Success: "Successfully committed and pushed to my-project"]
 ```
 
+### Status Panel
+
+The plugin provides a dedicated status panel in the sidebar for at-a-glance repository monitoring:
+
+**Opening the Status Panel:**
+- Click the git branch icon (🔀) in the left ribbon, or
+- Use the "Toggle status panel" command (configure hotkey in settings), or
+- Use the command palette and search for "Multi-Git: Toggle status panel"
+
+**Panel Features:**
+- **Repository List** - All configured repositories shown with current status
+- **Real-Time Updates** - Status refreshes every 30 seconds automatically
+- **Manual Refresh** - Click refresh button to update immediately
+- **Status Indicators:**
+  - 🔴 Red dot - Uncommitted changes present
+  - ⬆️ Arrow up - Unpushed commits waiting to be pushed
+  - ⬇️ Arrow down - Remote changes available to pull
+  - ✅ Green check - Repository is clean and up-to-date
+  - ❌ Red X - Error fetching status (hover for details)
+- **Branch Information** - Current branch name displayed for each repository
+- **Last Refresh Time** - Timestamp shown in panel header
+
+**Keyboard Shortcuts:**
+
+Configure keyboard shortcuts in Settings → Hotkeys → Search "Multi-Git":
+
+| Command | Default | Description |
+|---------|---------|-------------|
+| **Commit and push changes** | Not set | Open commit workflow for repositories with changes |
+| **Toggle status panel** | Not set | Show/hide the status panel |
+| **Refresh repository status** | Not set | Manually refresh all repository statuses |
+
+**Recommended Hotkeys:**
+- Commit and push: `Cmd/Ctrl+Shift+P`
+- Toggle status panel: `Cmd/Ctrl+Shift+G`
+- Refresh status: `Cmd/Ctrl+Shift+R`
+
+**Status Panel Behavior:**
+- Opens in right sidebar by default
+- State persists across Obsidian restarts
+- Updates automatically after fetch, commit, and push operations
+- Shows loading indicator during refresh operations
+- Displays user-friendly error messages for failed operations
+
 ### Hotkey Configuration
 
 1. Open Obsidian Settings
 2. Navigate to **Hotkeys**
 3. Search for "Multi-Git"
-4. Find "Multi-Git: Commit and push changes"
-5. Click the + icon and press your desired key combination
-6. Recommended: Cmd/Ctrl+Shift+P (if not conflicting)
+4. Find commands:
+   - "Multi-Git: Commit and push changes"
+   - "Multi-Git: Toggle status panel"
+   - "Multi-Git: Refresh repository status"
+5. Click the + icon next to each command
+6. Press your desired key combination
+7. Recommended hotkeys:
+   - Commit and push: `Cmd/Ctrl+Shift+P` (if not conflicting)
+   - Toggle status panel: `Cmd/Ctrl+Shift+G`
+   - Refresh status: `Cmd/Ctrl+Shift+R`
 
 ### Commit Message Suggestions
 
@@ -543,14 +596,12 @@ multi-git/
 - ✅ Repository picker for multiple repos
 - ✅ Smart commit message generation
 - ✅ Comprehensive error handling
+- ✅ Repository status panel (FR-4)
+- ✅ Real-time status updates
+- ✅ Visual status indicators
+- ✅ Automatic 30-second polling
 
 ### Future Versions
-
-**v0.3.0 - Status Display (FR-4)**
-- Dedicated status panel
-- Repository status view
-- Real-time updates
-- Manual refresh
 
 **v0.4.0 - Enhanced Error Handling (FR-5)**
 - Modal dialogs for critical errors

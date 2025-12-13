@@ -109,7 +109,8 @@ multi-git/
 │   │   └── SettingTab.ts      # Settings UI
 │   ├── ui/                     # UI components
 │   │   ├── RepositoryPickerModal.ts
-│   │   └── CommitMessageModal.ts
+│   │   ├── CommitMessageModal.ts
+│   │   └── StatusPanelView.ts
 │   └── utils/                  # Utility functions
 │       ├── errors.ts          # Custom error classes
 │       ├── validation.ts      # Path validation
@@ -350,7 +351,67 @@ class NotificationService {
 └─────────────────────────────────┘
 ```
 
-### 9. Commit Message Modal (src/ui/CommitMessageModal.ts)
+### 9. Status Panel View (src/ui/StatusPanelView.ts)
+
+**Responsibilities:**
+- Display repository status in dedicated sidebar panel
+- Real-time status updates every 30 seconds
+- Show uncommitted changes, unpushed commits, remote changes
+- Provide manual refresh capability
+- Integrate with fetch completion events
+
+**Key Methods:**
+```typescript
+class StatusPanelView extends ItemView {
+    async onOpen(): Promise<void>
+    async onClose(): Promise<void>
+    async refreshAll(): Promise<void>
+    async refreshRepository(repoId: string): Promise<void>
+    private renderStatuses(): void
+    private renderRepositoryStatus(status: RepositoryStatus): HTMLElement
+    private startPolling(): void
+    private stopPolling(): void
+}
+```
+
+**Status Display:**
+- Repository name and current branch
+- Visual indicators for status:
+  - 🔴 Red dot - Uncommitted changes
+  - ⬆️ Arrow up - Unpushed commits
+  - ⬇️ Arrow down - Remote changes available
+  - ✅ Green check - Clean and up-to-date
+  - ❌ Red X - Error fetching status
+- Last refresh timestamp in header
+- Manual refresh button
+
+**Panel Behavior:**
+- Opens in right sidebar by default
+- Registered as Obsidian ItemView
+- Polling starts on open, stops on close
+- Updates automatically after fetch/commit/push operations
+- Debounces rapid refresh requests
+
+**UI Structure:**
+```
+┌─────────────────────────────────┐
+│ Multi-Git Status      [Refresh] │
+│ Last updated: 2m ago            │
+├─────────────────────────────────┤
+│ my-project              🔴 ⬆️   │
+│ main • 3 uncommitted            │
+│ 2 unpushed commits              │
+├─────────────────────────────────┤
+│ other-repo              ⬇️       │
+│ develop • clean                 │
+│ 1 remote change available       │
+├─────────────────────────────────┤
+│ third-repo              ✅       │
+│ main • up to date               │
+└─────────────────────────────────┘
+```
+
+### 10. Commit Message Modal (src/ui/CommitMessageModal.ts)
 
 **Responsibilities:**
 - Display repository and file information
@@ -387,7 +448,7 @@ class NotificationService {
 └─────────────────────────────────┘
 ```
 
-### 10. Validation Utilities (src/utils/validation.ts)
+### 11. Validation Utilities (src/utils/validation.ts)
 
 **Functions:**
 ```typescript
@@ -405,7 +466,7 @@ validateRepositoryPath(path: string): { isValid: boolean; error?: string }
 - Absolute path enforcement
 - Safe path normalization
 
-### 11. Error Classes (src/utils/errors.ts)
+### 12. Error Classes (src/utils/errors.ts)
 
 **Hierarchy:**
 ```
@@ -430,7 +491,7 @@ GitRepositoryError (base)
 - `NETWORK_ERROR` - Network connectivity issue
 - `TIMEOUT` - Operation timeout
 
-### 12. Logger Utility (src/utils/logger.ts)
+### 13. Logger Utility (src/utils/logger.ts)
 
 **Responsibilities:**
 - Centralized logging
