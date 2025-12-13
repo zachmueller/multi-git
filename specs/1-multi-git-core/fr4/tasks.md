@@ -93,72 +93,72 @@ npm run build
 
 ## Phase 2: Core Feature Implementation
 
-### DATA-001: RepositoryStatus Interface Extension
+### DATA-001: RepositoryStatus Interface Extension ✅
 **Description:** Extend RepositoryStatus interface with remote tracking fields
-**Files:** `src/services/GitCommandService.ts`
+**Files:** `src/settings/data.ts`
 **Dependencies:** ARCH-004
 **Acceptance Criteria:**
-- [ ] unpushedCommits optional field added (number)
-- [ ] remoteChanges optional field added (number)
-- [ ] fetchStatus optional field added ('success' | 'error' | 'pending')
-- [ ] lastFetchTime optional field added (number timestamp)
-- [ ] lastFetchError optional field added (string)
-- [ ] Interface changes don't break existing code
-- [ ] TypeScript compilation succeeds
+- [x] unpushedCommits optional field added (number)
+- [x] remoteChanges optional field added (number)
+- [x] fetchStatus optional field added ('success' | 'error' | 'pending')
+- [x] lastFetchTime optional field added (number timestamp)
+- [x] lastFetchError optional field added (string)
+- [x] Interface changes don't break existing code
+- [x] TypeScript compilation succeeds
 
-### GIT-001: Unpushed Commit Count Method
+### GIT-001: Unpushed Commit Count Method ✅
 **Description:** Implement getUnpushedCommitCount() in GitCommandService
 **Files:** `src/services/GitCommandService.ts`
 **Dependencies:** DATA-001
 **Acceptance Criteria:**
-- [ ] Method executes `git rev-list @{u}..HEAD --count`
-- [ ] Parses output to integer
-- [ ] Returns 0 if no upstream branch exists
-- [ ] Handles detached HEAD state gracefully
-- [ ] Returns 0 on errors (logs debug info if enabled)
-- [ ] Method has JSDoc documentation
-- [ ] TypeScript types properly defined
+- [x] Method executes `git rev-list @{u}..HEAD --count`
+- [x] Parses output to integer
+- [x] Returns 0 if no upstream branch exists
+- [x] Handles detached HEAD state gracefully
+- [x] Returns 0 on errors (logs debug info if enabled)
+- [x] Method has JSDoc documentation
+- [x] TypeScript types properly defined
 
-### GIT-002: Remote Change Count Method
+### GIT-002: Remote Change Count Method ✅
 **Description:** Implement getRemoteChangeCount() in GitCommandService
 **Files:** `src/services/GitCommandService.ts`
 **Dependencies:** DATA-001
 **Acceptance Criteria:**
-- [ ] Method executes `git rev-list HEAD..@{u} --count`
-- [ ] Parses output to integer
-- [ ] Returns 0 if no upstream branch exists
-- [ ] Handles detached HEAD state gracefully
-- [ ] Returns 0 on errors (logs debug info if enabled)
-- [ ] Method has JSDoc documentation
-- [ ] TypeScript types properly defined
+- [x] Method executes `git rev-list HEAD..@{u} --count`
+- [x] Parses output to integer
+- [x] Returns 0 if no upstream branch exists
+- [x] Handles detached HEAD state gracefully
+- [x] Returns 0 on errors (logs debug info if enabled)
+- [x] Method has JSDoc documentation
+- [x] TypeScript types properly defined
 
-### GIT-003: Extended Status Method
+### GIT-003: Extended Status Method ✅
 **Description:** Create getExtendedRepositoryStatus() method combining all status info
 **Files:** `src/services/GitCommandService.ts`
 **Dependencies:** GIT-001, GIT-002
 **Acceptance Criteria:**
-- [ ] Calls existing getRepositoryStatus() for base data
-- [ ] Calls getUnpushedCommitCount() for unpushedCommits
-- [ ] Calls getRemoteChangeCount() for remoteChanges
-- [ ] Adds fetchStatus from settings/cache if available
-- [ ] Adds lastFetchTime from settings/cache if available
-- [ ] Returns complete RepositoryStatus with all fields
-- [ ] Handles partial failures gracefully
-- [ ] Method has JSDoc documentation
+- [x] Calls existing getRepositoryStatus() for base data
+- [x] Calls getUnpushedCommitCount() for unpushedCommits
+- [x] Calls getRemoteChangeCount() for remoteChanges
+- [x] Adds fetchStatus from settings/cache if available
+- [x] Adds lastFetchTime from settings/cache if available
+- [x] Returns complete RepositoryStatus with all fields
+- [x] Handles partial failures gracefully
+- [x] Method has JSDoc documentation
 
-### TEST-001 [P]: GitCommandService Unit Tests
+### TEST-001 [P]: GitCommandService Unit Tests ✅
 **Description:** Create unit tests for new git command methods
 **Files:** `test/services/GitCommandService.test.ts`
 **Dependencies:** GIT-003
 **Acceptance Criteria:**
-- [ ] Tests for getUnpushedCommitCount() with various scenarios
-- [ ] Tests for getRemoteChangeCount() with various scenarios
-- [ ] Tests for getExtendedRepositoryStatus()
-- [ ] Tests handle no upstream branch case
-- [ ] Tests handle detached HEAD case
-- [ ] Tests handle git command failures
-- [ ] All tests passing
-- [ ] Code coverage above 80% for new methods
+- [x] Tests for getUnpushedCommitCount() with various scenarios
+- [x] Tests for getRemoteChangeCount() with various scenarios
+- [x] Tests for getExtendedRepositoryStatus()
+- [x] Tests handle no upstream branch case
+- [x] Tests handle detached HEAD case
+- [x] Tests handle git command failures
+- [x] All tests passing
+- [x] Code coverage above 80% for new methods
 
 ## Phase 3: Integration & Data Flow
 
@@ -568,8 +568,8 @@ ENV-001 → ARCH-001 → ARCH-002 → ARCH-003 → REFRESH-001 → RENDER-001 �
 - [x] **Phase 1: Foundation** (4 tasks)
   - [x] ARCH-001, ARCH-002, ARCH-003, ARCH-004
 
-- [ ] **Phase 2: Core Features** (5 tasks)
-  - [ ] DATA-001, GIT-001, GIT-002, GIT-003, TEST-001
+- [x] **Phase 2: Core Features** (5 tasks)
+  - [x] DATA-001, GIT-001, GIT-002, GIT-003, TEST-001
 
 - [ ] **Phase 3: Integration** (11 tasks)
   - [ ] UI-001, REFRESH-001, REFRESH-002, RENDER-001, RENDER-002
@@ -585,7 +585,7 @@ ENV-001 → ARCH-001 → ARCH-002 → ARCH-003 → REFRESH-001 → RENDER-001 �
   - [ ] TEST-002, TEST-003, TEST-004, MANUAL-001
   - [ ] DOC-001, DOC-002, QA-001, VAL-001
 
-### Overall Progress: 5/42 tasks complete (12%)
+### Overall Progress: 10/42 tasks complete (24%)
 
 ---
 

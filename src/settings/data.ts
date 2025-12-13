@@ -36,6 +36,21 @@ export interface RepositoryStatus {
 
     /** Files that are untracked (new files not in git) */
     untrackedFiles: string[];
+
+    /** Number of commits that are unpushed to remote */
+    unpushedCommits?: number;
+
+    /** Number of commits available from remote (commits behind) */
+    remoteChanges?: number;
+
+    /** Status of the last fetch operation for this repository */
+    fetchStatus?: 'success' | 'error' | 'pending';
+
+    /** Timestamp of last fetch attempt (Unix timestamp in milliseconds) */
+    lastFetchTime?: number;
+
+    /** Error message from last fetch failure */
+    lastFetchError?: string;
 }
 
 /**

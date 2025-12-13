@@ -711,6 +711,142 @@ export class GitCommandService {
     }
 
     /**
+     * Get count of unpushed commits (commits ahead of remote)
+     * @param repoPath Absolute path to repository
+     * @returns Number of unpushed commits, or 0 if no tracking branch or on error
+     */
+    async getUnpushedCommitCount(repoPath: string): Promise<number> {
+        try {
+            // Use @{u} to reference upstream branch
+            // Count commits between upstream and HEAD
+            const result = await this.executeGitCommand('rev-list @{u}..HEAD --count', {
+                cwd: repoPath,
+            });
+
+            const count = parseInt(result.stdout.trim(), 10);
+            return isNaN(count) ? 0 : count;
+        } catch (error) {
+            // Handle cases where there's no upstream branch or detached HEAD
+            const errorStr = error instanceof Error ? error.message.toLowerCase() : String(error).toLowerCase();
+            if (errorStr.includes('no upstream') ||
+                errorStr.includes('does not point to a branch') ||
+                errorStr.includes('detached head')) {
+                Logger.debug('GitCommand', `No upstream branch configured for ${repoPath}`);
+                return 0;
+            }
+
+            // For other errors, log and return 0
+            Logger.debug('GitCommand', `Error getting unpushed commit count for ${repoPath}`, error);
+            return 0;
+        }
+    }
+
+    /**
+     * Get count of remote changes (commits behind remote)
+     * @param repoPath Absolute path to repository
+     * @returns Number of commits remote is ahead, or 0 if no tracking branch or on error
+     */
+    async getRemoteChangeCount(repoPath: string): Promise<number> {
+        try {
+            // Use @{u} to reference upstream branch
+            // Count commits between HEAD and upstream
+            const result = await this.executeGitCommand('rev-list HEAD..@{u} --count', {
+                cwd: repoPath,
+            });
+
+            const count = parseInt(result.stdout.trim(), 10);
+            return isNaN(count) ? 0 : count;
+        } catch (error) {
+            // Handle cases where there's no upstream branch or detached HEAD
+            const errorStr = error instanceof Error ? error.message.toLowerCase() : String(error).toLowerCase();
+            if (errorStr.includes('no upstream') ||
+                errorStr.includes('does not point to a branch') ||
+                errorStr.includes('detached head')) {
+                Logger.debug('GitCommand', `No upstream branch configured for ${repoPath}`);
+                return 0;
+            }
+
+            // For other errors, log and return 0
+            Logger.debug('GitCommand', `Error getting remote change count for ${repoPath}`, error);
+            return 0;
+        }
+    }
+
+    /**
+     * Get extended repository status including remote tracking information
+     * @param repoPath Absolute path to repository
+     * @param repositoryId Repository ID from configuration
+     * @param repositoryName Repository name from configuration
+     * @param repositoryConfig Optional repository config for fetch status
+     * @returns Repository status with all fields including remote tracking
+     * @throws GitStatusError if status check fails
+     */
+    async getExtendedRepositoryStatus(
+        repoPath: string,
+        repositoryId: string,
+        repositoryName: string,
+        repositoryConfig?: { lastFetchTime?: number; lastFetchStatus?: string; lastFetchError?: string }
+    ): Promise<RepositoryStatus> {
+        Logger.debug('GitCommand', `Getting extended repository status for: ${repoPath}`);
+
+        try {
+            // Get base status first
+            const baseStatus = await this.getRepositoryStatus(repoPath, repositoryId, repositoryName);
+
+            // Get unpushed commit count
+            const unpushedCommits = await this.getUnpushedCommitCount(repoPath);
+
+            // Get remote change count
+            const remoteChanges = await this.getRemoteChangeCount(repoPath);
+
+            // Build extended status
+            const extendedStatus: RepositoryStatus = {
+                ...baseStatus,
+                unpushedCommits,
+                remoteChanges,
+            };
+
+            // Add fetch status information if available from repository config
+            if (repositoryConfig) {
+                if (repositoryConfig.lastFetchTime !== undefined) {
+                    extendedStatus.lastFetchTime = repositoryConfig.lastFetchTime;
+                }
+                if (repositoryConfig.lastFetchStatus) {
+                    // Map FetchStatus to the simpler fetchStatus type
+                    const fetchStatusMap: Record<string, 'success' | 'error' | 'pending'> = {
+                        'success': 'success',
+                        'error': 'error',
+                        'fetching': 'pending',
+                        'idle': 'success' // Treat idle as success for display purposes
+                    };
+                    extendedStatus.fetchStatus = fetchStatusMap[repositoryConfig.lastFetchStatus] || 'success';
+                }
+                if (repositoryConfig.lastFetchError) {
+                    extendedStatus.lastFetchError = repositoryConfig.lastFetchError;
+                }
+            }
+
+            Logger.debug('GitCommand', `Extended repository status complete for ${repoPath}`, {
+                unpushedCommits,
+                remoteChanges,
+                fetchStatus: extendedStatus.fetchStatus,
+            });
+
+            return extendedStatus;
+        } catch (error) {
+            Logger.error('GitCommand', `Failed to get extended repository status for ${repoPath}`, error);
+            // Re-throw the error as-is if it's already a GitStatusError
+            if (error instanceof GitStatusError) {
+                throw error;
+            }
+            throw new GitStatusError(
+                `Failed to get extended repository status: ${error instanceof Error ? error.message : String(error)}`,
+                repoPath
+            );
+        }
+    }
+
+    /**
      * Stage all changes in the repository
      * @param repoPath Absolute path to repository
      * @throws GitRepositoryError if staging fails

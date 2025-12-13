@@ -1427,4 +1427,371 @@ describe('GitCommandService', () => {
             });
         });
     });
+
+    describe('FR-4: Repository Status Display - Remote Tracking', () => {
+        let trackingRepoPath: string;
+        let trackingBareRepoPath: string;
+
+        beforeAll(async () => {
+            // Create a bare repository and clone it
+            const tmpDir = os.tmpdir();
+            trackingBareRepoPath = path.join(tmpDir, `tracking-bare-repo-${Date.now()}`);
+            trackingRepoPath = path.join(tmpDir, `tracking-repo-${Date.now()}`);
+
+            fs.mkdirSync(trackingBareRepoPath, { recursive: true });
+            await execPromise('git init --bare', { cwd: trackingBareRepoPath });
+
+            await execPromise(`git clone "${trackingBareRepoPath}" "${trackingRepoPath}"`);
+            await execPromise('git config user.email "test@example.com"', { cwd: trackingRepoPath });
+            await execPromise('git config user.name "Test User"', { cwd: trackingRepoPath });
+
+            // Create initial commit
+            fs.writeFileSync(path.join(trackingRepoPath, 'README.md'), '# Test');
+            await execPromise('git add README.md', { cwd: trackingRepoPath });
+            await execPromise('git commit -m "Initial commit"', { cwd: trackingRepoPath });
+            await execPromise('git push -u origin main || git push -u origin master', { cwd: trackingRepoPath });
+        });
+
+        afterAll(async () => {
+            try {
+                fs.rmSync(trackingRepoPath, { recursive: true, force: true });
+                fs.rmSync(trackingBareRepoPath, { recursive: true, force: true });
+            } catch (error) {
+                // Ignore cleanup errors
+            }
+        });
+
+        describe('getUnpushedCommitCount', () => {
+            it('should return 0 when no unpushed commits exist', async () => {
+                // Ensure we're in sync
+                await execPromise('git pull', { cwd: trackingRepoPath });
+
+                const count = await service.getUnpushedCommitCount(trackingRepoPath);
+                expect(count).toBe(0);
+            });
+
+            it('should count unpushed commits correctly', async () => {
+                // Create local commits
+                fs.writeFileSync(path.join(trackingRepoPath, 'unpushed1.txt'), 'content 1');
+                await execPromise('git add unpushed1.txt', { cwd: trackingRepoPath });
+                await execPromise('git commit -m "Unpushed commit 1"', { cwd: trackingRepoPath });
+
+                fs.writeFileSync(path.join(trackingRepoPath, 'unpushed2.txt'), 'content 2');
+                await execPromise('git add unpushed2.txt', { cwd: trackingRepoPath });
+                await execPromise('git commit -m "Unpushed commit 2"', { cwd: trackingRepoPath });
+
+                const count = await service.getUnpushedCommitCount(trackingRepoPath);
+                expect(count).toBe(2);
+
+                // Clean up - push the commits
+                await execPromise('git push', { cwd: trackingRepoPath });
+            });
+
+            it('should return 0 when no upstream branch exists', async () => {
+                // Create a branch without upstream
+                await execPromise('git checkout -b no-tracking-branch', { cwd: trackingRepoPath });
+                fs.writeFileSync(path.join(trackingRepoPath, 'no-tracking.txt'), 'content');
+                await execPromise('git add no-tracking.txt', { cwd: trackingRepoPath });
+                await execPromise('git commit -m "Commit on no-tracking branch"', { cwd: trackingRepoPath });
+
+                const count = await service.getUnpushedCommitCount(trackingRepoPath);
+                expect(count).toBe(0);
+
+                // Clean up
+                await execPromise('git checkout main || git checkout master', { cwd: trackingRepoPath });
+                await execPromise('git branch -D no-tracking-branch', { cwd: trackingRepoPath });
+            });
+
+            it('should return 0 for detached HEAD state', async () => {
+                // Get current commit hash
+                const { stdout: commitHash } = await execPromise('git rev-parse HEAD', { cwd: trackingRepoPath });
+
+                // Checkout detached HEAD
+                await execPromise(`git checkout ${commitHash.trim()}`, { cwd: trackingRepoPath });
+
+                const count = await service.getUnpushedCommitCount(trackingRepoPath);
+                expect(count).toBe(0);
+
+                // Return to main branch
+                await execPromise('git checkout main || git checkout master', { cwd: trackingRepoPath });
+            });
+
+            it('should return 0 on errors', async () => {
+                // Non-git directory should return 0, not throw
+                const count = await service.getUnpushedCommitCount(nonGitPath);
+                expect(count).toBe(0);
+            });
+        });
+
+        describe('getRemoteChangeCount', () => {
+            it('should return 0 when no remote changes exist', async () => {
+                // Ensure we're in sync
+                await execPromise('git fetch', { cwd: trackingRepoPath });
+                await execPromise('git pull', { cwd: trackingRepoPath });
+
+                const count = await service.getRemoteChangeCount(trackingRepoPath);
+                expect(count).toBe(0);
+            });
+
+            it('should count remote changes correctly', async () => {
+                // Create commits in remote (bare repo)
+                // We need to create a temporary clone, make commits, and push
+                const tmpDir = os.tmpdir();
+                const tempClonePath = path.join(tmpDir, `temp-clone-${Date.now()}`);
+
+                try {
+                    await execPromise(`git clone "${trackingBareRepoPath}" "${tempClonePath}"`);
+                    await execPromise('git config user.email "test@example.com"', { cwd: tempClonePath });
+                    await execPromise('git config user.name "Test User"', { cwd: tempClonePath });
+
+                    // Create and push commits
+                    fs.writeFileSync(path.join(tempClonePath, 'remote1.txt'), 'remote content 1');
+                    await execPromise('git add remote1.txt', { cwd: tempClonePath });
+                    await execPromise('git commit -m "Remote commit 1"', { cwd: tempClonePath });
+
+                    fs.writeFileSync(path.join(tempClonePath, 'remote2.txt'), 'remote content 2');
+                    await execPromise('git add remote2.txt', { cwd: tempClonePath });
+                    await execPromise('git commit -m "Remote commit 2"', { cwd: tempClonePath });
+
+                    await execPromise('git push', { cwd: tempClonePath });
+
+                    // Fetch in our tracking repo
+                    await execPromise('git fetch', { cwd: trackingRepoPath });
+
+                    const count = await service.getRemoteChangeCount(trackingRepoPath);
+                    expect(count).toBe(2);
+
+                    // Clean up - pull the commits
+                    await execPromise('git pull', { cwd: trackingRepoPath });
+                } finally {
+                    fs.rmSync(tempClonePath, { recursive: true, force: true });
+                }
+            });
+
+            it('should return 0 when no upstream branch exists', async () => {
+                // Create a branch without upstream
+                await execPromise('git checkout -b no-upstream-branch', { cwd: trackingRepoPath });
+                fs.writeFileSync(path.join(trackingRepoPath, 'no-upstream.txt'), 'content');
+                await execPromise('git add no-upstream.txt', { cwd: trackingRepoPath });
+                await execPromise('git commit -m "Commit on no-upstream branch"', { cwd: trackingRepoPath });
+
+                const count = await service.getRemoteChangeCount(trackingRepoPath);
+                expect(count).toBe(0);
+
+                // Clean up
+                await execPromise('git checkout main || git checkout master', { cwd: trackingRepoPath });
+                await execPromise('git branch -D no-upstream-branch', { cwd: trackingRepoPath });
+            });
+
+            it('should return 0 for detached HEAD state', async () => {
+                // Get current commit hash
+                const { stdout: commitHash } = await execPromise('git rev-parse HEAD', { cwd: trackingRepoPath });
+
+                // Checkout detached HEAD
+                await execPromise(`git checkout ${commitHash.trim()}`, { cwd: trackingRepoPath });
+
+                const count = await service.getRemoteChangeCount(trackingRepoPath);
+                expect(count).toBe(0);
+
+                // Return to main branch
+                await execPromise('git checkout main || git checkout master', { cwd: trackingRepoPath });
+            });
+
+            it('should return 0 on errors', async () => {
+                // Non-git directory should return 0, not throw
+                const count = await service.getRemoteChangeCount(nonGitPath);
+                expect(count).toBe(0);
+            });
+        });
+
+        describe('getExtendedRepositoryStatus', () => {
+            it('should return complete status with remote tracking', async () => {
+                // Ensure we're in sync
+                await execPromise('git fetch', { cwd: trackingRepoPath });
+                await execPromise('git pull', { cwd: trackingRepoPath });
+
+                const status = await service.getExtendedRepositoryStatus(
+                    trackingRepoPath,
+                    'test-repo-id',
+                    'Test Repository'
+                );
+
+                expect(status.repositoryId).toBe('test-repo-id');
+                expect(status.repositoryName).toBe('Test Repository');
+                expect(status.repositoryPath).toBe(trackingRepoPath);
+                expect(status.currentBranch).toMatch(/^(main|master)$/);
+                expect(status.unpushedCommits).toBe(0);
+                expect(status.remoteChanges).toBe(0);
+            });
+
+            it('should include unpushed commits in status', async () => {
+                // Create local commit
+                fs.writeFileSync(path.join(trackingRepoPath, 'local-test.txt'), 'content');
+                await execPromise('git add local-test.txt', { cwd: trackingRepoPath });
+                await execPromise('git commit -m "Local test commit"', { cwd: trackingRepoPath });
+
+                const status = await service.getExtendedRepositoryStatus(
+                    trackingRepoPath,
+                    'test-repo-id',
+                    'Test Repository'
+                );
+
+                expect(status.unpushedCommits).toBeGreaterThan(0);
+                expect(status.remoteChanges).toBe(0);
+
+                // Clean up
+                await execPromise('git push', { cwd: trackingRepoPath });
+            });
+
+            it('should include remote changes in status', async () => {
+                // Create remote commit
+                const tmpDir = os.tmpdir();
+                const tempClonePath = path.join(tmpDir, `temp-clone-${Date.now()}`);
+
+                try {
+                    await execPromise(`git clone "${trackingBareRepoPath}" "${tempClonePath}"`);
+                    await execPromise('git config user.email "test@example.com"', { cwd: tempClonePath });
+                    await execPromise('git config user.name "Test User"', { cwd: tempClonePath });
+
+                    fs.writeFileSync(path.join(tempClonePath, 'remote-test.txt'), 'remote content');
+                    await execPromise('git add remote-test.txt', { cwd: tempClonePath });
+                    await execPromise('git commit -m "Remote test commit"', { cwd: tempClonePath });
+                    await execPromise('git push', { cwd: tempClonePath });
+
+                    // Fetch in our tracking repo
+                    await execPromise('git fetch', { cwd: trackingRepoPath });
+
+                    const status = await service.getExtendedRepositoryStatus(
+                        trackingRepoPath,
+                        'test-repo-id',
+                        'Test Repository'
+                    );
+
+                    expect(status.unpushedCommits).toBe(0);
+                    expect(status.remoteChanges).toBeGreaterThan(0);
+
+                    // Clean up
+                    await execPromise('git pull', { cwd: trackingRepoPath });
+                } finally {
+                    fs.rmSync(tempClonePath, { recursive: true, force: true });
+                }
+            });
+
+            it('should include fetch status from repository config', async () => {
+                const repositoryConfig = {
+                    lastFetchTime: Date.now(),
+                    lastFetchStatus: 'success',
+                    lastFetchError: undefined,
+                };
+
+                const status = await service.getExtendedRepositoryStatus(
+                    trackingRepoPath,
+                    'test-repo-id',
+                    'Test Repository',
+                    repositoryConfig
+                );
+
+                expect(status.fetchStatus).toBe('success');
+                expect(status.lastFetchTime).toBe(repositoryConfig.lastFetchTime);
+                expect(status.lastFetchError).toBeUndefined();
+            });
+
+            it('should map fetch status types correctly', async () => {
+                const statusMappings = [
+                    { input: 'success', expected: 'success' },
+                    { input: 'error', expected: 'error' },
+                    { input: 'fetching', expected: 'pending' },
+                    { input: 'idle', expected: 'success' },
+                ];
+
+                for (const mapping of statusMappings) {
+                    const config = {
+                        lastFetchTime: Date.now(),
+                        lastFetchStatus: mapping.input,
+                    };
+
+                    const status = await service.getExtendedRepositoryStatus(
+                        trackingRepoPath,
+                        'test-repo-id',
+                        'Test Repository',
+                        config
+                    );
+
+                    expect(status.fetchStatus).toBe(mapping.expected);
+                }
+            });
+
+            it('should include fetch error message when present', async () => {
+                const repositoryConfig = {
+                    lastFetchTime: Date.now(),
+                    lastFetchStatus: 'error',
+                    lastFetchError: 'Network error: Unable to reach remote',
+                };
+
+                const status = await service.getExtendedRepositoryStatus(
+                    trackingRepoPath,
+                    'test-repo-id',
+                    'Test Repository',
+                    repositoryConfig
+                );
+
+                expect(status.fetchStatus).toBe('error');
+                expect(status.lastFetchError).toBe('Network error: Unable to reach remote');
+            });
+
+            it('should handle missing repository config gracefully', async () => {
+                const status = await service.getExtendedRepositoryStatus(
+                    trackingRepoPath,
+                    'test-repo-id',
+                    'Test Repository'
+                );
+
+                expect(status.fetchStatus).toBeUndefined();
+                expect(status.lastFetchTime).toBeUndefined();
+                expect(status.lastFetchError).toBeUndefined();
+                expect(status.unpushedCommits).toBeDefined();
+                expect(status.remoteChanges).toBeDefined();
+            });
+
+            it('should include base status fields', async () => {
+                // Create some changes
+                fs.writeFileSync(path.join(trackingRepoPath, 'unstaged.txt'), 'unstaged content');
+
+                const status = await service.getExtendedRepositoryStatus(
+                    trackingRepoPath,
+                    'test-repo-id',
+                    'Test Repository'
+                );
+
+                expect(status.hasUncommittedChanges).toBe(true);
+                expect(status.unstagedFiles).toContain('unstaged.txt');
+                expect(status.stagedFiles).toBeDefined();
+                expect(status.untrackedFiles).toBeDefined();
+
+                // Clean up
+                fs.unlinkSync(path.join(trackingRepoPath, 'unstaged.txt'));
+            });
+
+            it('should throw GitStatusError for non-git directory', async () => {
+                const { GitStatusError } = await import('../../src/utils/errors');
+                await expect(
+                    service.getExtendedRepositoryStatus(nonGitPath, 'test-id', 'Test')
+                ).rejects.toThrow(GitStatusError);
+            });
+
+            it('should handle partial failures gracefully', async () => {
+                // Even if unpushed/remote counts fail, base status should work
+                const status = await service.getExtendedRepositoryStatus(
+                    trackingRepoPath,
+                    'test-repo-id',
+                    'Test Repository'
+                );
+
+                // Should not throw, should return a valid status object
+                expect(status).toBeDefined();
+                expect(status.repositoryId).toBe('test-repo-id');
+                expect(status.currentBranch).toBeDefined();
+            });
+        });
+    });
 });
