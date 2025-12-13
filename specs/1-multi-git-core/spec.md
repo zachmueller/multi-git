@@ -112,6 +112,19 @@ Enable efficient management of multiple git repositories within an Obsidian vaul
   - [ ] Setting persists across Obsidian restarts
   - [ ] Debug logging can be toggled on/off without plugin reload (takes effect on next operation)
 
+#### FR-7: Custom PATH Configuration
+- **Description:** The plugin must support user-configurable PATH entries to enable git commands to find credential helpers and tools installed in non-standard locations
+- **Priority:** High
+- **Acceptance Criteria:**
+  - [ ] Users can configure additional PATH entries via settings UI
+  - [ ] Default PATH entries cover common credential helper locations (~/.cargo/bin, ~/.local/bin, /opt/homebrew/bin, /usr/local/bin)
+  - [ ] Tilde (~) expansion is supported for home directory
+  - [ ] Custom PATH entries are prepended to system PATH when executing git commands
+  - [ ] Path validation prevents security issues (no shell metacharacters, absolute paths only)
+  - [ ] Changes take effect immediately without plugin reload
+  - [ ] Works cross-platform (macOS, Windows, Linux)
+  - [ ] Debug logging shows effective PATH when enabled
+
 ### Non-Functional Requirements
 
 #### NFR-1: Performance
