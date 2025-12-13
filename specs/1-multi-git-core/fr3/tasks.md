@@ -7,59 +7,59 @@
 ## Phase 2: GitCommandService Extensions
 
 ### Add getRepositoryStatus() Method
-- [ ] Create RepositoryStatus interface in data.ts
-- [ ] Implement getRepositoryStatus() method in GitCommandService
-- [ ] Parse `git status --porcelain` output
-- [ ] Categorize files into staged/unstaged/untracked arrays
-- [ ] Get current branch name using getCurrentBranch()
-- [ ] Handle edge cases (empty repo, detached HEAD, etc.)
+- [x] Create RepositoryStatus interface in data.ts
+- [x] Implement getRepositoryStatus() method in GitCommandService
+- [x] Parse `git status --porcelain` output
+- [x] Categorize files into staged/unstaged/untracked arrays
+- [x] Get current branch name using getCurrentBranch()
+- [x] Handle edge cases (empty repo, detached HEAD, etc.)
 - [ ] Write unit tests for getRepositoryStatus()
 - [ ] Write integration tests with real git repo
 
 ### Add stageAllChanges() Method
-- [ ] Implement stageAllChanges() method
-- [ ] Execute `git add -A` command
-- [ ] Handle permission errors
-- [ ] Handle non-git directory errors
+- [x] Implement stageAllChanges() method
+- [x] Execute `git add -A` command
+- [x] Handle permission errors
+- [x] Handle non-git directory errors
 - [ ] Write unit tests for stageAllChanges()
 - [ ] Test with files containing special characters
 
 ### Add createCommit() Method
-- [ ] Implement createCommit() method
-- [ ] Validate commit message is not empty
-- [ ] Execute `git commit -m "message"` command
-- [ ] Handle "nothing to commit" scenarios
-- [ ] Handle pre-commit hook failures
-- [ ] Capture and return hook output on failure
+- [x] Implement createCommit() method
+- [x] Validate commit message is not empty
+- [x] Execute `git commit -m "message"` command
+- [x] Handle "nothing to commit" scenarios
+- [x] Handle pre-commit hook failures
+- [x] Capture and return hook output on failure
 - [ ] Write unit tests for createCommit()
 - [ ] Test with various commit message formats
 
 ### Add pushToRemote() Method
-- [ ] Implement pushToRemote() method
-- [ ] Execute `git push` command
-- [ ] Respect configurable timeout (default 60s)
-- [ ] Handle authentication errors
-- [ ] Handle network errors
-- [ ] Handle "no upstream branch" errors
-- [ ] Handle pre-push hook failures
+- [x] Implement pushToRemote() method
+- [x] Execute `git push` command
+- [x] Respect configurable timeout (default 60s)
+- [x] Handle authentication errors
+- [x] Handle network errors
+- [x] Handle "no upstream branch" errors
+- [x] Handle pre-push hook failures
 - [ ] Write unit tests for pushToRemote()
 - [ ] Test timeout behavior
 
 ### Add commitAndPush() Method
-- [ ] Implement commitAndPush() orchestration method
-- [ ] Call stageAllChanges()
-- [ ] Call createCommit()
-- [ ] Call pushToRemote()
-- [ ] Stop on first error with clear context
+- [x] Implement commitAndPush() orchestration method
+- [x] Call stageAllChanges()
+- [x] Call createCommit()
+- [x] Call pushToRemote()
+- [x] Stop on first error with clear context
 - [ ] Write unit tests for commitAndPush()
 - [ ] Test error handling at each step
 - [ ] Test end-to-end success scenario
 
 ### Add New Error Classes
-- [ ] Create GitCommitError in errors.ts
-- [ ] Create GitPushError in errors.ts
-- [ ] Create GitStatusError in errors.ts
-- [ ] Add appropriate error codes
+- [x] Create GitCommitError in errors.ts
+- [x] Create GitPushError in errors.ts
+- [x] Create GitStatusError in errors.ts
+- [x] Add appropriate error codes
 - [ ] Write unit tests for new error classes
 
 ## Phase 3: Commit Message Generation
@@ -308,11 +308,11 @@
 
 ## Progress Tracking
 
-- [ ] Phase 2: GitCommandService Extensions (0/33 tasks)
+- [ ] Phase 2: GitCommandService Extensions (25/33 tasks - 76% complete, tests pending)
 - [ ] Phase 3: Commit Message Generation (0/16 tasks)
 - [ ] Phase 4: Repository Picker Modal (0/20 tasks)
 - [ ] Phase 5: Commit Message Modal (0/30 tasks)
 - [ ] Phase 6: Command Registration & Orchestration (0/21 tasks)
 - [ ] Phase 7: Documentation & Finalization (0/28 tasks)
 
-**Overall Progress:** 0/148 tasks complete (0%)
+**Overall Progress:** 25/148 tasks complete (17%)
