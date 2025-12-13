@@ -1,4 +1,4 @@
-import { Plugin, Notice } from 'obsidian';
+import { Plugin, Notice, WorkspaceLeaf } from 'obsidian';
 import { MultiGitSettings, DEFAULT_SETTINGS, RepositoryConfig, RepositoryStatus } from './settings/data';
 import { RepositoryConfigService } from './services/RepositoryConfigService';
 import { GitCommandService } from './services/GitCommandService';
@@ -8,6 +8,7 @@ import { CommitMessageService } from './services/CommitMessageService';
 import { MultiGitSettingTab } from './settings/SettingTab';
 import { RepositoryPickerModal } from './ui/RepositoryPickerModal';
 import { CommitMessageModal } from './ui/CommitMessageModal';
+import { StatusPanelView, VIEW_TYPE_STATUS_PANEL } from './ui/StatusPanelView';
 import { Logger } from './utils/logger';
 import { GitCommitError, GitPushError, FetchError, FetchErrorCode } from './utils/errors';
 
@@ -22,6 +23,7 @@ export default class MultiGitPlugin extends Plugin {
 	fetchSchedulerService!: FetchSchedulerService;
 	notificationService!: NotificationService;
 	commitMessageService!: CommitMessageService;
+	statusPanelView: StatusPanelView | null = null;
 
 	/**
 	 * Called when the plugin is loaded
@@ -55,6 +57,9 @@ export default class MultiGitPlugin extends Plugin {
 		// Register settings tab
 		this.addSettingTab(new MultiGitSettingTab(this.app, this));
 
+		// Register status panel view
+		this.registerStatusPanel();
+
 		// Start automated fetching for all enabled repositories
 		this.fetchSchedulerService.startAll();
 
@@ -71,6 +76,97 @@ export default class MultiGitPlugin extends Plugin {
 	}
 
 	/**
+	 * Register status panel view type and ribbon icon
+	 */
+	registerStatusPanel() {
+		Logger.debug('Plugin', 'Registering status panel view');
+
+		// Register the view type
+		this.registerView(
+			VIEW_TYPE_STATUS_PANEL,
+			(leaf: WorkspaceLeaf) => new StatusPanelView(leaf, this)
+		);
+
+		// Add ribbon icon to toggle panel
+		this.addRibbonIcon('git-branch', 'Multi-Git Status', async () => {
+			await this.activateStatusPanel();
+		});
+
+		Logger.debug('Plugin', 'Status panel view registered successfully');
+	}
+
+	/**
+	 * Activate (open) the status panel view
+	 * Opens panel in right sidebar by default
+	 */
+	async activateStatusPanel(): Promise<void> {
+		const { workspace } = this.app;
+
+		// Check if panel is already open
+		let leaf = workspace.getLeavesOfType(VIEW_TYPE_STATUS_PANEL)[0];
+
+		if (!leaf) {
+			// Panel not open, create it in right sidebar
+			Logger.debug('Plugin', 'Opening status panel in right sidebar');
+			const rightLeaf = workspace.getRightLeaf(false);
+			if (rightLeaf) {
+				await rightLeaf.setViewState({
+					type: VIEW_TYPE_STATUS_PANEL,
+					active: true,
+				});
+				leaf = rightLeaf;
+			}
+		}
+
+		// Reveal the panel (bring to front if already open)
+		if (leaf) {
+			workspace.revealLeaf(leaf);
+			Logger.debug('Plugin', 'Status panel activated');
+		}
+	}
+
+	/**
+	 * Deactivate (close) the status panel view
+	 */
+	async deactivateStatusPanel(): Promise<void> {
+		const { workspace } = this.app;
+		const leaves = workspace.getLeavesOfType(VIEW_TYPE_STATUS_PANEL);
+
+		for (const leaf of leaves) {
+			leaf.detach();
+		}
+
+		Logger.debug('Plugin', 'Status panel deactivated');
+	}
+
+	/**
+	 * Notify status panel of repository changes
+	 * Triggers refresh for specific repository or all repositories
+	 * @param repoId - Optional repository ID to refresh (refreshes all if not provided)
+	 */
+	notifyRepositoryChanged(repoId?: string): void {
+		const { workspace } = this.app;
+		const leaves = workspace.getLeavesOfType(VIEW_TYPE_STATUS_PANEL);
+
+		if (leaves.length === 0) {
+			// Panel not open, no need to notify
+			return;
+		}
+
+		// Get the view instance
+		const leaf = leaves[0];
+		const view = leaf.view as StatusPanelView;
+
+		if (repoId) {
+			Logger.debug('Plugin', `Notifying status panel of changes to repository: ${repoId}`);
+			view.refreshRepository(repoId);
+		} else {
+			Logger.debug('Plugin', 'Notifying status panel of changes to all repositories');
+			view.refreshAll();
+		}
+	}
+
+	/**
 	 * Register plugin commands
 	 */
 	registerCommands() {
@@ -79,6 +175,33 @@ export default class MultiGitPlugin extends Plugin {
 			id: 'multi-git:commit-push',
 			name: 'Commit and push changes',
 			callback: () => this.handleCommitAndPush(),
+		});
+
+		// Command: Toggle status panel
+		this.addCommand({
+			id: 'multi-git:toggle-status-panel',
+			name: 'Toggle status panel',
+			callback: async () => {
+				const { workspace } = this.app;
+				const leaves = workspace.getLeavesOfType(VIEW_TYPE_STATUS_PANEL);
+
+				if (leaves.length > 0) {
+					// Panel is open, close it
+					await this.deactivateStatusPanel();
+				} else {
+					// Panel is closed, open it
+					await this.activateStatusPanel();
+				}
+			},
+		});
+
+		// Command: Refresh status panel
+		this.addCommand({
+			id: 'multi-git:refresh-status',
+			name: 'Refresh repository status',
+			callback: () => {
+				this.notifyRepositoryChanged();
+			},
 		});
 	}
 
@@ -252,6 +375,9 @@ export default class MultiGitPlugin extends Plugin {
 	onunload() {
 		console.log('Unloading Multi-Git plugin');
 		Logger.debug('Plugin', 'Multi-Git plugin unloading');
+
+		// Close status panel if open
+		this.deactivateStatusPanel();
 
 		// Stop all scheduled fetches
 		this.fetchSchedulerService.stopAll();
