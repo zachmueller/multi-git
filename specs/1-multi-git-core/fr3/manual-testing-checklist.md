@@ -230,9 +230,9 @@ This checklist validates the commit and push workflow triggered by hotkey. The w
 4. Verify commit in git log
 
 **Expected Results:**
-- [ ] Multi-line message is accepted
-- [ ] Commit succeeds with all lines preserved
-- [ ] Git log shows commit with full multi-line message
+- [x] Multi-line message is accepted
+- [x] Commit succeeds with all lines preserved
+- [x] Git log shows commit with full multi-line message
 - [ ] Message formatting is preserved (blank lines, bullets, etc.)
 - [ ] No errors about "dangerous patterns" or newline characters
 
