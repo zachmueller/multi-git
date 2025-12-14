@@ -128,7 +128,7 @@ This checklist validates the commit and push workflow triggered by hotkey. The w
 3. Examine auto-generated message in commit modal
 
 **Expected Results:**
-- [ ] Message format: "Auto-commit {timestamp}"
+- [x] Message format: "Auto-commit {timestamp}"
 - [ ] Timestamp is in ISO 8601 format (e.g., "2025-12-14T21:30:00+13:00")
 - [ ] Timestamp reflects current local time
 - [ ] Format is consistent across multiple uses
@@ -142,9 +142,9 @@ This checklist validates the commit and push workflow triggered by hotkey. The w
 2. Observe generated messages
 
 **Expected Results:**
-- [ ] Each message has unique timestamp (seconds precision)
-- [ ] No duplicate commit messages
-- [ ] Timestamps are sequential
+- [x] Each message has unique timestamp (seconds precision)
+- [x] No duplicate commit messages
+- [x] Timestamps are sequential
 
 **Notes:**
 
@@ -193,10 +193,10 @@ This checklist validates the commit and push workflow triggered by hotkey. The w
 3. Attempt to submit
 
 **Expected Results:**
-- [ ] Submit button is disabled OR
-- [ ] Error message appears: "Commit message cannot be empty"
-- [ ] Commit operation does not execute
-- [ ] Modal remains open
+- [x] Submit button is disabled OR
+- [x] Error message appears: "Commit message cannot be empty"
+- [x] Commit operation does not execute
+- [x] Modal remains open
 
 **Notes:**
 
@@ -210,15 +210,36 @@ This checklist validates the commit and push workflow triggered by hotkey. The w
 5. Observe behavior
 
 **Expected Results:**
-- [ ] Enter key creates newline in textarea (does NOT submit)
-- [ ] Shift+Enter also creates newline
-- [ ] Multiline messages can be created easily
-- [ ] No accidental submission from Enter key
+- [x] Enter key creates newline in textarea (does NOT submit)
+- [x] Shift+Enter also creates newline
+- [x] Multiline messages can be created easily
+- [x] No accidental submission from Enter key
 
 **Notes:**
 
 
-#### Test 2.10: Cmd/Ctrl+Enter to Submit
+#### Test 2.10: Multi-Line Commit Messages
+**Steps:**
+1. Open commit message modal
+2. Create multi-line commit message:
+   - Line 1: "Fix: Update user authentication"
+   - Line 2: (blank line)
+   - Line 3: "- Updated login flow"
+   - Line 4: "- Added password reset"
+3. Submit commit
+4. Verify commit in git log
+
+**Expected Results:**
+- [ ] Multi-line message is accepted
+- [ ] Commit succeeds with all lines preserved
+- [ ] Git log shows commit with full multi-line message
+- [ ] Message formatting is preserved (blank lines, bullets, etc.)
+- [ ] No errors about "dangerous patterns" or newline characters
+
+**Notes:**
+
+
+#### Test 2.11: Cmd/Ctrl+Enter to Submit
 **Steps:**
 1. Open commit message modal
 2. Edit message
@@ -233,7 +254,7 @@ This checklist validates the commit and push workflow triggered by hotkey. The w
 **Notes:**
 
 
-#### Test 2.11: Cancel Commit Modal
+#### Test 2.12: Cancel Commit Modal
 **Steps:**
 1. Open commit message modal
 2. Click Cancel button

@@ -875,7 +875,7 @@ export class GitCommandService {
     /**
      * Create a commit with the given message
      * @param repoPath Absolute path to repository
-     * @param message Commit message
+     * @param message Commit message (supports multi-line messages)
      * @throws GitCommitError if commit fails
      */
     async createCommit(repoPath: string, message: string): Promise<void> {
@@ -890,10 +890,18 @@ export class GitCommandService {
         }
 
         try {
-            // Use -m flag to provide commit message
-            // Escape message properly for shell
-            const escapedMessage = message.replace(/"/g, '\\"');
-            await this.executeGitCommand(`commit -m "${escapedMessage}"`, {
+            // For multi-line messages, use multiple -m flags (one per line)
+            // This is safer than trying to escape newlines in shell commands
+            const lines = message.split('\n');
+            const messageFlags = lines
+                .map(line => {
+                    // Escape double quotes in each line
+                    const escapedLine = line.replace(/"/g, '\\"');
+                    return `-m "${escapedLine}"`;
+                })
+                .join(' ');
+
+            await this.executeGitCommand(`commit ${messageFlags}`, {
                 cwd: repoPath,
             });
 

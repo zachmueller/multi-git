@@ -366,9 +366,11 @@ class CommitMessageModal extends Modal {
    - Handle errors (permissions, etc.)
 
 3. Add `createCommit()` method
-   - Execute `git commit -m "message"`
+   - Execute `git commit` with multiple `-m` flags for multi-line messages
+   - Split message on newlines and use one `-m` flag per line
    - Validate commit message not empty
    - Handle errors (nothing to commit, pre-commit hook failures)
+   - **Design Note:** Multi-line messages use multiple `-m` flags instead of attempting to escape newlines in shell commands for better security and reliability
 
 4. Add `pushToRemote()` method
    - Execute `git push`
