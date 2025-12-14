@@ -62,12 +62,12 @@ This checklist validates the commit and push workflow triggered by hotkey. The w
 - [x] Repository picker modal opens
 - [x] All 3 repositories with changes are listed
 - [x] Each item shows: repository name, current branch, change count
-- [ ] List is readable and well-formatted
+- [x] List is readable and well-formatted
 - [x] No repositories without changes appear in list
 
 **Notes:**
 
-- More notes elsewhere for improvements needed here
+- After later updates, much improved
 
 #### Test 1.4: Picker Modal Keyboard Navigation
 **Steps:**
@@ -77,10 +77,10 @@ This checklist validates the commit and push workflow triggered by hotkey. The w
 4. Open picker again and press Escape
 
 **Expected Results:**
-- [ ] Down arrow moves selection down
-- [ ] Up arrow moves selection up
-- [ ] First item selected by default
-- [ ] Selected item is visually highlighted
+- [x] Down arrow moves selection down
+- [x] Up arrow moves selection up
+- [x] First item selected by default
+- [x] Selected item is visually highlighted
 - [x] Enter key confirms selection and opens commit modal
 - [x] Escape key closes picker without action
 
@@ -95,7 +95,7 @@ This checklist validates the commit and push workflow triggered by hotkey. The w
 3. Click to select
 
 **Expected Results:**
-- [ ] Hover state is visible
+- [x] Hover state is visible
 - [x] Click selects repository and opens commit modal
 - [x] Clicking outside modal closes it (cancel)
 
@@ -110,15 +110,16 @@ This checklist validates the commit and push workflow triggered by hotkey. The w
 2. Observe commit message modal
 
 **Expected Results:**
-- [ ] Modal displays repository name and branch at top
-- [ ] Changed files list is visible
-- [ ] Textarea contains suggested commit message
-- [ ] Suggested message is relevant to changes
-- [ ] "Commit & Push" button is enabled
-- [ ] "Cancel" button is present
+- [x] Modal displays repository name and branch at top
+- [x] Changed files list is visible
+- [x] Textarea contains suggested commit message
+- [x] Suggested message is relevant to changes
+- [x] "Commit & Push" button is enabled
+- [x] "Cancel" button is present
 
 **Notes:**
 
+- I'm not really a fan of the "suggested" commit messages and would prefer switching to a generic "auto-commit" + timestamp message
 
 #### Test 2.2: Commit Message Suggestions - Single File
 **Steps:**
