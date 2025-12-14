@@ -1038,7 +1038,7 @@ export class GitCommandService {
      * @param message Commit message
      * @param timeout Timeout for push operation in milliseconds (default: 60000ms)
      * @throws GitCommitError if staging or commit fails
-     * @throws GitPushError if push fails
+     * @throws GitPushError if push fails (with indication that commit succeeded locally)
      */
     async commitAndPush(
         repoPath: string,
@@ -1047,6 +1047,8 @@ export class GitCommandService {
     ): Promise<void> {
         Logger.debug('GitCommand', `Starting commit and push workflow for: ${repoPath}`);
 
+        let commitSucceeded = false;
+
         try {
             // Step 1: Stage all changes
             await this.stageAllChanges(repoPath);
@@ -1054,14 +1056,25 @@ export class GitCommandService {
 
             // Step 2: Create commit
             await this.createCommit(repoPath, message);
+            commitSucceeded = true;
             Logger.debug('GitCommand', 'Commit complete, proceeding to push');
 
             // Step 3: Push to remote
             await this.pushToRemote(repoPath, timeout);
             Logger.debug('GitCommand', `Commit and push workflow complete for ${repoPath}`);
         } catch (error) {
-            // Errors are already categorized by the individual methods
-            // Just re-throw them with appropriate context
+            // If commit succeeded but push failed, enhance the error message
+            if (commitSucceeded && error instanceof GitPushError) {
+                Logger.error('GitCommand', `Push failed after successful commit for ${repoPath}`, error);
+                // Enhance the error message to indicate commit succeeded
+                throw new GitPushError(
+                    `Changes committed locally, but push failed: ${error.message}`,
+                    repoPath,
+                    error
+                );
+            }
+
+            // For other errors, re-throw as-is
             Logger.error('GitCommand', `Commit and push workflow failed for ${repoPath}`, error);
             throw error;
         }

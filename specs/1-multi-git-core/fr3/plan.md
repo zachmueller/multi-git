@@ -513,6 +513,7 @@ class CommitMessageModal extends Modal {
    - Network errors → suggest checking connection
    - Auth errors → suggest credential setup
    - Pre-commit hook failures → show hook output
+   - Push failures after successful commit → clearly indicate commit succeeded locally
 
 4. Add settings UI:
    - Note about configuring hotkey in Obsidian settings
@@ -617,6 +618,7 @@ class CommitMessageModal extends Modal {
    - **Likelihood:** Low-Medium (intermittent connectivity)
    - **Mitigation:**
      - Timeout with clear error message
+     - **Enhanced:** Error message now clearly states "Changes committed locally, but push failed:"
      - Inform user changes are committed locally
      - Suggest retrying when online
    - **Contingency:** User can push manually or retry with hotkey

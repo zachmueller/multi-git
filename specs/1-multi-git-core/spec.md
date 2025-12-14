@@ -85,6 +85,7 @@ Enable efficient management of multiple git repositories within an Obsidian vaul
   - [x] "Commit & Push" button is first to tab into from textarea and uses Obsidian's purple color
   - [x] "Cancel" button uses Obsidian's red color
   - [x] Push operation provides immediate feedback on success or failure
+  - [x] When push fails after successful commit, error message clearly indicates commit succeeded locally
 
 #### FR-4: Repository Status Display
 - **Description:** Users must be able to view the current state of all managed repositories in a dedicated side panel
