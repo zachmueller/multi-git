@@ -296,10 +296,10 @@ This checklist validates the commit and push workflow triggered by hotkey. The w
 3. Trigger commit+push workflow
 
 **Expected Results:**
-- [ ] All changes (staged and unstaged) are included in commit
-- [ ] Operation uses `git add -A` to stage everything
-- [ ] Commit includes all modified files
-- [ ] Push succeeds
+- [x] All changes (staged and unstaged) are included in commit
+- [x] Operation uses `git add -A` to stage everything
+- [x] Commit includes all modified files
+- [x] Push succeeds
 
 **Notes:**
 
@@ -311,9 +311,9 @@ This checklist validates the commit and push workflow triggered by hotkey. The w
 3. Observe behavior
 
 **Expected Results:**
-- [ ] Repository is not shown in picker (no uncommitted changes)
+- [x] Repository is not shown in picker (no uncommitted changes)
 - [ ] OR: If workflow proceeds, error is handled gracefully
-- [ ] Clear error message if commit fails: "Nothing to commit"
+- [x] Clear error message if commit fails: "Nothing to commit"
 
 **Notes:**
 
