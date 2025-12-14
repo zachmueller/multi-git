@@ -332,6 +332,7 @@ This checklist validates the commit and push workflow triggered by hotkey. The w
 
 **Notes:**
 
+- Testing via new `test-branch`
 
 ### 4. Error Handling
 
