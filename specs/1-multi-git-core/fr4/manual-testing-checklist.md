@@ -21,10 +21,10 @@
 2. Click the ribbon icon
 
 **Expected Result:**
-- [ ] Status panel opens in sidebar
-- [ ] Panel displays "Multi-Git Status" title
-- [ ] Refresh button visible in header
-- [ ] Repository list visible (or empty state if no repos)
+- [x] Status panel opens in sidebar
+- [x] Panel displays "Multi-Git Status" title
+- [x] Refresh button visible in header
+- [x] Repository list visible (or empty state if no repos)
 
 ### Test Case 1.2: Panel Persists Across Restarts
 **Steps:**
@@ -33,9 +33,9 @@
 3. Observe panel state
 
 **Expected Result:**
-- [ ] Panel reopens automatically in same position
-- [ ] Panel shows previously visible state
-- [ ] No errors in console
+- [x] Panel reopens automatically in same position
+- [x] Panel shows previously visible state
+- [x] No errors in console
 
 ### Test Case 1.3: Close Status Panel
 **Steps:**
@@ -43,18 +43,23 @@
 2. Click ribbon icon again (or close panel tab)
 
 **Expected Result:**
-- [ ] Panel closes cleanly
-- [ ] No errors in console
-- [ ] Status polling stops (verify in debug logs if enabled)
+- [x] Panel closes cleanly
+- [x] No errors in console
+- [x] Status polling stops (verify in debug logs if enabled)
+
+**Notes:**
+
+- Clicking on the ribbon icon again does not change the panel tab, though I don't think closing the side panel is the expected behavior anyways, so no changes needed.
+- Closing the panel regularly works fine
 
 ### Test Case 1.4: Toggle Panel Multiple Times
 **Steps:**
 1. Open panel, close panel (repeat 5 times quickly)
 
 **Expected Result:**
-- [ ] Panel opens and closes smoothly each time
-- [ ] No memory leaks or performance degradation
-- [ ] No errors in console
+- [x] Panel opens and closes smoothly each time
+- [x] No memory leaks or performance degradation
+- [x] No errors in console
 
 ## 2. Empty and Loading States
 
@@ -192,10 +197,10 @@
 **Steps:**
 1. Open status panel
 2. Make changes to repository externally
-3. Wait 30 seconds (without manual refresh)
+3. Wait 5 minutes (without manual refresh)
 
 **Expected Result:**
-- [ ] Status automatically updates after ~30 seconds
+- [ ] Status automatically updates after ~5 minutes
 - [ ] No user interaction required
 - [ ] Smooth UI update (no jarring refresh)
 - [ ] Debug logs show polling activity (if enabled)
@@ -445,18 +450,22 @@
 - [ ] Scroll position maintained during refresh
 - [ ] No jumping or flickering
 
-### Test Case 7.7: Last Refresh Timestamp
+### Test Case 7.7: Last Refresh Timestamp Display
 **Steps:**
-1. Open status panel
-2. Note last refresh time
-3. Wait 1 minute
-4. Observe timestamp
+1. Open status panel and trigger manual refresh
+2. Observe timestamp immediately (should show "Just now")
+3. Wait 5-10 seconds, observe timestamp (should update to "Just now")
+4. Wait until 15 seconds have passed, observe timestamp (should show "<1m")
+5. Wait until 65 seconds have passed, observe timestamp (should show "1m")
+6. Wait until 125 seconds have passed, observe timestamp (should show "2m")
 
 **Expected Result:**
-- [ ] Timestamp updates appropriately
-- [ ] Shows relative time (e.g., "Updated 2 minutes ago")
-- [ ] Updates automatically as time passes
-- [ ] Format is human-readable
+- [ ] Timestamp shows "Just now" for 0-10 seconds after refresh
+- [ ] Timestamp shows "<1m" for 10-60 seconds after refresh
+- [ ] Timestamp shows "{n}m" format for 60+ seconds (e.g., "1m", "2m", "3m")
+- [ ] Timestamp updates automatically every 5 seconds
+- [ ] Format is human-readable and concise
+- [ ] Timestamp display does not cause UI flickering or performance issues
 
 ## 8. Integration Testing
 

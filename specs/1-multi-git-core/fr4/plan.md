@@ -25,7 +25,7 @@
     - Pure polling: Would miss immediate feedback on user actions
     - Pure event-driven: Would miss external git operations
     - File system watchers: Too resource-intensive, platform-specific issues
-  - **Trade-offs:** Pro: Balance of responsiveness and resource usage. Con: 30s polling adds minimal overhead
+  - **Trade-offs:** Pro: Balance of responsiveness and resource usage. Con: 5-minute polling adds minimal overhead
 
 - **State Management:** In-memory cache with periodic git status checks
   - **Rationale:** Minimizes git command execution, provides instant UI updates
@@ -79,7 +79,8 @@
 - **User actions:** After commit/push operations complete
 - **Fetch completion:** After automated or manual fetch operations
 - **Manual refresh:** User-triggered refresh button in panel
-- **Periodic poll:** Every 30 seconds for external changes
+- **Periodic poll:** Every 5 minutes for external changes
+- **Timestamp updates:** Every 5 seconds to refresh "last updated" display with human-readable relative time
 
 ### Security Considerations
 - **Git operations:** Use existing sanitized GitCommandService methods
@@ -212,7 +213,8 @@ interface StatusPanelState {
 
 **Update Rules:**
 - Status updates on: manual refresh, fetch completion, commit/push completion
-- Polling every 30 seconds when panel is open
+- Polling every 5 minutes when panel is open
+- Timestamp display updates every 5 seconds with relative time format
 - Stop polling when panel is closed (resource conservation)
 - Cache invalidation on any git operation completion
 
@@ -617,30 +619,42 @@ No changes needed - existing esbuild configuration handles new files.
 
 **Tasks:**
 1. **Implement startPolling() method**
-   - Create setInterval with 30-second interval
+   - Create setInterval with 5-minute interval for status refresh
    - Call refreshAll() on each interval
    - Store interval ID for cleanup
    - Only poll when panel is open
 
-2. **Implement stopPolling() method**
-   - Clear interval using stored ID
-   - Set interval ID to null
+2. **Implement startTimestampUpdates() method**
+   - Create separate setInterval with 5-second interval for timestamp display
+   - Update timestamp text using updateLastRefreshTime() method
+   - Store interval ID for cleanup
+   - Format timestamps as:
+     - "Just now" for 0-10 seconds
+     - "<1m" for 10-60 seconds
+     - "{n}m" for each minute after (e.g., "1m", "2m", "3m")
+
+3. **Implement stopPolling() method**
+   - Clear status refresh interval using stored ID
+   - Clear timestamp update interval using stored ID
+   - Set interval IDs to null
    - Call in onClose()
 
-3. **Wire up manual refresh**
+4. **Wire up manual refresh**
    - Add refresh button click handler
    - Call refreshAll() on click
    - Disable button while refreshing
    - Show loading indicator
 
-4. **Optimize polling behavior**
+5. **Optimize polling behavior**
    - Don't poll if no repositories configured
    - Skip poll if manual refresh in progress
    - Log polling activity in debug mode
 
 **Acceptance:**
-- Status updates every 30 seconds
-- Polling stops when panel closed
+- Status data refreshes every 5 minutes
+- Timestamp display updates every 5 seconds
+- Timestamp shows "Just now", "<1m", or "{n}m" format
+- Both polling timers stop when panel closed
 - Manual refresh works correctly
 - No overlapping refresh operations
 - Debug logs show polling activity

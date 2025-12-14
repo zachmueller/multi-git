@@ -262,27 +262,31 @@ npm run build
 ## Phase 4: Status Updates & Polling
 
 ### POLL-001: startPolling() Implementation ✅
-**Description:** Implement automatic status polling with 30-second interval
+**Description:** Implement automatic status polling with 5-minute interval for data refresh and 5-second interval for timestamp updates
 **Files:** `src/ui/StatusPanelView.ts`
 **Dependencies:** REFRESH-001
 **Acceptance Criteria:**
-- [x] Creates setInterval with 30-second interval
-- [x] Calls refreshAll() on each interval
-- [x] Stores interval ID for cleanup
+- [x] Creates setInterval with 5-minute interval for status data refresh
+- [x] Creates separate setInterval with 5-second interval for timestamp display updates
+- [x] Calls refreshAll() on each 5-minute interval
+- [x] Calls updateLastRefreshTime() on each 5-second interval
+- [x] Stores both interval IDs for cleanup
 - [x] Only polls when panel is open
-- [x] Skips poll if manual refresh in progress
-- [x] Skips poll if no repositories configured
+- [x] Skips data refresh poll if manual refresh in progress
+- [x] Skips data refresh poll if no repositories configured
+- [x] Timestamp updates use human-readable format: "Just now" (0-10s), "<1m" (10-60s), "{n}m" (60+s)
 - [x] Logs polling activity in debug mode
 
 ### POLL-002: stopPolling() Implementation ✅
-**Description:** Implement polling cleanup to stop timers
+**Description:** Implement polling cleanup to stop both data refresh and timestamp update timers
 **Files:** `src/ui/StatusPanelView.ts`
 **Dependencies:** POLL-001
 **Acceptance Criteria:**
-- [x] Clears interval using stored ID
-- [x] Sets interval ID to null
+- [x] Clears status refresh interval using stored ID
+- [x] Clears timestamp update interval using stored ID
+- [x] Sets both interval IDs to null
 - [x] Called automatically in onClose()
-- [x] Prevents memory leaks
+- [x] Prevents memory leaks from both timers
 - [x] Logs stop event in debug mode
 
 ### BTN-001: Manual Refresh Button ✅

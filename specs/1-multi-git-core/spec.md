@@ -96,7 +96,8 @@ Enable efficient management of multiple git repositories within an Obsidian vaul
   - [ ] Users can see which repositories have uncommitted changes
   - [ ] Users can see which repositories have unpushed commits
   - [ ] Users can see which repositories have remote changes available
-  - [ ] Status information updates in real-time or within 30 seconds of changes
+  - [ ] Status information refreshes automatically every 5 minutes
+  - [ ] Last refresh timestamp updates every 5 seconds with human-readable relative time ("Just now", "<1m", "{n}m")
   - [ ] Users can view basic git information per repository (current branch, last commit message)
   - [ ] Panel supports manual refresh action for all repositories
 
