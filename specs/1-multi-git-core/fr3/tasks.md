@@ -72,53 +72,53 @@ The CommitMessageService still contains complex file analysis logic that generat
 ### Required Corrections:
 
 #### 1. Simplify CommitMessageService Interface
-- [ ] Update CommitMessageSuggestion interface to only require `summary: string`
-- [ ] Remove FileChangeAnalysis interface (no longer needed)
-- [ ] Remove all file analysis helper methods
-- [ ] Remove constants for MAX_SUMMARY_LENGTH and MAX_FILENAME_LENGTH
+- [x] Update CommitMessageSuggestion interface to only require `summary: string`
+- [x] Remove FileChangeAnalysis interface (no longer needed)
+- [x] Remove all file analysis helper methods
+- [x] Remove constants for MAX_SUMMARY_LENGTH and MAX_FILENAME_LENGTH
 
 #### 2. Reimplement generateSuggestion() Method
-- [ ] Change method signature: `generateSuggestion(): CommitMessageSuggestion`
+- [x] Change method signature: `generateSuggestion(): CommitMessageSuggestion`
   - Remove RepositoryStatus parameter (not needed for timestamp generation)
-- [ ] Generate ISO 8601 timestamp with local timezone
+- [x] Generate ISO 8601 timestamp with UTC timezone
   - Format: "Auto-commit {ISO 8601 timestamp}"
-  - Example: "Auto-commit 2025-12-14T21:30:00+13:00"
-- [ ] Ensure timezone is correctly included
-- [ ] Return simple CommitMessageSuggestion with timestamp summary
+  - Example: "Auto-commit 2025-12-14T08:48:33.072Z"
+- [x] Ensure timezone is correctly included (UTC with Z suffix)
+- [x] Return simple CommitMessageSuggestion with timestamp summary
 
 #### 3. Remove All File Analysis Logic
-- [ ] Delete analyzeChanges() method
-- [ ] Delete isRenamedFile() method
-- [ ] Delete extractRenamedFilename() method
-- [ ] Delete isInitialCommit() method
-- [ ] Delete generateSummary() method
-- [ ] Delete generateAddMessage() method
-- [ ] Delete generateDeleteMessage() method
-- [ ] Delete generateRenameMessage() method
-- [ ] Delete generateUpdateMessage() method
-- [ ] Delete getDisplayFilename() method
-- [ ] Delete truncateSummary() method
+- [x] Delete analyzeChanges() method
+- [x] Delete isRenamedFile() method
+- [x] Delete extractRenamedFilename() method
+- [x] Delete isInitialCommit() method
+- [x] Delete generateSummary() method
+- [x] Delete generateAddMessage() method
+- [x] Delete generateDeleteMessage() method
+- [x] Delete generateRenameMessage() method
+- [x] Delete generateUpdateMessage() method
+- [x] Delete getDisplayFilename() method
+- [x] Delete truncateSummary() method
 
 #### 4. Update main.ts to Match New Interface
-- [ ] Update call in proceedWithCommit() method
-- [ ] Change from: `this.commitMessageService.generateSuggestion(status)`
-- [ ] Change to: `this.commitMessageService.generateSuggestion()`
-- [ ] Remove status parameter since it's no longer needed
+- [x] Update call in proceedWithCommit() method
+- [x] Change from: `this.commitMessageService.generateSuggestion(status)`
+- [x] Change to: `this.commitMessageService.generateSuggestion()`
+- [x] Remove status parameter since it's no longer needed
 
 #### 5. Update Unit Tests
-- [ ] Rewrite CommitMessageService.test.ts for timestamp generation
-- [ ] Remove all file analysis test cases
-- [ ] Add test: Verify ISO 8601 format with timezone
-- [ ] Add test: Verify "Auto-commit" prefix
-- [ ] Add test: Verify timestamp uniqueness (successive calls differ)
-- [ ] Add test: Verify timestamp format consistency
+- [x] Rewrite CommitMessageService.test.ts for timestamp generation
+- [x] Remove all file analysis test cases
+- [x] Add test: Verify ISO 8601 format with timezone
+- [x] Add test: Verify "Auto-commit" prefix
+- [x] Add test: Verify timestamp uniqueness (successive calls differ)
+- [x] Add test: Verify timestamp format consistency
 
 #### 6. Verify Implementation Matches Plan
-- [ ] Confirm no file analysis logic remains
-- [ ] Confirm timestamp format matches specification
-- [ ] Confirm method signature simplified (no status parameter)
-- [ ] Confirm all callers updated in main.ts
-- [ ] Run all tests to ensure nothing breaks
+- [x] Confirm no file analysis logic remains
+- [x] Confirm timestamp format matches specification
+- [x] Confirm method signature simplified (no status parameter)
+- [x] Confirm all callers updated in main.ts
+- [x] Run all tests to ensure nothing breaks
 
 ### Implementation Notes:
 

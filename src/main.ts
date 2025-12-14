@@ -311,7 +311,7 @@ export default class MultiGitPlugin extends Plugin {
 			Logger.debug('Command', `Proceeding with commit for repository: ${status.repositoryName}`);
 
 			// Generate commit message suggestion
-			const suggestion = this.commitMessageService.generateSuggestion(status);
+			const suggestion = this.commitMessageService.generateSuggestion();
 			Logger.debug('Command', `Generated commit message suggestion: ${suggestion.summary}`);
 
 			// Show commit message modal
