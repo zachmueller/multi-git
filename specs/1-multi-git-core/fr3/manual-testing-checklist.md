@@ -10,12 +10,12 @@ This checklist validates the commit and push workflow triggered by hotkey. The w
 
 ## Prerequisites
 
-- [ ] Multi-Git plugin built and loaded in Obsidian (`npm run dev`)
-- [ ] At least 3 test repositories configured and enabled
-- [ ] Test repositories have write access to remotes
-- [ ] Git credentials configured (SSH keys or HTTPS tokens)
-- [ ] **[FR-7]** Custom PATH entries configured if using credential helpers
-- [ ] Hotkey configured for `multi-git:commit-push` command (e.g., Cmd/Ctrl+Shift+P)
+- [x] Multi-Git plugin built and loaded in Obsidian (`npm run dev`)
+- [x] At least 3 test repositories configured and enabled
+- [x] Test repositories have write access to remotes
+- [x] Git credentials configured (SSH keys or HTTPS tokens)
+- [x] **[FR-7]** Custom PATH entries configured if using credential helpers
+- [x] Hotkey configured for `multi-git:commit-push` command (e.g., Cmd/Ctrl+Shift+P)
 
 ## Test Scenarios
 
@@ -28,10 +28,10 @@ This checklist validates the commit and push workflow triggered by hotkey. The w
 3. Observe behavior
 
 **Expected Results:**
-- [ ] Notice appears: "No uncommitted changes in any repository"
-- [ ] No modal opens
-- [ ] No git operations executed
-- [ ] Plugin remains responsive
+- [x] Notice appears: "No uncommitted changes in any repository"
+- [x] No modal opens
+- [x] No git operations executed
+- [x] Plugin remains responsive
 
 **Notes:**
 
@@ -43,13 +43,14 @@ This checklist validates the commit and push workflow triggered by hotkey. The w
 3. Observe behavior
 
 **Expected Results:**
-- [ ] Repository picker modal does NOT appear (skips picker for single repo)
-- [ ] Commit message modal opens directly
-- [ ] Modal shows correct repository name and branch
-- [ ] Modal shows changed files list
+- [x] Repository picker modal does NOT appear (skips picker for single repo)
+- [x] Commit message modal opens directly
+- [x] Modal shows correct repository name and branch
+- [x] Modal shows changed files list
 
 **Notes:**
 
+- Some notes captured elsewhere for improvements to the UI
 
 #### Test 1.3: Multiple Repositories with Changes
 **Steps:**
@@ -58,14 +59,15 @@ This checklist validates the commit and push workflow triggered by hotkey. The w
 3. Observe picker modal
 
 **Expected Results:**
-- [ ] Repository picker modal opens
-- [ ] All 3 repositories with changes are listed
-- [ ] Each item shows: repository name, current branch, change count
+- [x] Repository picker modal opens
+- [x] All 3 repositories with changes are listed
+- [x] Each item shows: repository name, current branch, change count
 - [ ] List is readable and well-formatted
-- [ ] No repositories without changes appear in list
+- [x] No repositories without changes appear in list
 
 **Notes:**
 
+- More notes elsewhere for improvements needed here
 
 #### Test 1.4: Picker Modal Keyboard Navigation
 **Steps:**
@@ -79,11 +81,12 @@ This checklist validates the commit and push workflow triggered by hotkey. The w
 - [ ] Up arrow moves selection up
 - [ ] First item selected by default
 - [ ] Selected item is visually highlighted
-- [ ] Enter key confirms selection and opens commit modal
-- [ ] Escape key closes picker without action
+- [x] Enter key confirms selection and opens commit modal
+- [x] Escape key closes picker without action
 
 **Notes:**
 
+- The picker modal does not seem to show any visible selection. As noted elsewhere, I recommend switching this to Obsidian's built-in Suggester prompt mechanism.
 
 #### Test 1.5: Picker Modal Mouse Selection
 **Steps:**
@@ -93,8 +96,8 @@ This checklist validates the commit and push workflow triggered by hotkey. The w
 
 **Expected Results:**
 - [ ] Hover state is visible
-- [ ] Click selects repository and opens commit modal
-- [ ] Clicking outside modal closes it (cancel)
+- [x] Click selects repository and opens commit modal
+- [x] Clicking outside modal closes it (cancel)
 
 **Notes:**
 
