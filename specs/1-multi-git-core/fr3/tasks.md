@@ -64,16 +64,78 @@
 
 ## Phase 3: Commit Message Generation
 
-### Simplify CommitMessageService
-- [x] Update src/services/CommitMessageService.ts
-- [x] Simplify CommitMessageSuggestion interface (just summary string)
-- [x] Implement generateSuggestion() method for timestamps
-- [x] Use ISO 8601 timestamp format with local timezone
-- [x] Format: "Auto-commit {timestamp}"
-- [x] Remove file analysis logic (not needed for MVP)
-- [x] Handle timezone correctly
-- [x] Write unit tests for timestamp generation
-- [x] Test timestamp format consistency
+### CORRECTIVE ACTIONS NEEDED - CommitMessageService Not Actually Simplified
+
+**Root Cause Identified:**
+The CommitMessageService still contains complex file analysis logic that generates messages like "Update files", "Add 3 files", etc. According to the FR3 plan, this should have been simplified to generate timestamp-based messages only.
+
+### Required Corrections:
+
+#### 1. Simplify CommitMessageService Interface
+- [ ] Update CommitMessageSuggestion interface to only require `summary: string`
+- [ ] Remove FileChangeAnalysis interface (no longer needed)
+- [ ] Remove all file analysis helper methods
+- [ ] Remove constants for MAX_SUMMARY_LENGTH and MAX_FILENAME_LENGTH
+
+#### 2. Reimplement generateSuggestion() Method
+- [ ] Change method signature: `generateSuggestion(): CommitMessageSuggestion`
+  - Remove RepositoryStatus parameter (not needed for timestamp generation)
+- [ ] Generate ISO 8601 timestamp with local timezone
+  - Format: "Auto-commit {ISO 8601 timestamp}"
+  - Example: "Auto-commit 2025-12-14T21:30:00+13:00"
+- [ ] Ensure timezone is correctly included
+- [ ] Return simple CommitMessageSuggestion with timestamp summary
+
+#### 3. Remove All File Analysis Logic
+- [ ] Delete analyzeChanges() method
+- [ ] Delete isRenamedFile() method
+- [ ] Delete extractRenamedFilename() method
+- [ ] Delete isInitialCommit() method
+- [ ] Delete generateSummary() method
+- [ ] Delete generateAddMessage() method
+- [ ] Delete generateDeleteMessage() method
+- [ ] Delete generateRenameMessage() method
+- [ ] Delete generateUpdateMessage() method
+- [ ] Delete getDisplayFilename() method
+- [ ] Delete truncateSummary() method
+
+#### 4. Update main.ts to Match New Interface
+- [ ] Update call in proceedWithCommit() method
+- [ ] Change from: `this.commitMessageService.generateSuggestion(status)`
+- [ ] Change to: `this.commitMessageService.generateSuggestion()`
+- [ ] Remove status parameter since it's no longer needed
+
+#### 5. Update Unit Tests
+- [ ] Rewrite CommitMessageService.test.ts for timestamp generation
+- [ ] Remove all file analysis test cases
+- [ ] Add test: Verify ISO 8601 format with timezone
+- [ ] Add test: Verify "Auto-commit" prefix
+- [ ] Add test: Verify timestamp uniqueness (successive calls differ)
+- [ ] Add test: Verify timestamp format consistency
+
+#### 6. Verify Implementation Matches Plan
+- [ ] Confirm no file analysis logic remains
+- [ ] Confirm timestamp format matches specification
+- [ ] Confirm method signature simplified (no status parameter)
+- [ ] Confirm all callers updated in main.ts
+- [ ] Run all tests to ensure nothing breaks
+
+### Implementation Notes:
+
+**Correct Implementation Should Be:**
+```typescript
+export class CommitMessageService {
+    generateSuggestion(): CommitMessageSuggestion {
+        const timestamp = new Date().toISOString();
+        return {
+            summary: `Auto-commit ${timestamp}`
+        };
+    }
+}
+```
+
+**Why This Matters:**
+The simplified approach aligns with FR3's "Iterative Simplicity" principle. Complex file analysis is over-engineering for an MVP feature. Users can edit the message if they want something more specific.
 
 ### Write Phase 2 Unit and Integration Tests
 - [x] Write unit tests for getRepositoryStatus()
