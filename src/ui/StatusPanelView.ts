@@ -40,7 +40,8 @@ interface StatusPanelState {
 export class StatusPanelView extends ItemView {
     private plugin: MultiGitPlugin;
     private state: StatusPanelState;
-    private pollingInterval: NodeJS.Timeout | null = null;
+    private dataRefreshInterval: NodeJS.Timeout | null = null;
+    private timestampUpdateInterval: NodeJS.Timeout | null = null;
     private headerEl: HTMLElement | null = null;
     private repositoryListEl: HTMLElement | null = null;
 
@@ -162,47 +163,60 @@ export class StatusPanelView extends ItemView {
     }
 
     /**
-     * Start periodic status polling
-     * Polls every 30 seconds when panel is open
+     * Start periodic status polling with dual timers
+     * - Data refresh: Every 5 minutes
+     * - Timestamp update: Every 5 seconds
      */
     private startPolling(): void {
         // Don't start if already polling
-        if (this.pollingInterval !== null) {
+        if (this.dataRefreshInterval !== null || this.timestampUpdateInterval !== null) {
             Logger.debug('StatusPanel', 'Polling already active, skipping start');
             return;
         }
 
-        Logger.debug('StatusPanel', 'Starting status polling (30 second interval)');
+        Logger.debug('StatusPanel', 'Starting status polling (5 minute data refresh + 5 second timestamp update)');
 
-        // Poll every 30 seconds
-        this.pollingInterval = setInterval(() => {
+        // Data refresh interval - every 5 minutes
+        this.dataRefreshInterval = setInterval(() => {
             // Skip if refresh already in progress
             if (this.state.isRefreshing) {
-                Logger.debug('StatusPanel', 'Skipping poll - refresh already in progress');
+                Logger.debug('StatusPanel', 'Skipping data refresh poll - refresh already in progress');
                 return;
             }
 
             // Skip if no repositories configured
             const repositories = this.plugin.repositoryConfigService.getEnabledRepositories();
             if (repositories.length === 0) {
-                Logger.debug('StatusPanel', 'Skipping poll - no repositories configured');
+                Logger.debug('StatusPanel', 'Skipping data refresh poll - no repositories configured');
                 return;
             }
 
-            Logger.debug('StatusPanel', 'Executing scheduled status poll');
+            Logger.debug('StatusPanel', 'Executing scheduled data refresh');
             this.refreshAll();
-        }, 30000); // 30 seconds
+        }, 300000); // 5 minutes (300,000 ms)
+
+        // Timestamp update interval - every 5 seconds
+        this.timestampUpdateInterval = setInterval(() => {
+            Logger.debug('StatusPanel', 'Updating timestamp display');
+            this.updateLastRefreshTime();
+        }, 5000); // 5 seconds
     }
 
     /**
      * Stop periodic status polling
-     * Cleans up interval timer
+     * Cleans up both data refresh and timestamp update interval timers
      */
     private stopPolling(): void {
-        if (this.pollingInterval !== null) {
-            Logger.debug('StatusPanel', 'Stopping status polling');
-            clearInterval(this.pollingInterval);
-            this.pollingInterval = null;
+        if (this.dataRefreshInterval !== null) {
+            Logger.debug('StatusPanel', 'Stopping data refresh polling');
+            clearInterval(this.dataRefreshInterval);
+            this.dataRefreshInterval = null;
+        }
+
+        if (this.timestampUpdateInterval !== null) {
+            Logger.debug('StatusPanel', 'Stopping timestamp update polling');
+            clearInterval(this.timestampUpdateInterval);
+            this.timestampUpdateInterval = null;
         }
     }
 
@@ -582,6 +596,10 @@ export class StatusPanelView extends ItemView {
 
     /**
      * Update the last refresh time display in header
+     * Uses human-readable format:
+     * - "Just now" for 0-10 seconds
+     * - "<1m" for 10-60 seconds
+     * - "{n}m" for 60+ seconds
      */
     private updateLastRefreshTime(): void {
         if (!this.headerEl) return;
@@ -595,11 +613,13 @@ export class StatusPanelView extends ItemView {
             const elapsed = Date.now() - this.state.lastRefreshTime;
             const seconds = Math.floor(elapsed / 1000);
 
-            if (seconds < 60) {
-                lastRefreshEl.textContent = `Updated ${seconds}s ago`;
+            if (seconds <= 10) {
+                lastRefreshEl.textContent = 'Just now';
+            } else if (seconds < 60) {
+                lastRefreshEl.textContent = '<1m';
             } else {
                 const minutes = Math.floor(seconds / 60);
-                lastRefreshEl.textContent = `Updated ${minutes}m ago`;
+                lastRefreshEl.textContent = `${minutes}m`;
             }
         }
     }
