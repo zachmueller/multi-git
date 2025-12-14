@@ -159,7 +159,13 @@ export default class MultiGitPlugin extends Plugin {
 
 		// Get the view instance
 		const leaf = leaves[0];
-		const view = leaf.view as StatusPanelView;
+		const view = leaf.view;
+
+		// Verify view is actually a StatusPanelView instance with required methods
+		if (!(view instanceof StatusPanelView)) {
+			Logger.debug('Plugin', 'View is not a StatusPanelView instance, skipping notification');
+			return;
+		}
 
 		if (repoId) {
 			Logger.debug('Plugin', `Notifying status panel of changes to repository: ${repoId}`);
