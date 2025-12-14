@@ -143,14 +143,14 @@
 - [ ] Verify button order and focus behavior
 
 ### Handle User Interactions
-- [ ] Enter in textarea = newline only (no submit)
-- [ ] Cmd+Enter (Ctrl+Enter on Windows) = submit
-- [ ] Shift+Enter in textarea = newline
-- [ ] Click submit button = submit
-- [ ] Click cancel button = close modal
-- [ ] Escape key = close modal (when not processing)
-- [ ] Prevent double submission
-- [ ] Maintain focus on textarea after error
+- [x] Enter in textarea = newline only (no submit)
+- [x] Cmd+Enter (Ctrl+Enter on Windows) = submit
+- [x] Shift+Enter in textarea = newline
+- [x] Click submit button = submit
+- [x] Click cancel button = close modal
+- [x] Escape key = close modal (when not processing)
+- [x] Prevent double submission
+- [x] Maintain focus on textarea after error
 
 ### Manual Testing
 - [ ] Test with various commit messages

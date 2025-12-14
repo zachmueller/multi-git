@@ -163,9 +163,10 @@ export class CommitMessageModal extends Modal {
         this.messageTextarea.placeholder = 'Enter commit message...';
         this.messageTextarea.rows = 4;
 
-        // Handle Enter key (submit) and Shift+Enter (newline)
+        // Handle Cmd+Enter / Ctrl+Enter to submit
+        // Enter and Shift+Enter both create newlines (default behavior)
         this.messageTextarea.addEventListener('keydown', (evt) => {
-            if (evt.key === 'Enter' && !evt.shiftKey) {
+            if (evt.key === 'Enter' && (evt.metaKey || evt.ctrlKey)) {
                 evt.preventDefault();
                 this.handleSubmit();
             }
