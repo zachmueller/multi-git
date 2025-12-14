@@ -246,10 +246,10 @@ This checklist validates the commit and push workflow triggered by hotkey. The w
 3. Press Cmd+Enter (macOS) or Ctrl+Enter (Windows/Linux)
 
 **Expected Results:**
-- [ ] Cmd+Enter/Ctrl+Enter triggers commit operation
-- [ ] Same behavior as clicking "Commit & Push" button
-- [ ] Commit operation begins
-- [ ] Loading state appears
+- [x] Cmd+Enter/Ctrl+Enter triggers commit operation
+- [x] Same behavior as clicking "Commit & Push" button
+- [x] Commit operation begins
+- [x] Loading state appears
 
 **Notes:**
 
