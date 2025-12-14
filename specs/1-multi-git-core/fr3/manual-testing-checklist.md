@@ -233,11 +233,12 @@ This checklist validates the commit and push workflow triggered by hotkey. The w
 - [x] Multi-line message is accepted
 - [x] Commit succeeds with all lines preserved
 - [x] Git log shows commit with full multi-line message
-- [ ] Message formatting is preserved (blank lines, bullets, etc.)
-- [ ] No errors about "dangerous patterns" or newline characters
+- [x] Message formatting is preserved (blank lines, bullets, etc.)
+- [x] No errors about "dangerous patterns" or newline characters
 
 **Notes:**
 
+- It is _preserved_ in that the formatting characters stay in, though depending on where it's rendered it either stays as plaintext or gets rendered like normal Markdown into formatted content.
 
 #### Test 2.11: Cmd/Ctrl+Enter to Submit
 **Steps:**
@@ -261,10 +262,10 @@ This checklist validates the commit and push workflow triggered by hotkey. The w
 3. Open again and press Escape key
 
 **Expected Results:**
-- [ ] Cancel button closes modal without committing
-- [ ] Escape key closes modal without committing
-- [ ] No git operations executed
-- [ ] Changes remain uncommitted
+- [x] Cancel button closes modal without committing
+- [x] Escape key closes modal without committing
+- [x] No git operations executed
+- [x] Changes remain uncommitted
 
 **Notes:**
 
@@ -278,12 +279,12 @@ This checklist validates the commit and push workflow triggered by hotkey. The w
 3. Submit commit
 
 **Expected Results:**
-- [ ] Loading state appears (button disabled, spinner visible)
-- [ ] Success Notice appears: "Successfully committed and pushed changes to [repo-name]"
-- [ ] Modal closes automatically
-- [ ] Changes are committed locally (verify with `git log`)
-- [ ] Changes are pushed to remote (verify on remote platform)
-- [ ] Working directory is clean after operation
+- [x] Loading state appears (button disabled, spinner visible)
+- [x] Success Notice appears: "Successfully committed and pushed changes to [repo-name]"
+- [x] Modal closes automatically
+- [x] Changes are committed locally (verify with `git log`)
+- [x] Changes are pushed to remote (verify on remote platform)
+- [x] Working directory is clean after operation
 
 **Notes:**
 
