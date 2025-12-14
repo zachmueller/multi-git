@@ -261,33 +261,33 @@ npm run build
 
 ## Phase 4: Status Updates & Polling
 
-### POLL-001: startPolling() Implementation ✅
+### POLL-001: startPolling() Implementation ⚠️ NEEDS RE-IMPLEMENTATION
 **Description:** Implement automatic status polling with 5-minute interval for data refresh and 5-second interval for timestamp updates
 **Files:** `src/ui/StatusPanelView.ts`
 **Dependencies:** REFRESH-001
 **Acceptance Criteria:**
-- [x] Creates setInterval with 5-minute interval for status data refresh
-- [x] Creates separate setInterval with 5-second interval for timestamp display updates
-- [x] Calls refreshAll() on each 5-minute interval
-- [x] Calls updateLastRefreshTime() on each 5-second interval
-- [x] Stores both interval IDs for cleanup
-- [x] Only polls when panel is open
-- [x] Skips data refresh poll if manual refresh in progress
-- [x] Skips data refresh poll if no repositories configured
-- [x] Timestamp updates use human-readable format: "Just now" (0-10s), "<1m" (10-60s), "{n}m" (60+s)
-- [x] Logs polling activity in debug mode
+- [ ] Creates setInterval with 5-minute interval for status data refresh
+- [ ] Creates separate setInterval with 5-second interval for timestamp display updates
+- [ ] Calls refreshAll() on each 5-minute interval
+- [ ] Calls updateLastRefreshTime() on each 5-second interval
+- [ ] Stores both interval IDs for cleanup
+- [ ] Only polls when panel is open
+- [ ] Skips data refresh poll if manual refresh in progress
+- [ ] Skips data refresh poll if no repositories configured
+- [ ] Timestamp updates use human-readable format: "Just now" (0-10s), "<1m" (10-60s), "{n}m" (60+s)
+- [ ] Logs polling activity in debug mode
 
-### POLL-002: stopPolling() Implementation ✅
+### POLL-002: stopPolling() Implementation ⚠️ NEEDS RE-IMPLEMENTATION
 **Description:** Implement polling cleanup to stop both data refresh and timestamp update timers
 **Files:** `src/ui/StatusPanelView.ts`
 **Dependencies:** POLL-001
 **Acceptance Criteria:**
-- [x] Clears status refresh interval using stored ID
-- [x] Clears timestamp update interval using stored ID
-- [x] Sets both interval IDs to null
-- [x] Called automatically in onClose()
-- [x] Prevents memory leaks from both timers
-- [x] Logs stop event in debug mode
+- [ ] Clears status refresh interval using stored ID
+- [ ] Clears timestamp update interval using stored ID
+- [ ] Sets both interval IDs to null
+- [ ] Called automatically in onClose()
+- [ ] Prevents memory leaks from both timers
+- [ ] Logs stop event in debug mode
 
 ### BTN-001: Manual Refresh Button ✅
 **Description:** Wire up manual refresh button functionality
@@ -584,8 +584,8 @@ ENV-001 → ARCH-001 → ARCH-002 → ARCH-003 → REFRESH-001 → RENDER-001 �
   - [x] UI-001, REFRESH-001, REFRESH-002, RENDER-001, RENDER-002
   - [x] STYLE-001, ICON-001
 
-- [x] **Phase 4: Status Updates** (6 tasks)
-  - [x] POLL-001, POLL-002, BTN-001, EVENT-001, EVENT-002, API-001
+- [ ] **Phase 4: Status Updates** (6 tasks) - ⚠️ 2 TASKS NEED RE-IMPLEMENTATION
+  - [⚠️] POLL-001, [⚠️] POLL-002, [x] BTN-001, [x] EVENT-001, [x] EVENT-002, [x] API-001
 
 - [x] **Phase 5: Polish** (6 tasks)
   - [x] OPT-001, OPT-002, ERROR-001, A11Y-001, THEME-001
@@ -596,9 +596,16 @@ ENV-001 → ARCH-001 → ARCH-002 → ARCH-003 → REFRESH-001 → RENDER-001 �
   - [⚠️] TEST-004 (created but has timing issues)
   - [x] MANUAL-001, DOC-001, DOC-002, QA-001, VAL-001
 
-### Overall Progress: 37/42 tasks complete (88%)
+### Overall Progress: 35/42 tasks complete (83%)
 
-**Phase 6 Status:** All documentation and validation tasks completed. CMD-001 keyboard shortcuts documentation added to README. Ready for final review and merge.
+**Current Status:** 
+- Phase 4 needs re-implementation: POLL-001 and POLL-002 require updates for new timestamp behavior
+- Changes needed:
+  - POLL-001: Change from 30s single interval to dual intervals (5min data refresh + 5s timestamp update)
+  - POLL-002: Update cleanup to handle both interval timers
+  - Implement new timestamp format logic: "Just now" (0-10s), "<1m" (10-60s), "{n}m" (60+s)
+
+**Phase 6 Status:** All documentation and validation tasks completed. CMD-001 keyboard shortcuts documentation added to README.
 
 ---
 
