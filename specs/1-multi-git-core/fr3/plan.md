@@ -35,11 +35,11 @@
 - **Alternatives Considered:** Background polling (adds complexity), cached state (may be stale)
 - **Trade-offs:** Small delay when opening picker (<500ms), but ensures accuracy
 
-**Commit Message Generation:** Smart defaults with user override
-- **Decision:** Generate suggested commit message from changed files, allow full editing
-- **Rationale:** Balances convenience with flexibility, reduces typing while maintaining control
-- **Alternatives Considered:** Templates only (less convenient), auto-generate only (less flexible)
-- **Trade-offs:** Suggestion algorithm may not always be ideal, but users can always edit
+**Commit Message Generation:** Simple auto-generated timestamps with user override
+- **Decision:** Generate simple "Auto-commit {timestamp}" message, allow full editing
+- **Rationale:** Provides consistent default without complexity, users can edit if needed
+- **Alternatives Considered:** Complex file-based suggestions (over-engineered for MVP), templates (less convenient)
+- **Trade-offs:** Messages may be less descriptive by default, but simplicity aligns with MVP goals and users maintain full control
 
 ### Technology Stack Rationale
 
@@ -183,22 +183,18 @@ interface RepositoryStatus {
 - Repository must be valid git repo at time of operation
 
 #### Entity: CommitMessageSuggestion
-Algorithm for generating suggested commit messages:
+Simple timestamp-based commit message generation:
 
 ```typescript
 interface CommitMessageSuggestion {
-    summary: string;        // First line (50 char max)
-    details?: string[];     // Additional lines if needed
+    summary: string;        // "Auto-commit {timestamp}"
 }
 ```
 
 **Generation Rules:**
-1. If single file changed: "Update [filename]"
-2. If 2-3 files changed: "Update [file1], [file2], [file3]"
-3. If 4+ files changed: "Update [N] files"
-4. If only new files: "Add [filename]" or "Add [N] files"
-5. If only deletions: "Remove [filename]" or "Remove [N] files"
-6. Mixed operations: "Update [N] files"
+1. Format: "Auto-commit {ISO 8601 timestamp}"
+2. Example: "Auto-commit 2025-12-14T21:30:00+13:00"
+3. Simple, consistent, and always unique
 
 ### API Contracts
 
@@ -241,6 +237,8 @@ class GitCommandService {
     ): Promise<void>
 }
 ```
+
+**Note:** CommitMessageService will be simplified to generate timestamp-based messages only.
 
 **Error Types:**
 - `GitCommitError`: Commit operation failed (extends RepositoryError)
@@ -299,7 +297,7 @@ class CommitMessageModal extends Modal {
 **Behavior:**
 - Display repository name prominently with proper spacing before "on {branch_name}"
 - Show list of changed files (max 10, then "and N more...")
-- Text area pre-filled with suggested message
+- Text area pre-filled with auto-generated message: "Auto-commit {timestamp}"
 - "Commit & Push" button:
   - Styled with Obsidian's purple color (mod-cta class)
   - First element in tab order from textarea
@@ -307,7 +305,9 @@ class CommitMessageModal extends Modal {
 - "Cancel" button:
   - Styled with Obsidian's red color (mod-warning class)
   - Second element in tab order
-- Enter in textarea = submit (Shift+Enter = newline)
+- Enter in textarea = newline only
+- Cmd + Enter (Ctrl + Enter on Windows) = submit
+- Shift+Enter = newline (standard behavior)
 - Display loading state during commit+push
 - Display success/error feedback
 
@@ -391,24 +391,22 @@ class CommitMessageModal extends Modal {
 ### Phase 3: Commit Message Generation
 
 **Tasks:**
-1. Create `CommitMessageService` class
-   - `generateSuggestion(status: RepositoryStatus): CommitMessageSuggestion`
-   - Implement file change analysis
-   - Apply suggestion rules
-   - Keep suggestions concise (<50 char summary)
+1. Simplify `CommitMessageService` class
+   - `generateSuggestion(): CommitMessageSuggestion`
+   - Generate timestamp using ISO 8601 format
+   - Return "Auto-commit {timestamp}"
+   - No file analysis needed (removed for MVP simplicity)
 
 2. Handle edge cases:
-   - Empty repository (initial commit)
-   - Binary files
-   - Renamed files
-   - Very long file names
+   - Timezone handling (use local timezone)
+   - Format consistency
 
 **Testing:**
-- Unit tests for various file change scenarios
-- Test suggestion quality with real repos
-- Edge case handling
+- Unit tests for timestamp generation
+- Timezone tests
+- Format validation
 
-**Deliverable:** CommitMessageService with suggestion algorithm, 15+ tests
+**Deliverable:** Simplified CommitMessageService with timestamp generation, 5+ tests
 
 ### Phase 4: Repository Picker Modal
 
@@ -455,7 +453,8 @@ class CommitMessageModal extends Modal {
 
 3. Handle user interactions:
    - Edit commit message
-   - Submit (Enter or button)
+   - Submit (Cmd+Enter / Ctrl+Enter or button)
+   - Enter creates new line in textarea
    - Cancel (Escape or button)
    - Prevent double submission
    - Show progress indicator
@@ -467,9 +466,10 @@ class CommitMessageModal extends Modal {
 **Testing:**
 - Manual testing in Obsidian
 - Unit tests for message validation
+- Keyboard shortcut tests (Cmd+Enter / Ctrl+Enter)
 - Error handling tests
 
-**Deliverable:** CommitMessageModal component, CSS styling
+**Deliverable:** CommitMessageModal component with updated keyboard handling, CSS styling
 
 ### Phase 6: Command Registration & Orchestration
 
@@ -495,11 +495,11 @@ class CommitMessageModal extends Modal {
    ↓
    User selects repository
    ↓
-   Generate commit message suggestion
+   Generate auto-commit message with timestamp
    ↓
-   Show CommitMessageModal with suggestion
+   Show CommitMessageModal with auto-generated message
    ↓
-   User edits and confirms message
+   User edits and confirms message (Cmd+Enter / Ctrl+Enter or button)
    ↓
    Execute commitAndPush()
    ↓

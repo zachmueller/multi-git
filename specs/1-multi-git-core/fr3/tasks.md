@@ -64,23 +64,16 @@
 
 ## Phase 3: Commit Message Generation
 
-### Create CommitMessageService
-- [x] Create src/services/CommitMessageService.ts
-- [x] Define CommitMessageSuggestion interface
-- [x] Implement generateSuggestion() method
-- [x] Analyze file changes (new, modified, deleted)
-- [x] Apply rule: single file → "Update [filename]"
-- [x] Apply rule: 2-3 files → "Update [file1], [file2], [file3]"
-- [x] Apply rule: 4+ files → "Update [N] files"
-- [x] Apply rule: only additions → "Add [filename]" or "Add [N] files"
-- [x] Apply rule: only deletions → "Remove [filename]" or "Remove [N] files"
-- [x] Keep summary under 50 characters
-- [x] Handle edge case: empty repository (initial commit)
-- [x] Handle edge case: renamed files
-- [x] Handle edge case: binary files
-- [x] Handle edge case: very long file names (truncate)
-- [x] Write unit tests for each suggestion rule
-- [x] Test with various real-world scenarios
+### Simplify CommitMessageService
+- [x] Update src/services/CommitMessageService.ts
+- [x] Simplify CommitMessageSuggestion interface (just summary string)
+- [x] Implement generateSuggestion() method for timestamps
+- [x] Use ISO 8601 timestamp format with local timezone
+- [x] Format: "Auto-commit {timestamp}"
+- [x] Remove file analysis logic (not needed for MVP)
+- [x] Handle timezone correctly
+- [x] Write unit tests for timestamp generation
+- [x] Test timestamp format consistency
 
 ### Write Phase 2 Unit and Integration Tests
 - [x] Write unit tests for getRepositoryStatus()
@@ -150,7 +143,8 @@
 - [ ] Verify button order and focus behavior
 
 ### Handle User Interactions
-- [ ] Enter in textarea = submit (prevent default)
+- [ ] Enter in textarea = newline only (no submit)
+- [ ] Cmd+Enter (Ctrl+Enter on Windows) = submit
 - [ ] Shift+Enter in textarea = newline
 - [ ] Click submit button = submit
 - [ ] Click cancel button = close modal

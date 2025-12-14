@@ -112,74 +112,39 @@ This checklist validates the commit and push workflow triggered by hotkey. The w
 **Expected Results:**
 - [x] Modal displays repository name and branch at top
 - [x] Changed files list is visible
-- [x] Textarea contains suggested commit message
-- [x] Suggested message is relevant to changes
+- [x] Textarea contains auto-generated message: "Auto-commit {timestamp}"
+- [x] Timestamp is in ISO 8601 format with local timezone
 - [x] "Commit & Push" button is enabled
 - [x] "Cancel" button is present
 
 **Notes:**
 
-- I'm not really a fan of the "suggested" commit messages and would prefer switching to a generic "auto-commit" + timestamp message
+- Design updated to use simple timestamp-based messages for MVP simplicity
 
-#### Test 2.2: Commit Message Suggestions - Single File
+#### Test 2.2: Auto-Commit Message Format
 **Steps:**
-1. Modify exactly one file (e.g., README.md)
+1. Modify any files in a repository
 2. Trigger workflow
-3. Examine suggested message
+3. Examine auto-generated message in commit modal
 
 **Expected Results:**
-- [ ] Suggested message format: "Update README.md" (or similar)
-- [ ] Message references the specific filename
-- [ ] Message is under 50 characters
-- [ ] Message is clear and descriptive
+- [ ] Message format: "Auto-commit {timestamp}"
+- [ ] Timestamp is in ISO 8601 format (e.g., "2025-12-14T21:30:00+13:00")
+- [ ] Timestamp reflects current local time
+- [ ] Format is consistent across multiple uses
 
 **Notes:**
 
 
-#### Test 2.3: Commit Message Suggestions - Multiple Files
+#### Test 2.3: Auto-Commit Message Uniqueness
 **Steps:**
-1. Modify 2-3 files
-2. Trigger workflow
-3. Examine suggested message
+1. Trigger workflow multiple times within same minute
+2. Observe generated messages
 
 **Expected Results:**
-- [ ] Suggested message lists files: "Update file1.ts, file2.ts"
-- [ ] Message is under 50 characters (may abbreviate if too long)
-
-**Steps:**
-1. Modify 5+ files
-2. Trigger workflow
-3. Examine suggested message
-
-**Expected Results:**
-- [ ] Suggested message format: "Update 5 files" (count, not individual names)
-- [ ] Message is concise
-
-**Notes:**
-
-
-#### Test 2.4: Commit Message Suggestions - File Additions
-**Steps:**
-1. Create new files only (no modifications)
-2. Trigger workflow
-3. Examine suggested message
-
-**Expected Results:**
-- [ ] Suggested message uses "Add" verb: "Add newfile.ts" or "Add 3 files"
-- [ ] Message is appropriate for additions
-
-**Notes:**
-
-
-#### Test 2.5: Commit Message Suggestions - File Deletions
-**Steps:**
-1. Delete files only (no other changes)
-2. Trigger workflow
-3. Examine suggested message
-
-**Expected Results:**
-- [ ] Suggested message uses "Remove" verb: "Remove oldfile.ts" or "Remove 2 files"
-- [ ] Message is appropriate for deletions
+- [ ] Each message has unique timestamp (seconds precision)
+- [ ] No duplicate commit messages
+- [ ] Timestamps are sequential
 
 **Notes:**
 
@@ -190,8 +155,8 @@ This checklist validates the commit and push workflow triggered by hotkey. The w
 2. Observe file list in commit modal
 
 **Expected Results:**
-- [ ] All 8 files are listed (under 10 files threshold)
-- [ ] Each file shows status indicator (M/A/D)
+- [x] All 8 files are listed (under 10 files threshold)
+- [x] Each file shows status indicator (M/A/D)
 - [ ] List is scrollable if needed
 
 **Steps:**
@@ -236,30 +201,32 @@ This checklist validates the commit and push workflow triggered by hotkey. The w
 **Notes:**
 
 
-#### Test 2.9: Multiline Commit Messages
+#### Test 2.9: Enter Key Creates Newline
 **Steps:**
 1. Open commit message modal
 2. Type first line
-3. Press Shift+Enter
+3. Press Enter
 4. Type second line
-5. Submit
+5. Observe behavior
 
 **Expected Results:**
-- [ ] Shift+Enter creates newline in textarea (not submit)
-- [ ] Multiline message is accepted
-- [ ] Commit uses full multiline message
+- [ ] Enter key creates newline in textarea (does NOT submit)
+- [ ] Shift+Enter also creates newline
+- [ ] Multiline messages can be created easily
+- [ ] No accidental submission from Enter key
 
 **Notes:**
 
 
-#### Test 2.10: Enter Key to Submit
+#### Test 2.10: Cmd/Ctrl+Enter to Submit
 **Steps:**
 1. Open commit message modal
 2. Edit message
-3. Press Enter key (not Shift+Enter)
+3. Press Cmd+Enter (macOS) or Ctrl+Enter (Windows/Linux)
 
 **Expected Results:**
-- [ ] Enter key submits the commit (same as clicking button)
+- [ ] Cmd+Enter/Ctrl+Enter triggers commit operation
+- [ ] Same behavior as clicking "Commit & Push" button
 - [ ] Commit operation begins
 - [ ] Loading state appears
 

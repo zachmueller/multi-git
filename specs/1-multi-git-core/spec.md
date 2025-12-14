@@ -76,10 +76,12 @@ Enable efficient management of multiple git repositories within an Obsidian vaul
   - [x] Repository picker primary text displays: `{repo_name} ({change_count} changes)`
   - [x] Repository picker secondary text displays: `Branch: {branch_name}`
   - [x] Repository picker only shows enabled repositories with uncommitted changes
-  - [x] After repository selection, commit dialog appears with pre-filled suggested commit message
+  - [x] After repository selection, commit dialog appears with pre-filled auto-generated commit message
   - [x] Commit dialog displays repository name prominently (especially for auto-selected single repo)
   - [x] Commit dialog has proper spacing between repo name and "on {branch_name}"
   - [x] Users can edit commit message before confirming push
+  - [x] Enter key creates new line in commit message textarea
+  - [x] Cmd + Enter (Ctrl + Enter on Windows) triggers commit and push operation
   - [x] "Commit & Push" button is first to tab into from textarea and uses Obsidian's purple color
   - [x] "Cancel" button uses Obsidian's red color
   - [x] Push operation provides immediate feedback on success or failure
