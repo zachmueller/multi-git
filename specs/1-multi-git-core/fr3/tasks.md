@@ -99,31 +99,24 @@
 ## Phase 4: Repository Picker Modal
 
 ### Create RepositoryPickerModal Component
-- [x] Create src/ui/RepositoryPickerModal.ts
-- [x] Extend Obsidian Modal class
-- [x] Define constructor accepting repositories and callback
-- [x] Implement onOpen() method
-- [x] Render repository list container
-- [x] Display repository name, branch, change count per item
-- [x] Handle empty state (no uncommitted changes)
-- [x] Implement click-to-select behavior
-- [x] Implement keyboard navigation (arrow keys)
-- [x] Implement Enter key to confirm selection
-- [x] Implement Escape key to cancel
-- [x] Highlight selected repository
-- [x] Call callback on selection
-- [x] Close modal on selection
+- [ ] Update src/ui/RepositoryPickerModal.ts to extend SuggestModal
+- [ ] Change from Modal to SuggestModal<RepositoryStatus>
+- [ ] Define constructor accepting repositories and callback
+- [ ] Implement getSuggestions(query: string) method
+- [ ] Implement renderSuggestion(repo: RepositoryStatus, el: HTMLElement) method
+- [ ] Primary text format: `{repo_name} ({change_count} changes)`
+- [ ] Secondary text format: `Branch: {branch_name}`
+- [ ] Implement onChooseSuggestion(repo: RepositoryStatus) method
+- [ ] Handle empty state (no uncommitted changes)
+- [ ] Remove custom keyboard navigation (SuggestModal handles this)
+- [ ] Remove custom click-to-select (SuggestModal handles this)
+- [ ] Call callback on selection in onChooseSuggestion
 
-### Add Modal Styling
-- [x] Add .multi-git-picker-modal class to styles.css
-- [x] Style repository list container
-- [x] Style individual repository items
-- [x] Add hover state styling
-- [x] Add selected state styling
-- [x] Style repository info (name, branch, count)
-- [x] Style empty state message
-- [ ] Test styling in light mode
-- [ ] Test styling in dark mode
+### Update Modal Styling
+- [ ] Remove custom .multi-git-picker-modal styles (SuggestModal provides native styling)
+- [ ] Verify SuggestModal native styling works in light mode
+- [ ] Verify SuggestModal native styling works in dark mode
+- [ ] Add any minimal custom styling if needed for suggestion items
 
 ### Manual Testing
 - [ ] Test with 0 repositories (should not open)
@@ -137,39 +130,24 @@
 ## Phase 5: Commit Message Modal
 
 ### Create CommitMessageModal Component
-- [x] Create src/ui/CommitMessageModal.ts
-- [x] Extend Obsidian Modal class
-- [x] Define constructor accepting repo, suggestion, and callback
-- [x] Implement onOpen() method
-- [x] Display repository name and branch
-- [x] Display list of changed files (max 10)
-- [x] Show "and N more..." if >10 files
-- [x] Render textarea for commit message
-- [x] Pre-fill textarea with suggested message
-- [x] Add "Commit & Push" button
-- [x] Add "Cancel" button
-- [x] Disable submit button during processing
-- [x] Show loading state during operation
-- [x] Implement handleSubmit() method
-- [x] Validate message is not empty
-- [x] Call commitAndPush callback
-- [x] Handle success: show Notice, close modal
-- [x] Handle error: display error in modal, allow retry
-- [x] Implement onClose() cleanup
+- [ ] Update src/ui/CommitMessageModal.ts modal header display
+- [ ] Ensure proper spacing between repository name and "on {branch_name}"
+- [ ] Make repository name more prominent (especially for auto-selected single repo)
+- [ ] Update "Commit & Push" button to use mod-cta class (Obsidian purple)
+- [ ] Update "Cancel" button to use mod-warning class (Obsidian red)
+- [ ] Ensure "Commit & Push" button is first in tab order from textarea
+- [ ] Ensure "Cancel" button is second in tab order
+- [ ] Verify button tab order works correctly
+- [ ] Test all button styling matches Obsidian's native buttons
 
-### Add Modal Styling
-- [x] Add .multi-git-commit-modal class to styles.css
-- [x] Style modal header (repo name, branch)
-- [x] Style file list container
-- [x] Style individual file items
-- [x] Style commit message textarea
-- [x] Style button container
-- [x] Style submit button (normal, hover, disabled, loading)
-- [x] Style cancel button
-- [x] Add loading spinner styles
-- [x] Style error message display
-- [x] Test styling in light mode
-- [x] Test styling in dark mode
+### Update Modal Styling
+- [ ] Update .multi-git-commit-modal header styling for prominence
+- [ ] Verify mod-cta class applies correctly to "Commit & Push" button
+- [ ] Verify mod-warning class applies correctly to "Cancel" button
+- [ ] Add spacing adjustments for repository name display
+- [ ] Test button colors in light mode (should use Obsidian's theme colors)
+- [ ] Test button colors in dark mode (should use Obsidian's theme colors)
+- [ ] Verify button order and focus behavior
 
 ### Handle User Interactions
 - [ ] Enter in textarea = submit (prevent default)

@@ -68,15 +68,21 @@ Enable efficient management of multiple git repositories within an Obsidian vaul
 #### FR-3: Hotkey-Driven Push Operations ✅ IMPLEMENTED
 - **Description:** Users must be able to commit and push changes using keyboard shortcuts without leaving Obsidian
 - **Priority:** High
-- **Status:** ✅ Complete - Implemented 2025-12-14 (Manual testing pending)
+- **Status:** ✅ Complete - Implemented 2025-12-14 (Design updates pending)
 - **Manual Testing Checklist:** [specs/1-multi-git-core/fr3/manual-testing-checklist.md](specs/1-multi-git-core/fr3/manual-testing-checklist.md)
 - **Acceptance Criteria:**
   - [x] Users can assign custom hotkeys for push operations
-  - [x] Hotkey presents repository picker dialog requiring explicit selection
-  - [x] After repository selection, commit dialog appears with pre-filled suggested commit message
-  - [x] Users can edit commit message before confirming push
-  - [x] Push operation provides immediate feedback on success or failure
+  - [x] Hotkey presents repository picker using Obsidian's Suggester prompt requiring explicit selection
+  - [x] Repository picker primary text displays: `{repo_name} ({change_count} changes)`
+  - [x] Repository picker secondary text displays: `Branch: {branch_name}`
   - [x] Repository picker only shows enabled repositories with uncommitted changes
+  - [x] After repository selection, commit dialog appears with pre-filled suggested commit message
+  - [x] Commit dialog displays repository name prominently (especially for auto-selected single repo)
+  - [x] Commit dialog has proper spacing between repo name and "on {branch_name}"
+  - [x] Users can edit commit message before confirming push
+  - [x] "Commit & Push" button is first to tab into from textarea and uses Obsidian's purple color
+  - [x] "Cancel" button uses Obsidian's red color
+  - [x] Push operation provides immediate feedback on success or failure
 
 #### FR-4: Repository Status Display
 - **Description:** Users must be able to view the current state of all managed repositories in a dedicated side panel

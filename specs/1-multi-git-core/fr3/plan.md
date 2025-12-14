@@ -8,11 +8,14 @@
 
 ### Architecture Decisions
 
-**UI Framework:** Obsidian Modal API
-- **Decision:** Use Obsidian's built-in Modal class for dialogs
-- **Rationale:** Consistent with Obsidian's design patterns, no additional dependencies, familiar to users
-- **Alternatives Considered:** Custom HTML/CSS dialogs (unnecessary complexity)
-- **Trade-offs:** Limited to Obsidian's modal capabilities, but sufficient for requirements
+**UI Framework:** Mixed Approach
+- **Repository Picker:** Use Obsidian's built-in SuggestModal for repository selection
+- **Commit Dialog:** Use Obsidian's Modal class
+- **Decision Rationale:** 
+  - SuggestModal provides native keyboard navigation, search, and consistent UX for picker
+  - Modal class provides flexibility needed for commit message editing and button styling
+- **Alternatives Considered:** Custom HTML/CSS dialogs (unnecessary complexity), Modal for both (less optimal picker UX)
+- **Trade-offs:** Using different modal types requires understanding both APIs, but provides optimal UX for each use case
 
 **Command Registration:** Obsidian Command API
 - **Decision:** Register commands using Obsidian's addCommand() API with hotkey support
@@ -255,23 +258,26 @@ class GitCommandService {
 
 **RepositoryPickerModal:**
 ```typescript
-class RepositoryPickerModal extends Modal {
+class RepositoryPickerModal extends SuggestModal<RepositoryStatus> {
     constructor(
         app: App,
         repositories: RepositoryStatus[],
         onSelect: (repo: RepositoryStatus) => void
     )
     
-    onOpen(): void
-    onClose(): void
+    getSuggestions(query: string): RepositoryStatus[]
+    renderSuggestion(repo: RepositoryStatus, el: HTMLElement): void
+    onChooseSuggestion(repo: RepositoryStatus): void
 }
 ```
 
 **Behavior:**
-- Display list of repositories with uncommitted changes
-- Show repository name, branch, and change count
-- Arrow key navigation, Enter to select
-- Escape to cancel
+- Uses Obsidian's SuggestModal for native picker experience
+- Primary text format: `{repo_name} ({change_count} changes)`
+- Secondary text format: `Branch: {branch_name}`
+- Built-in search/filter functionality
+- Arrow key navigation, Enter to select (native to SuggestModal)
+- Escape to cancel (native to SuggestModal)
 - Display "No uncommitted changes" if list empty
 
 **CommitMessageModal:**
@@ -291,11 +297,16 @@ class CommitMessageModal extends Modal {
 ```
 
 **Behavior:**
-- Display repository name and branch
+- Display repository name prominently with proper spacing before "on {branch_name}"
 - Show list of changed files (max 10, then "and N more...")
 - Text area pre-filled with suggested message
-- Submit button (disabled while processing)
-- Cancel button
+- "Commit & Push" button:
+  - Styled with Obsidian's purple color (mod-cta class)
+  - First element in tab order from textarea
+  - Disabled while processing
+- "Cancel" button:
+  - Styled with Obsidian's red color (mod-warning class)
+  - Second element in tab order
 - Enter in textarea = submit (Shift+Enter = newline)
 - Display loading state during commit+push
 - Display success/error feedback
