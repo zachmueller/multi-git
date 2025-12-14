@@ -190,101 +190,8 @@ button:disabled {
     width: 80px;
 }
 
-/* FR-3: Repository Picker Modal */
-.multi-git-picker-modal {
-    min-width: 400px;
-    max-width: 600px;
-}
-
-.multi-git-picker-title {
-    margin-top: 0;
-    margin-bottom: 1em;
-    font-size: 1.3em;
-    font-weight: 600;
-}
-
-.multi-git-picker-empty {
-    text-align: center;
-    padding: 2em 1em;
-    color: var(--text-muted);
-    font-size: 0.95em;
-}
-
-.multi-git-picker-list {
-    max-height: 400px;
-    overflow-y: auto;
-    margin-bottom: 1em;
-}
-
-.multi-git-picker-item {
-    padding: 1em;
-    border: 1px solid var(--background-modifier-border);
-    border-radius: 6px;
-    margin-bottom: 0.75em;
-    cursor: pointer;
-    transition: all 0.15s ease;
-}
-
-.multi-git-picker-item:hover {
-    background: var(--background-secondary);
-    border-color: var(--interactive-accent);
-}
-
-.multi-git-picker-item-selected {
-    background: var(--interactive-accent);
-    border-color: var(--interactive-accent);
-    color: var(--text-on-accent);
-}
-
-.multi-git-picker-item-selected:hover {
-    background: var(--interactive-accent-hover);
-    border-color: var(--interactive-accent-hover);
-}
-
-.multi-git-picker-item-name {
-    font-size: 1.05em;
-    font-weight: 600;
-    margin-bottom: 0.5em;
-}
-
-.multi-git-picker-item-info {
-    display: flex;
-    gap: 1em;
-    font-size: 0.9em;
-    color: var(--text-muted);
-}
-
-.multi-git-picker-item-selected .multi-git-picker-item-info {
-    color: var(--text-on-accent);
-    opacity: 0.9;
-}
-
-.multi-git-picker-item-branch {
-    font-family: var(--font-monospace);
-}
-
-.multi-git-picker-item-changes {
-    font-weight: 500;
-}
-
-/* Focus state for keyboard navigation */
-.multi-git-picker-item:focus {
-    outline: 2px solid var(--interactive-accent);
-    outline-offset: 2px;
-}
-
-/* Responsive adjustments for picker modal */
-@media (max-width: 600px) {
-    .multi-git-picker-modal {
-        min-width: auto;
-        width: 100%;
-    }
-
-    .multi-git-picker-item-info {
-        flex-direction: column;
-        gap: 0.3em;
-    }
-}
+/* FR-3: Repository Picker Modal - Uses native SuggestModal styling */
+/* No custom styles needed - Obsidian's SuggestModal provides all necessary styling */
 
 /* FR-3: Commit Message Modal */
 .multi-git-commit-modal {
@@ -304,19 +211,20 @@ button:disabled {
 }
 
 .multi-git-commit-repo-info {
-    display: flex;
-    gap: 0.5em;
-    font-size: 0.95em;
+    font-size: 1em;
     color: var(--text-muted);
+    line-height: 1.5;
 }
 
 .multi-git-commit-repo-name {
-    font-weight: 600;
+    font-weight: 700;
+    font-size: 1.05em;
     color: var(--text-normal);
 }
 
 .multi-git-commit-branch {
     font-family: var(--font-monospace);
+    font-size: 0.95em;
 }
 
 /* Changed files list */
@@ -403,7 +311,7 @@ button:disabled {
     font-size: 0.9em;
 }
 
-/* Buttons */
+/* Buttons - Uses Obsidian's native button classes */
 .multi-git-commit-buttons {
     display: flex;
     justify-content: flex-end;
@@ -413,57 +321,19 @@ button:disabled {
     border-top: 1px solid var(--background-modifier-border);
 }
 
-.multi-git-commit-button {
+/* Ensure proper button sizing and spacing */
+.multi-git-commit-buttons button {
     padding: 0.5em 1.25em;
-    border-radius: 4px;
     font-size: 0.95em;
-    font-weight: 500;
-    cursor: pointer;
-    transition: all 0.15s ease;
-    border: 1px solid var(--background-modifier-border);
 }
 
-.multi-git-commit-button-cancel {
-    background: var(--background-secondary);
-    color: var(--text-normal);
+/* Button order: Primary action (Commit & Push) comes first in tab order */
+.multi-git-commit-buttons button:first-child {
+    order: 1;
 }
 
-.multi-git-commit-button-cancel:hover {
-    background: var(--background-secondary-alt);
-}
-
-.multi-git-commit-button-submit {
-    background: var(--interactive-accent);
-    color: var(--text-on-accent);
-    border-color: var(--interactive-accent);
-}
-
-.multi-git-commit-button-submit:hover:not(:disabled) {
-    background: var(--interactive-accent-hover);
-    border-color: var(--interactive-accent-hover);
-}
-
-.multi-git-commit-button-submit:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-}
-
-.multi-git-commit-button-loading {
-    position: relative;
-}
-
-.multi-git-commit-button-loading::after {
-    content: '';
-    position: absolute;
-    right: 0.75em;
-    top: 50%;
-    transform: translateY(-50%);
-    width: 12px;
-    height: 12px;
-    border: 2px solid currentColor;
-    border-right-color: transparent;
-    border-radius: 50%;
-    animation: spin 0.6s linear infinite;
+.multi-git-commit-buttons button:last-child {
+    order: 2;
 }
 
 /* Responsive adjustments for commit modal */

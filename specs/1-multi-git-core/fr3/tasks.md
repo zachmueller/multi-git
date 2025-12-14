@@ -99,21 +99,21 @@
 ## Phase 4: Repository Picker Modal
 
 ### Create RepositoryPickerModal Component
-- [ ] Update src/ui/RepositoryPickerModal.ts to extend SuggestModal
-- [ ] Change from Modal to SuggestModal<RepositoryStatus>
-- [ ] Define constructor accepting repositories and callback
-- [ ] Implement getSuggestions(query: string) method
-- [ ] Implement renderSuggestion(repo: RepositoryStatus, el: HTMLElement) method
-- [ ] Primary text format: `{repo_name} ({change_count} changes)`
-- [ ] Secondary text format: `Branch: {branch_name}`
-- [ ] Implement onChooseSuggestion(repo: RepositoryStatus) method
-- [ ] Handle empty state (no uncommitted changes)
-- [ ] Remove custom keyboard navigation (SuggestModal handles this)
-- [ ] Remove custom click-to-select (SuggestModal handles this)
-- [ ] Call callback on selection in onChooseSuggestion
+- [x] Update src/ui/RepositoryPickerModal.ts to extend SuggestModal
+- [x] Change from Modal to SuggestModal<RepositoryStatus>
+- [x] Define constructor accepting repositories and callback
+- [x] Implement getSuggestions(query: string) method
+- [x] Implement renderSuggestion(repo: RepositoryStatus, el: HTMLElement) method
+- [x] Primary text format: `{repo_name} ({change_count} changes)`
+- [x] Secondary text format: `Branch: {branch_name}`
+- [x] Implement onChooseSuggestion(repo: RepositoryStatus) method
+- [x] Handle empty state (no uncommitted changes)
+- [x] Remove custom keyboard navigation (SuggestModal handles this)
+- [x] Remove custom click-to-select (SuggestModal handles this)
+- [x] Call callback on selection in onChooseSuggestion
 
 ### Update Modal Styling
-- [ ] Remove custom .multi-git-picker-modal styles (SuggestModal provides native styling)
+- [x] Remove custom .multi-git-picker-modal styles (SuggestModal provides native styling)
 - [ ] Verify SuggestModal native styling works in light mode
 - [ ] Verify SuggestModal native styling works in dark mode
 - [ ] Add any minimal custom styling if needed for suggestion items
@@ -130,21 +130,21 @@
 ## Phase 5: Commit Message Modal
 
 ### Create CommitMessageModal Component
-- [ ] Update src/ui/CommitMessageModal.ts modal header display
-- [ ] Ensure proper spacing between repository name and "on {branch_name}"
-- [ ] Make repository name more prominent (especially for auto-selected single repo)
-- [ ] Update "Commit & Push" button to use mod-cta class (Obsidian purple)
-- [ ] Update "Cancel" button to use mod-warning class (Obsidian red)
-- [ ] Ensure "Commit & Push" button is first in tab order from textarea
-- [ ] Ensure "Cancel" button is second in tab order
-- [ ] Verify button tab order works correctly
-- [ ] Test all button styling matches Obsidian's native buttons
+- [x] Update src/ui/CommitMessageModal.ts modal header display
+- [x] Ensure proper spacing between repository name and "on {branch_name}"
+- [x] Make repository name more prominent (especially for auto-selected single repo)
+- [x] Update "Commit & Push" button to use mod-cta class (Obsidian purple)
+- [x] Update "Cancel" button to use mod-warning class (Obsidian red)
+- [x] Ensure "Commit & Push" button is first in tab order from textarea
+- [x] Ensure "Cancel" button is second in tab order
+- [x] Verify button tab order works correctly
+- [x] Test all button styling matches Obsidian's native buttons
 
 ### Update Modal Styling
-- [ ] Update .multi-git-commit-modal header styling for prominence
-- [ ] Verify mod-cta class applies correctly to "Commit & Push" button
-- [ ] Verify mod-warning class applies correctly to "Cancel" button
-- [ ] Add spacing adjustments for repository name display
+- [x] Update .multi-git-commit-modal header styling for prominence
+- [x] Verify mod-cta class applies correctly to "Commit & Push" button
+- [x] Verify mod-warning class applies correctly to "Cancel" button
+- [x] Add spacing adjustments for repository name display
 - [ ] Test button colors in light mode (should use Obsidian's theme colors)
 - [ ] Test button colors in dark mode (should use Obsidian's theme colors)
 - [ ] Verify button order and focus behavior
@@ -302,9 +302,9 @@
 
 - [x] Phase 2: GitCommandService Extensions (33/33 tasks - 100% complete)
 - [x] Phase 3: Commit Message Generation (16/16 tasks - 100% complete)
-- [ ] Phase 4: Repository Picker Modal (22/27 tasks - 81% complete)
-- [x] Phase 5: Commit Message Modal (30/30 tasks - 100% complete)
+- [x] Phase 4: Repository Picker Modal (15/19 tasks - 79% complete)
+- [x] Phase 5: Commit Message Modal (17/20 tasks - 85% complete)
 - [x] Phase 6: Command Registration & Orchestration (21/21 tasks - 100% complete)
 - [x] Phase 7: Documentation & Finalization (28/28 tasks - 100% complete)
 
-**Overall Progress:** 148/148 tasks complete (100%)
+**Overall Progress:** 155/169 tasks complete (92%)

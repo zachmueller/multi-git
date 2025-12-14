@@ -84,11 +84,16 @@ export class CommitMessageModal extends Modal {
         const repoInfo = header.createEl('div');
         repoInfo.addClass('multi-git-commit-repo-info');
 
-        // Repository name
-        const repoName = repoInfo.createEl('span', {
+        // Repository name (prominent)
+        const repoName = repoInfo.createEl('strong', {
             text: this.repository.repositoryName,
         });
         repoName.addClass('multi-git-commit-repo-name');
+
+        // Spacing between repo name and branch
+        repoInfo.createEl('span', {
+            text: ' ',
+        });
 
         // Branch name
         const branchText = this.repository.currentBranch ?? 'detached HEAD';
@@ -174,26 +179,24 @@ export class CommitMessageModal extends Modal {
         const buttonContainer = container.createEl('div');
         buttonContainer.addClass('multi-git-commit-buttons');
 
-        // Cancel button
+        // Submit button (first in tab order)
+        this.submitButton = buttonContainer.createEl('button', {
+            text: 'Commit & Push',
+        });
+        this.submitButton.addClass('mod-cta');
+        this.submitButton.addEventListener('click', () => {
+            this.handleSubmit();
+        });
+
+        // Cancel button (second in tab order)
         const cancelButton = buttonContainer.createEl('button', {
             text: 'Cancel',
         });
-        cancelButton.addClass('multi-git-commit-button');
-        cancelButton.addClass('multi-git-commit-button-cancel');
+        cancelButton.addClass('mod-warning');
         cancelButton.addEventListener('click', () => {
             if (!this.isProcessing) {
                 this.close();
             }
-        });
-
-        // Submit button
-        this.submitButton = buttonContainer.createEl('button', {
-            text: 'Commit & Push',
-        });
-        this.submitButton.addClass('multi-git-commit-button');
-        this.submitButton.addClass('multi-git-commit-button-submit');
-        this.submitButton.addEventListener('click', () => {
-            this.handleSubmit();
         });
     }
 
@@ -245,14 +248,7 @@ export class CommitMessageModal extends Modal {
 
         if (this.submitButton) {
             this.submitButton.disabled = processing;
-
-            if (processing) {
-                this.submitButton.addClass('multi-git-commit-button-loading');
-                this.submitButton.textContent = 'Committing...';
-            } else {
-                this.submitButton.removeClass('multi-git-commit-button-loading');
-                this.submitButton.textContent = 'Commit & Push';
-            }
+            this.submitButton.textContent = processing ? 'Committing...' : 'Commit & Push';
         }
 
         // Disable textarea during processing
