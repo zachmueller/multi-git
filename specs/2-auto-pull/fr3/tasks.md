@@ -179,30 +179,30 @@ grep -n "openRepositoryInExplorer" src/ui/MergeConflictModal.ts
 - [x] getNotificationMessage() helper method added (in NotificationService)
 - [x] Silent mode respected except for critical errors
 
-### SVC-003 [P]: Add NotificationService Tests
+### SVC-003 [P]: Add NotificationService Tests ✅
 **Description:** Unit tests for enhanced notification logic
 **Files:** `test/services/NotificationService.test.ts`
 **Dependencies:** SVC-002
 **Acceptance Criteria:**
-- [ ] Test showManualInterventionNotification() for each skipReason
-- [ ] Test modal launched for critical scenarios
-- [ ] Test notice shown for non-critical scenarios
-- [ ] Test verbosity settings respected
-- [ ] Test critical scenarios ignore silent mode
-- [ ] Mock ManualInterventionModal
-- [ ] Coverage above 90%
+- [x] Test showManualInterventionNotification() for each skipReason
+- [x] Test modal launched for critical scenarios
+- [x] Test notice shown for non-critical scenarios
+- [x] Test verbosity settings respected
+- [x] Test critical scenarios ignore silent mode
+- [x] Mock ManualInterventionModal
+- [x] Coverage above 90%
 
-### SVC-004 [P]: Update AutoPullService Tests
+### SVC-004 [P]: Update AutoPullService Tests ✅
 **Description:** Update existing tests for new notification behavior
 **Files:** `test/services/AutoPullService.test.ts`
 **Dependencies:** SVC-002
 **Acceptance Criteria:**
-- [ ] Test notifyManualInterventionRequired() delegates to NotificationService
-- [ ] Test shouldShowModal() logic for each skipReason
-- [ ] Test getNotificationMessage() content
-- [ ] Mock NotificationService properly
-- [ ] All existing tests still pass
-- [ ] Coverage maintained above 90%
+- [x] Test notifyManualInterventionRequired() delegates to NotificationService
+- [x] Test shouldShowModal() logic for each skipReason
+- [x] Test getNotificationMessage() content
+- [x] Mock NotificationService properly
+- [x] All existing tests still pass
+- [x] Coverage maintained above 90%
 
 ## Phase 4: UI Status Panel Enhancement
 
@@ -546,13 +546,13 @@ Each phase has validation checkpoints:
 
 ## Progress Tracking
 
-**Current Status:** In Progress (10/28 tasks complete)
+**Current Status:** In Progress (12/28 tasks complete)
 
 **Phase Completion:**
 - [x] Phase 0: Setup (2/2) ✅
 - [x] Phase 1: Foundation (2/2) ✅
 - [x] Phase 2: Core Modal (4/4) ✅
-- [x] Phase 3: Service Integration (2/4) 🔄
+- [x] Phase 3: Service Integration (4/4) ✅
 - [ ] Phase 4: UI Enhancement (0/5)
 - [ ] Phase 5: Integration (0/3)
 - [ ] Phase 6: Quality (0/4)

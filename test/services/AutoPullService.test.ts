@@ -27,6 +27,7 @@ describe('AutoPullService', () => {
 
         mockNotification = {
             show: jest.fn(),
+            showManualInterventionNotification: jest.fn(),
         };
 
         mockRepoConfig = {
@@ -204,6 +205,16 @@ describe('AutoPullService', () => {
 
                 expect(result.status).toBe('skipped');
                 expect(result.skipReason).toBe(PullSkipReason.UNCOMMITTED_CHANGES);
+
+                // Should notify manual intervention required
+                expect(mockNotification.showManualInterventionNotification).toHaveBeenCalledWith(
+                    expect.objectContaining({
+                        repositoryId,
+                        repositoryName,
+                        skipReason: PullSkipReason.UNCOMMITTED_CHANGES,
+                        status: 'skipped',
+                    })
+                );
             });
 
             it('should proceed when working directory clean', async () => {
@@ -241,6 +252,16 @@ describe('AutoPullService', () => {
 
                 expect(result.status).toBe('skipped');
                 expect(result.skipReason).toBe(PullSkipReason.DIVERGED_BRANCHES);
+
+                // Should notify manual intervention required (critical scenario)
+                expect(mockNotification.showManualInterventionNotification).toHaveBeenCalledWith(
+                    expect.objectContaining({
+                        repositoryId,
+                        repositoryName,
+                        skipReason: PullSkipReason.DIVERGED_BRANCHES,
+                        status: 'skipped',
+                    })
+                );
             });
 
             it('should skip when detached HEAD', async () => {
@@ -254,6 +275,16 @@ describe('AutoPullService', () => {
 
                 expect(result.status).toBe('skipped');
                 expect(result.skipReason).toBe(PullSkipReason.DETACHED_HEAD);
+
+                // Should notify manual intervention required
+                expect(mockNotification.showManualInterventionNotification).toHaveBeenCalledWith(
+                    expect.objectContaining({
+                        repositoryId,
+                        repositoryName,
+                        skipReason: PullSkipReason.DETACHED_HEAD,
+                        status: 'skipped',
+                    })
+                );
             });
 
             it('should skip when no tracking branch', async () => {
@@ -267,6 +298,16 @@ describe('AutoPullService', () => {
 
                 expect(result.status).toBe('skipped');
                 expect(result.skipReason).toBe(PullSkipReason.NO_TRACKING_BRANCH);
+
+                // Should notify manual intervention required
+                expect(mockNotification.showManualInterventionNotification).toHaveBeenCalledWith(
+                    expect.objectContaining({
+                        repositoryId,
+                        repositoryName,
+                        skipReason: PullSkipReason.NO_TRACKING_BRANCH,
+                        status: 'skipped',
+                    })
+                );
             });
 
             it('should proceed when fast-forward possible', async () => {
@@ -385,42 +426,117 @@ describe('AutoPullService', () => {
             });
         });
 
-        describe('Notification Verbosity', () => {
+        describe('Manual Intervention Notifications', () => {
             beforeEach(() => {
                 mockSettings.autoPullEnabled = true;
                 mockGitCommand.getRepositoryStatus.mockResolvedValue({
                     hasUncommittedChanges: false,
                 });
+            });
+
+            it('should call NotificationService for DIVERGED_BRANCHES', async () => {
                 mockFastForwardDetection.detectFastForward.mockResolvedValue({
                     status: 'diverged',
                 });
                 mockFastForwardDetection.canSafelyFastForward.mockReturnValue(false);
-            });
-
-            it('should send notifications when verbosity is "all"', async () => {
-                mockSettings.autoPullNotificationVerbosity = 'all';
 
                 await service.attemptAutoPull(repositoryId);
 
-                // Notification should have been created
-                // (In real usage, Notice would be called, but we're just testing the setting is checked)
-                expect(mockSettings.autoPullNotificationVerbosity).toBe('all');
+                expect(mockNotification.showManualInterventionNotification).toHaveBeenCalledWith(
+                    expect.objectContaining({
+                        repositoryId,
+                        repositoryName,
+                        skipReason: PullSkipReason.DIVERGED_BRANCHES,
+                    })
+                );
             });
 
-            it('should not send success notifications when verbosity is "failures-only"', async () => {
-                mockSettings.autoPullNotificationVerbosity = 'failures-only';
-
-                // This would need a successful pull to properly test
-                // For now, just verify setting is respected
-                expect(mockSettings.autoPullNotificationVerbosity).toBe('failures-only');
-            });
-
-            it('should not send any notifications when verbosity is "silent"', async () => {
-                mockSettings.autoPullNotificationVerbosity = 'silent';
+            it('should call NotificationService for UNCOMMITTED_CHANGES', async () => {
+                mockGitCommand.getRepositoryStatus.mockResolvedValue({
+                    hasUncommittedChanges: true,
+                });
 
                 await service.attemptAutoPull(repositoryId);
 
-                expect(mockSettings.autoPullNotificationVerbosity).toBe('silent');
+                expect(mockNotification.showManualInterventionNotification).toHaveBeenCalledWith(
+                    expect.objectContaining({
+                        repositoryId,
+                        repositoryName,
+                        skipReason: PullSkipReason.UNCOMMITTED_CHANGES,
+                    })
+                );
+            });
+
+            it('should call NotificationService for DETACHED_HEAD', async () => {
+                mockFastForwardDetection.detectFastForward.mockResolvedValue({
+                    status: 'error',
+                    errorCode: 'detached-head',
+                });
+                mockFastForwardDetection.canSafelyFastForward.mockReturnValue(false);
+
+                await service.attemptAutoPull(repositoryId);
+
+                expect(mockNotification.showManualInterventionNotification).toHaveBeenCalledWith(
+                    expect.objectContaining({
+                        repositoryId,
+                        repositoryName,
+                        skipReason: PullSkipReason.DETACHED_HEAD,
+                    })
+                );
+            });
+
+            it('should call NotificationService for NO_TRACKING_BRANCH', async () => {
+                mockFastForwardDetection.detectFastForward.mockResolvedValue({
+                    status: 'error',
+                    errorCode: 'no-upstream',
+                });
+                mockFastForwardDetection.canSafelyFastForward.mockReturnValue(false);
+
+                await service.attemptAutoPull(repositoryId);
+
+                expect(mockNotification.showManualInterventionNotification).toHaveBeenCalledWith(
+                    expect.objectContaining({
+                        repositoryId,
+                        repositoryName,
+                        skipReason: PullSkipReason.NO_TRACKING_BRANCH,
+                    })
+                );
+            });
+
+            it('should not call NotificationService for DISABLED states', async () => {
+                mockSettings.autoPullEnabled = false;
+
+                await service.attemptAutoPull(repositoryId);
+
+                // DISABLED_GLOBAL/DISABLED_REPO should not trigger manual intervention notification
+                expect(mockNotification.showManualInterventionNotification).not.toHaveBeenCalled();
+            });
+
+            it('should pass complete PullOperationState to NotificationService', async () => {
+                mockGitCommand.getRepositoryStatus.mockResolvedValue({
+                    hasUncommittedChanges: true,
+                });
+
+                await service.attemptAutoPull(repositoryId);
+
+                expect(mockNotification.showManualInterventionNotification).toHaveBeenCalledWith(
+                    expect.objectContaining({
+                        repositoryId,
+                        repositoryName,
+                        repositoryPath: repoPath,
+                        status: 'skipped',
+                        skipReason: PullSkipReason.UNCOMMITTED_CHANGES,
+                        pullType: 'fast-forward-only',
+                        commitsBefore: expect.any(String),
+                        commitsAfter: null,
+                        commitsPulled: 0,
+                        errorMessage: null,
+                        errorCode: null,
+                        retryCount: 0,
+                        startTime: expect.any(Date),
+                        endTime: expect.any(Date),
+                    })
+                );
             });
         });
     });
