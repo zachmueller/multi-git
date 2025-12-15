@@ -215,6 +215,98 @@ Click the "Pull" button in the status panel to manually trigger a pull:
 5. Status panel shows skip reason and manual pull button
 ```
 
+### Manual Intervention Notifications
+
+When auto-pull cannot proceed safely, the plugin notifies you with clear guidance on what action to take:
+
+**🔔 Notification Types:**
+
+1. **Modal Dialog (Critical Scenarios):**
+   - Non-dismissible to ensure you don't miss critical issues
+   - Appears for: diverged branches, authentication failures, concurrent operations
+   - Provides "Open Terminal" button for immediate access
+   - Must acknowledge with "I'll Handle This" button
+
+2. **Notice (Non-Critical Scenarios):**
+   - Dismissible notification with 10-second duration
+   - Appears for: uncommitted changes, lock errors
+   - Provides guidance but doesn't block workflow
+   - Automatically dismissed or manually closed
+
+**🚨 Critical Scenarios (Always Show Modal):**
+
+| Scenario | Icon | What It Means | What To Do |
+|----------|------|---------------|------------|
+| **Diverged Branches** | ⚠️ Yellow warning | Your branch and remote have different commits | Click "Open Terminal" to manually merge or rebase |
+| **Authentication Failure** | 🔑 Red key | Git credentials not configured or expired | Set up SSH keys or HTTPS credentials |
+| **Concurrent Operation** | 🔒 Gray lock | Another git process is running in repository | Wait for operation to complete or check for stuck processes |
+
+**📋 Non-Critical Scenarios (Show Notice):**
+
+| Scenario | What It Means | What To Do |
+|----------|---------------|------------|
+| **Uncommitted Changes** | You have local changes not yet committed | Commit your changes with `git commit` or stash with `git stash` |
+| **Lock Error** | Repository temporarily locked | Wait a moment and try manual pull, or remove `.git/index.lock` if stuck |
+
+**🎚️ Notification Verbosity Control:**
+
+Configure in plugin settings how much you want to be notified:
+
+- **All Operations:** Notifications for both successful pulls and failures
+- **Failures Only:** Only show notifications when pull fails or is skipped (default)
+- **Silent:** Suppress all non-critical notifications (critical modals still appear)
+
+**Important:** Critical scenarios (diverged branches, auth failures) always show modals regardless of verbosity setting to prevent data loss.
+
+**📊 Status Panel Indicators:**
+
+The status panel shows persistent visual indicators for manual intervention scenarios:
+
+| Indicator | Meaning | Action Available |
+|-----------|---------|------------------|
+| ⚠️ **Warning icon (yellow/orange)** | Manual merge required (branches diverged) | "Open Terminal" button |
+| 🔑 **Key icon (red)** | Authentication needed | "Open Terminal" button |
+| 🔒 **Lock icon (gray)** | Repository busy or locked | Wait or check processes |
+| ℹ️ **Info icon (blue)** | Updates available (auto-pull disabled) | "Pull" button to manually pull |
+
+**Example Workflow (Diverged Branches):**
+
+```
+1. Plugin detects remote changes via fetch
+2. Attempts auto-pull (fast-forward only)
+3. Detects branches have diverged
+4. Shows modal: "Manual Merge Required"
+   - Repository: my-vault
+   - Branch: main
+   - Explanation: Your branch and the remote have diverged
+   - Action needed: Manually merge or rebase
+5. Click "Open Terminal" → Terminal opens at repository
+6. You run: git pull (handle merge) or git pull --rebase
+7. Resolve any conflicts if needed
+8. Auto-pull resumes on next fetch cycle
+```
+
+**Example Workflow (Uncommitted Changes):**
+
+```
+1. Plugin detects remote changes
+2. Attempts auto-pull
+3. Finds uncommitted changes (safety check)
+4. Shows notice: "my-vault: Uncommitted changes. Commit or stash first."
+5. Notice dismisses after 10 seconds
+6. You commit changes: git commit -m "Your message"
+7. Auto-pull succeeds on next fetch cycle
+```
+
+**Terminal Access:**
+
+The "Open Terminal" button provides direct access to your repository:
+- **macOS:** Opens Terminal.app at repository location
+- **Windows:** Opens Command Prompt at repository location
+- **Linux:** Opens default terminal at repository location
+
+This allows you to immediately resolve issues with git commands without navigating manually.
+
 ### Fetch Status Indicators
 
 Each repository displays its fetch status:

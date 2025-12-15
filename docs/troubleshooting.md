@@ -1243,6 +1243,532 @@ Pull History (Last 10 operations)
    - Check timing logs
    - Identify slow operations
 
+## Manual Intervention Notifications
+
+### Understanding Manual Intervention Scenarios
+
+The plugin notifies you when automatic pull operations cannot proceed safely. These notifications guide you through resolving issues that require manual action.
+
+### Notification Types
+
+**1. Modal Dialog (Critical Scenarios):**
+- Non-dismissible to ensure critical issues aren't missed
+- Requires acknowledgment via "I'll Handle This" button
+- Provides "Open Terminal" button for immediate access to repository
+- Appears for: diverged branches, authentication failures, concurrent operations
+
+**2. Notice (Non-Critical Scenarios):**
+- Dismissible notification with 10-second duration
+- Less intrusive for issues that don't require immediate action
+- Appears for: uncommitted changes, lock errors
+- Can be manually dismissed or auto-dismissed after timeout
+
+### Critical Scenarios
+
+#### Diverged Branches (Most Common)
+
+**When it appears:**
+- Your local branch and remote branch have different commits
+- Cannot fast-forward safely
+- Manual merge or rebase required
+
+**Modal Content:**
+```
+┌──────────────────────────────────────────┐
+│  ⚠️  Manual Merge Required                │
+├──────────────────────────────────────────┤
+│ Repository: my-vault                     │
+│ Branch: main                             │
+│                                          │
+│ Your branch and the remote have          │
+│ diverged. A manual merge is needed.      │
+│                                          │
+│ Details:                                 │
+│ • Local: 2 commits ahead                 │
+│ • Remote: 3 commits ahead                │
+│                                          │
+│ Resolution Options:                      │
+│ 1. Merge: git pull (keeps both)         │
+│ 2. Rebase: git pull --rebase (linear)   │
+│                                          │
+│ [Open Terminal] [I'll Handle This]       │
+└──────────────────────────────────────────┘
+```
+
+**Resolution Steps:**
+
+1. **Click "Open Terminal"** to open terminal at repository location
+
+2. **Check divergence:**
+   ```bash
+   git status
+   git log --oneline --graph --all -10
+   ```
+
+3. **Choose resolution strategy:**
+
+   **Option A - Merge (Recommended for beginners):**
+   ```bash
+   git pull
+   # Creates a merge commit
+   # Handles conflicts if they appear
+   ```
+
+   **Option B - Rebase (Clean linear history):**
+   ```bash
+   git pull --rebase
+   # Replays your commits on top of remote
+   # May need to resolve conflicts for each commit
+   ```
+
+   **Option C - Force remote (⚠️ Loses local commits):**
+   ```bash
+   git fetch origin
+   git reset --hard origin/main
+   # WARNING: Your local commits are lost permanently
+   ```
+
+4. **Resolve conflicts if they appear:**
+   - Open conflicted files
+   - Look for `<<<<<<<`, `=======`, `>>>>>>>` markers
+   - Edit to resolve
+   - Save files
+   - `git add <resolved-files>`
+   - `git commit` (for merge) or `git rebase --continue` (for rebase)
+
+5. **Push resolution:**
+   ```bash
+   git push
+   ```
+
+6. **Auto-pull resumes** on next fetch cycle
+
+**Prevention:**
+- Pull frequently before making changes
+- Push commits regularly
+- Coordinate with team on shared files
+- Use feature branches for larger changes
+
+#### Authentication Failures
+
+**When it appears:**
+- Git credentials not configured or expired
+- SSH keys not loaded
+- Token/password incorrect
+
+**Modal Content:**
+```
+┌──────────────────────────────────────────┐
+│  🔑  Authentication Required              │
+├──────────────────────────────────────────┤
+│ Repository: my-project                   │
+│                                          │
+│ Git operation failed due to              │
+│ authentication issues.                   │
+│                                          │
+│ Resolution Steps:                        │
+│ • For SSH: Check SSH keys are loaded    │
+│ • For HTTPS: Update credentials          │
+│ • Verify remote URL is correct          │
+│                                          │
+│ [Open Terminal] [I'll Handle This]       │
+└──────────────────────────────────────────┘
+```
+
+**Resolution Steps:**
+
+See [Authentication Failures](#authentication-failures) section above for detailed SSH and HTTPS setup instructions.
+
+**Quick Checks:**
+
+For SSH:
+```bash
+# Check SSH agent has keys
+ssh-add -l
+
+# If empty, add your key
+ssh-add ~/.ssh/id_ed25519
+
+# Test connection
+ssh -T git@github.com
+```
+
+For HTTPS:
+```bash
+# Reconfigure credential helper
+git config --global credential.helper osxkeychain  # macOS
+git config --global credential.helper manager-core  # Windows
+
+# Manually trigger credential prompt
+cd /path/to/repository
+git fetch
+# Enter your credentials when prompted
+```
+
+For Personal Access Tokens:
+1. Generate new token with `repo` scope
+2. Use token as password when prompted
+3. Credentials will be cached for future use
+
+#### Concurrent Operations
+
+**When it appears:**
+- Another git process is running in the repository
+- Repository is locked by another operation
+- Multiple tools accessing repository simultaneously
+
+**Modal Content:**
+```
+┌──────────────────────────────────────────┐
+│  🔒  Repository Busy                      │
+├──────────────────────────────────────────┤
+│ Repository: my-vault                     │
+│                                          │
+│ Another git operation is currently       │
+│ in progress or the repository is locked. │
+│                                          │
+│ Resolution Steps:                        │
+│ • Wait for other operation to complete   │
+│ • Check for stuck git processes          │
+│ • Close other git tools (VS Code, etc)   │
+│                                          │
+│ [Open Terminal] [I'll Handle This]       │
+└──────────────────────────────────────────┘
+```
+
+**Resolution Steps:**
+
+1. **Check for running git processes:**
+   ```bash
+   # macOS/Linux:
+   ps aux | grep git
+   
+   # Windows:
+   tasklist | findstr git
+   ```
+
+2. **Wait a moment:**
+   - Often resolves itself in seconds
+   - Plugin will retry automatically
+
+3. **Close other git tools:**
+   - VS Code with git extensions
+   - GitKraken, SourceTree, GitHub Desktop
+   - Terminal windows with active git commands
+
+4. **Remove stale lock (if safe):**
+   ```bash
+   cd /path/to/repository
+   # ONLY if certain no git operations are running:
+   rm .git/index.lock
+   ```
+
+5. **Check for stuck processes:**
+   ```bash
+   # Kill stuck git processes (macOS/Linux)
+   killall git
+   
+   # Windows: Use Task Manager to end git.exe processes
+   ```
+
+### Non-Critical Scenarios
+
+#### Uncommitted Changes
+
+**When it appears:**
+- Working directory has unsaved changes
+- Auto-pull would risk data loss
+- Safety check prevents pulling
+
+**Notice Content:**
+```
+⚠️ my-vault: Uncommitted changes detected.
+Commit or stash your changes before pulling.
+```
+
+**Resolution Steps:**
+
+**Option A - Commit changes:**
+```bash
+cd /path/to/repository
+git add -A
+git commit -m "Your descriptive message"
+# Auto-pull will work on next fetch cycle
+```
+
+**Option B - Stash changes:**
+```bash
+cd /path/to/repository
+git stash push -m "Work in progress"
+# Auto-pull will work on next fetch cycle
+# Later restore: git stash pop
+```
+
+**Option C - Discard changes (⚠️ Loses work):**
+```bash
+cd /path/to/repository
+git checkout .  # Discard tracked file changes
+git clean -fd   # Remove untracked files
+```
+
+**Best Practice:**
+- Commit frequently with meaningful messages
+- Use stash for temporary work-in-progress
+- Don't leave uncommitted changes for long periods
+
+#### Lock Errors
+
+**When it appears:**
+- Repository lock file exists
+- Temporary lock from another operation
+- Usually resolves quickly
+
+**Notice Content:**
+```
+🔒 my-vault: Repository locked.
+Wait for operation to complete or check for stuck processes.
+```
+
+**Resolution Steps:**
+
+1. **Wait for automatic retry:**
+   - Plugin retries automatically
+   - Lock usually releases within seconds
+
+2. **Check for active operations:**
+   ```bash
+   ps aux | grep git  # macOS/Linux
+   tasklist | findstr git  # Windows
+   ```
+
+3. **Remove lock if stale:**
+   ```bash
+   cd /path/to/repository
+   # Only if you're certain no git operations running:
+   find .git -name "*.lock" -type f
+   rm .git/index.lock
+   ```
+
+### Status Panel Indicators
+
+The status panel provides persistent visual feedback for manual intervention scenarios:
+
+| Icon | Color | Meaning | Action Button |
+|------|-------|---------|---------------|
+| ⚠️ | Yellow/Orange | Manual merge required (diverged) | "Open Terminal" |
+| 🔑 | Red | Authentication needed | "Open Terminal" |
+| 🔒 | Gray | Repository busy or locked | None (wait) |
+| ℹ️ | Blue | Updates available (auto-pull disabled) | "Pull" |
+
+**How to use:**
+
+1. **Check status panel** after notifications
+2. **Hover over icons** for tooltip explanations
+3. **Click action buttons** when available:
+   - "Open Terminal" → Opens terminal at repository location
+   - "Pull" → Manually triggers pull operation
+
+**Icon meanings in detail:**
+
+**⚠️ Warning (Yellow/Orange):**
+- Branches have diverged
+- Requires manual merge or rebase
+- Action needed to proceed
+- Won't auto-resolve
+
+**🔑 Key (Red):**
+- Authentication credentials needed
+- SSH keys not loaded or HTTPS credentials expired
+- Must configure credentials to proceed
+- Won't auto-resolve
+
+**🔒 Lock (Gray):**
+- Repository locked by concurrent operation
+- Another git process is running
+- Usually temporary
+- May auto-resolve
+
+**ℹ️ Info (Blue):**
+- Updates available but auto-pull is disabled
+- Can manually pull when ready
+- Not an error condition
+- User choice to pull or not
+
+### Terminal Launch Feature
+
+The "Open Terminal" button provides direct access to your repository for manual resolution.
+
+**What it does:**
+- Opens native terminal application
+- Sets working directory to repository path
+- Ready for immediate git command execution
+- Cross-platform support (macOS, Windows, Linux)
+
+**Platform-specific behavior:**
+
+**macOS:**
+- Opens Terminal.app
+- Executes: `open -a Terminal /path/to/repo`
+- Working directory set automatically
+
+**Windows:**
+- Opens Command Prompt or PowerShell
+- Executes: `start cmd /K cd /d C:\path\to\repo`
+- Ready for git commands
+
+**Linux:**
+- Opens default terminal (gnome-terminal, konsole, xterm)
+- Executes: `gnome-terminal --working-directory=/path/to/repo`
+- Fallback to xterm if default not available
+
+**Usage example:**
+```
+1. Modal appears: "Manual merge required"
+2. Click "Open Terminal" button
+3. Terminal opens at repository location
+4. Verify with: pwd  # Should show repository path
+5. Execute resolution commands:
+   git status
+   git pull
+   git merge --continue
+```
+
+**Troubleshooting terminal launch:**
+
+**Terminal doesn't open:**
+- Verify terminal application is installed
+- Check console for errors (Ctrl+Shift+I / Cmd+Option+I)
+- Try launching terminal manually
+- Copy repository path from modal for manual navigation
+
+**Wrong directory:**
+- Plugin uses absolute path from configuration
+- Verify repository path in settings is correct
+- Try manual navigation: `cd /path/to/repository`
+
+**Permission denied:**
+- Check file system permissions
+- Ensure repository directory is accessible
+- Try opening terminal with elevated privileges
+
+### Notification Verbosity Control
+
+Configure how much notification you want:
+
+**Settings → Multi-Git → Auto-pull notification verbosity**
+
+**Options:**
+
+1. **All Operations:**
+   - Success notifications: "Pulled 3 commits"
+   - Failure notifications: Network errors, timeouts
+   - Manual intervention modals: Always shown
+   - **Best for:** Staying fully informed
+
+2. **Failures Only (Default):**
+   - Success notifications: Suppressed (silent)
+   - Failure notifications: Shown as notices
+   - Manual intervention modals: Always shown
+   - **Best for:** Reducing noise while catching issues
+
+3. **Silent:**
+   - Success notifications: Suppressed
+   - Failure notifications: Suppressed (non-critical)
+   - Manual intervention modals: **Still shown** (critical)
+   - **Best for:** Minimal interruption
+
+**Important:** Critical scenarios (diverged branches, auth failures) always show modals regardless of verbosity setting to prevent data loss.
+
+**Recommendation:**
+- Start with "Failures Only" (default)
+- Switch to "All" if you want confirmation of successful pulls
+- Use "Silent" only if actively monitoring status panel
+
+### FAQ: Manual Intervention
+
+**Q: Why does the plugin show modals instead of just pulling?**
+
+A: Safety-first design. Automatic merges could:
+- Create merge conflicts unexpectedly
+- Lose your uncommitted work
+- Overwrite important local changes
+- Fail authentication midway
+
+Modals ensure you're aware of issues that require human judgment.
+
+**Q: Can I disable manual intervention modals?**
+
+A: Critical modals (diverged branches, auth failures) cannot be disabled—they prevent data loss. Non-critical notices can be suppressed with "Silent" verbosity setting.
+
+**Q: The terminal button doesn't work. What do I do?**
+
+A: Alternatives:
+1. Copy repository path from modal
+2. Open terminal manually
+3. Navigate: `cd /path/to/repository`
+4. Execute git commands
+
+Check console for terminal launch errors.
+
+**Q: How often do I need to handle diverged branches?**
+
+A: Depends on workflow:
+- Solo projects: Rare (only if pushing from multiple machines)
+- Team projects: More frequent with concurrent work
+- Prevention: Pull before making changes, push commits regularly
+
+**Q: Can auto-pull handle any conflicts automatically?**
+
+A: No. Auto-pull uses `--ff-only` (fast-forward only) which never creates merge commits. This guarantees:
+- No automatic conflict resolution
+- No surprise merge commits
+- No data loss
+- Safe, predictable behavior
+
+**Q: What's the difference between "I'll Handle This" and closing the modal?**
+
+A: You cannot close critical modals except by clicking "I'll Handle This." This ensures:
+- You've acknowledged the issue
+- You understand action is needed
+- The issue won't be forgotten
+
+Non-critical notices can be dismissed normally.
+
+**Q: Why does the modal show for uncommitted changes?**
+
+A: Protection against data loss. Pulling with uncommitted changes could:
+- Create merge conflicts
+- Require manual conflict resolution
+- Risk losing your work
+
+Commit or stash first for safety.
+
+**Q: How do I prevent getting these notifications frequently?**
+
+A: Best practices:
+1. **Commit frequently** - Keeps working directory clean
+2. **Pull before starting work** - Reduces divergence
+3. **Push commits regularly** - Keeps branches in sync
+4. **Communicate with team** - Coordinate on shared files
+5. **Use feature branches** - Isolates changes
+
+**Q: The modal appeared but I resolved the issue. Do I need to do anything?**
+
+A: Click "I'll Handle This" to acknowledge, then:
+- Auto-pull will retry on next fetch cycle (5 minutes default)
+- Or use status panel "Pull" button for immediate pull
+- Status panel icon will update when resolved
+
+**Q: Can I see a history of manual intervention events?**
+
+A: Yes, in the status panel:
+1. Open status panel (ribbon icon)
+2. Find your repository
+3. Expand "Pull History" section
+4. Review last 10 pull attempts with skip reasons
+
+This shows when and why manual intervention was needed.
+
 ## Plugin Configuration Issues
 
 ### Settings Not Persisting
