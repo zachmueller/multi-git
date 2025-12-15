@@ -1,5 +1,5 @@
 import { App, Modal } from 'obsidian';
-import type { PullOperationState, PullSkipReason, PullErrorCode } from '../services/AutoPullService';
+import type { PullOperationState } from '../services/AutoPullService';
 import { openRepositoryInTerminal } from '../utils/terminal';
 import { Logger } from '../utils/logger';
 

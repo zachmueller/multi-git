@@ -792,27 +792,20 @@ export class AutoPullService {
 
         if (!this._fastForwardDetectionService.canSafelyFastForward(ffResult)) {
             let skipReason: PullSkipReason;
-            let notificationReason: string;
 
             if (ffResult.status === 'diverged') {
                 skipReason = PullSkipReason.DIVERGED_BRANCHES;
-                notificationReason = 'Branches have diverged, manual merge required';
             } else if (ffResult.status === 'error' && ffResult.errorCode === 'detached-head') {
                 skipReason = PullSkipReason.DETACHED_HEAD;
-                notificationReason = 'Detached HEAD state';
             } else if (ffResult.status === 'error' && ffResult.errorCode === 'no-upstream') {
                 skipReason = PullSkipReason.NO_TRACKING_BRANCH;
-                notificationReason = 'No tracking branch configured';
             } else if (ffResult.status === 'up-to-date') {
                 // Already up to date, no need to pull
                 skipReason = PullSkipReason.NOT_FAST_FORWARD;
-                notificationReason = 'Already up to date';
             } else if (ffResult.status === 'local-ahead') {
                 skipReason = PullSkipReason.NOT_FAST_FORWARD;
-                notificationReason = 'Local has unpushed commits';
             } else {
                 skipReason = PullSkipReason.NOT_FAST_FORWARD;
-                notificationReason = 'Cannot fast-forward';
             }
 
             Logger.debug(COMPONENT, `Fast-forward check failed for ${repositoryId}: ${skipReason}`);

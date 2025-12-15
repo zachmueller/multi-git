@@ -431,7 +431,7 @@ export class StatusPanelView extends ItemView {
         const lastPullEntry = history.length > 0 ? history[0] : null;
 
         // Check if we should show Pull button (updates available scenarios)
-        const shouldShowPullButton = this.shouldShowPullButton(status, lastPullEntry);
+        const shouldShowPullButton = this.shouldShowPullButton(status);
         if (shouldShowPullButton) {
             const pullButton = headerEl.createEl('button', {
                 cls: 'multi-git-pull-button',
@@ -640,7 +640,7 @@ export class StatusPanelView extends ItemView {
         }
 
         // Pull History Section
-        this.renderPullHistory(itemEl, status.repositoryId, status.repositoryName);
+        this.renderPullHistory(itemEl, status.repositoryId);
     }
 
     /**
@@ -715,12 +715,10 @@ export class StatusPanelView extends ItemView {
      * Render pull history section for a repository
      * @param container Parent element
      * @param repositoryId Repository ID
-     * @param repositoryName Repository name for display
      */
     private renderPullHistory(
         container: HTMLElement,
-        repositoryId: string,
-        repositoryName: string
+        repositoryId: string
     ): void {
         // Get pull history from AutoPullService
         const history = this.plugin.autoPullService.getPullHistory(repositoryId);
@@ -821,7 +819,7 @@ export class StatusPanelView extends ItemView {
         const detailsEl = entryEl.createDiv({ cls: 'multi-git-pull-history-entry-details' });
 
         // Timestamp (relative)
-        const timestampEl = detailsEl.createDiv({
+        detailsEl.createDiv({
             cls: 'multi-git-pull-history-entry-timestamp',
             text: this.formatRelativeTime(entry.timestamp)
         });
@@ -987,10 +985,9 @@ export class StatusPanelView extends ItemView {
     /**
      * Determine if we should show the Pull button
      * @param status Repository status
-     * @param lastPullEntry Most recent pull history entry
      * @returns true if Pull button should be displayed
      */
-    private shouldShowPullButton(status: RepositoryStatus, lastPullEntry: PullHistoryEntry | null): boolean {
+    private shouldShowPullButton(status: RepositoryStatus): boolean {
         // Show Pull button if remote changes available
         if (status.remoteChanges && status.remoteChanges > 0) {
             return true;
