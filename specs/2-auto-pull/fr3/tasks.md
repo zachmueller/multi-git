@@ -14,16 +14,16 @@
 
 ## Phase 0: Setup & Prerequisites
 
-### ENV-001: Validate FR-2 Dependencies
+### ENV-001: Validate FR-2 Dependencies ✅
 **Description:** Verify FR-2 (Auto-pull) implementation is complete and provides required infrastructure
 **Files:** `src/services/AutoPullService.ts`, `src/ui/StatusPanelView.ts`, `src/settings/data.ts`
 **Dependencies:** None
 **Acceptance Criteria:**
-- [ ] AutoPullService has PullOperationState and PullSkipReason enums
-- [ ] AutoPullService has notifyManualInterventionRequired() method
-- [ ] StatusPanelView has renderPullHistory() method
-- [ ] Settings include autoPullNotificationVerbosity
-- [ ] All FR-2 tests passing
+- [x] AutoPullService has PullOperationState and PullSkipReason enums
+- [x] AutoPullService has notifyManualInterventionRequired() method
+- [x] StatusPanelView has renderPullHistory() method
+- [x] Settings include autoPullNotificationVerbosity
+- [x] All FR-2 tests passing
 
 **Commands:**
 ```bash
@@ -37,15 +37,15 @@ grep -n "autoPullNotificationVerbosity" src/settings/data.ts
 npm test -- test/services/AutoPullService.test.ts
 ```
 
-### ENV-002: Review Existing Modal Patterns
+### ENV-002: Review Existing Modal Patterns ✅
 **Description:** Analyze existing modal implementations for reuse patterns
 **Files:** `src/ui/CriticalErrorModal.ts`, `src/ui/MergeConflictModal.ts`, `src/ui/AuthFailureModal.ts`
 **Dependencies:** ENV-001
 **Acceptance Criteria:**
-- [ ] CriticalErrorModal base class understood
-- [ ] Non-dismissible modal pattern identified
-- [ ] Terminal launch pattern from MergeConflictModal extracted
-- [ ] Action button patterns documented
+- [x] CriticalErrorModal base class understood
+- [x] Non-dismissible modal pattern identified
+- [x] Terminal launch pattern from MergeConflictModal extracted
+- [x] Action button patterns documented
 
 **Commands:**
 ```bash
@@ -58,16 +58,16 @@ grep -n "openRepositoryInExplorer" src/ui/MergeConflictModal.ts
 
 ## Phase 1: Foundation & Utilities
 
-### UTIL-001: Create Terminal Launch Utility
+### UTIL-001: Create Terminal Launch Utility ✅
 **Description:** Extract and centralize terminal launching logic for cross-platform support
 **Files:** `src/utils/terminal.ts` (new file)
 **Dependencies:** ENV-002
 **Acceptance Criteria:**
-- [ ] openRepositoryInTerminal() function created
-- [ ] Cross-platform support (macOS, Windows, Linux)
-- [ ] Error handling for missing terminal applications
-- [ ] Returns Promise<boolean> indicating success
-- [ ] Logging on success and failure
+- [x] openRepositoryInTerminal() function created
+- [x] Cross-platform support (macOS, Windows, Linux)
+- [x] Error handling for missing terminal applications
+- [x] Returns Promise<boolean> indicating success
+- [x] Logging on success and failure
 
 **Implementation Notes:**
 - Reuse pattern from MergeConflictModal.openRepositoryInExplorer()
@@ -546,11 +546,11 @@ Each phase has validation checkpoints:
 
 ## Progress Tracking
 
-**Current Status:** Planning (0/28 tasks complete)
+**Current Status:** In Progress (3/28 tasks complete)
 
 **Phase Completion:**
-- [ ] Phase 0: Setup (0/2)
-- [ ] Phase 1: Foundation (0/2)
+- [x] Phase 0: Setup (2/2) ✅
+- [ ] Phase 1: Foundation (1/2)
 - [ ] Phase 2: Core Modal (0/4)
 - [ ] Phase 3: Service Integration (0/4)
 - [ ] Phase 4: UI Enhancement (0/5)
