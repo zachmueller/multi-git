@@ -122,19 +122,52 @@ export class Logger {
 
     /**
      * Sanitize error message to remove potential credentials
+     * Enhanced to handle SSH keys, tokens, and various credential formats
      * @param message - Original error message
      * @returns Sanitized message
      */
     private static sanitizeMessage(message: string): string {
-        // Remove anything that looks like a password or token
-        // Common patterns: password=xxx, token=xxx, Bearer xxx, etc.
-        return message
-            .replace(/password[=:]\s*\S+/gi, 'password=***')
-            .replace(/token[=:]\s*\S+/gi, 'token=***')
-            .replace(/Bearer\s+\S+/gi, 'Bearer ***')
-            .replace(/Authorization:\s*\S+/gi, 'Authorization: ***')
-            .replace(/ssh:\/\/[^@]+@/g, 'ssh://***@') // SSH URLs
-            .replace(/https?:\/\/[^:]+:[^@]+@/g, 'https://***:***@'); // HTTP(S) URLs with credentials
+        if (!message) return message;
+
+        let sanitized = message;
+
+        // Remove credentials from HTTPS URLs (more comprehensive pattern)
+        sanitized = sanitized.replace(
+            /(https?:\/\/)([^:@\s]+):([^@\s]+)@/g,
+            '$1[CREDENTIALS]@'
+        );
+
+        // Remove SSH key data (BEGIN/END blocks)
+        sanitized = sanitized.replace(
+            /-----BEGIN [A-Z ]+ KEY-----[\s\S]*?-----END [A-Z ]+ KEY-----/g,
+            '[SSH_KEY_REDACTED]'
+        );
+
+        // Remove various token formats (order matters - more specific patterns first)
+        sanitized = sanitized
+            .replace(/Authorization:\s+\S+\s+\S+/gi, 'Authorization: [REDACTED]')
+            .replace(/Bearer\s+\S+/gi, 'Bearer [REDACTED]')
+            .replace(/token([=:])\s*[^\s]+/gi, 'token$1[REDACTED]')
+            .replace(/password([=:])\s*\S+/gi, 'password$1[REDACTED]')
+            .replace(/api[_-]?key([=:])\s*\S+/gi, 'api_key$1[REDACTED]')
+            .replace(/secret([=:])\s*\S+/gi, 'secret$1[REDACTED]');
+
+        // Remove SSH URLs with usernames
+        sanitized = sanitized.replace(/ssh:\/\/[^@]+@/g, 'ssh://[USER]@');
+
+        // Remove git URLs with credentials
+        sanitized = sanitized.replace(/git@([^:]+):/g, 'git@$1:');
+
+        return sanitized;
+    }
+    /**
+     * Sanitize git output to remove sensitive information
+     * Public method for use in services that need to sanitize git command output
+     * @param output - Raw git output or error message
+     * @returns Sanitized output safe for logging
+     */
+    static sanitizeGitOutput(output: string): string {
+        return this.sanitizeMessage(output);
     }
 
     /**

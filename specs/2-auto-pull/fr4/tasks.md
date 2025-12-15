@@ -25,10 +25,10 @@
 **Files:** `src/utils/logger.ts`
 **Dependencies:** None
 **Acceptance Criteria:**
-- [ ] Debug mode functionality verified working
-- [ ] Current sanitization capabilities documented
-- [ ] Structured logging support assessed
-- [ ] List of required enhancements identified
+- [x] Debug mode functionality verified working
+- [x] Current sanitization capabilities documented
+- [x] Structured logging support assessed
+- [x] List of required enhancements identified
 
 **Commands:**
 ```bash
@@ -44,10 +44,10 @@ grep -r "debug\(" src/services/
 **Files:** `src/settings/data.ts`, `src/settings/SettingTab.ts`
 **Dependencies:** ENV-001
 **Acceptance Criteria:**
-- [ ] Debug mode setting exists in plugin settings
-- [ ] Setting accessible from services via plugin instance
-- [ ] Setting changes take effect without plugin reload
-- [ ] Default debug mode state confirmed (off)
+- [x] Debug mode setting exists in plugin settings
+- [x] Setting accessible from services via plugin instance
+- [x] Setting changes take effect without plugin reload
+- [x] Default debug mode state confirmed (off)
 
 ## Phase 1: Foundation - Logger Enhancements
 
@@ -56,12 +56,12 @@ grep -r "debug\(" src/services/
 **Files:** `src/utils/logger.ts`
 **Dependencies:** ENV-002
 **Acceptance Criteria:**
-- [ ] Sanitization function removes HTTPS credentials from URLs
-- [ ] Sanitization removes SSH key data from output
-- [ ] Sanitization removes tokens from error messages
-- [ ] Function handles null/undefined input gracefully
-- [ ] Sanitization preserves useful debugging information
-- [ ] Performance impact negligible (< 1ms per call)
+- [x] Sanitization function removes HTTPS credentials from URLs
+- [x] Sanitization removes SSH key data from output
+- [x] Sanitization removes tokens from error messages
+- [x] Function handles null/undefined input gracefully
+- [x] Sanitization preserves useful debugging information
+- [x] Performance impact negligible (< 1ms per call)
 
 **Implementation:**
 ```typescript
@@ -95,12 +95,12 @@ function sanitizeGitOutput(output: string): string {
 **Files:** `test/utils/logger.test.ts`
 **Dependencies:** LOG-001
 **Acceptance Criteria:**
-- [ ] Test sanitization of HTTPS URLs with embedded credentials
-- [ ] Test sanitization of SSH key data
-- [ ] Test sanitization of various token formats
-- [ ] Test that commit hashes are NOT sanitized
-- [ ] Test edge cases (empty strings, null, undefined)
-- [ ] All tests pass with 100% coverage of sanitization function
+- [x] Test sanitization of HTTPS URLs with embedded credentials
+- [x] Test sanitization of SSH key data
+- [x] Test sanitization of various token formats
+- [x] Test that commit hashes are NOT sanitized
+- [x] Test edge cases (empty strings, null, undefined)
+- [x] All tests pass with 100% coverage of sanitization function
 
 **Test Cases:**
 - Input: `https://user:pass@github.com/repo.git`
@@ -114,11 +114,11 @@ function sanitizeGitOutput(output: string): string {
 **Files:** `src/utils/logger.ts`
 **Dependencies:** LOG-001
 **Acceptance Criteria:**
-- [ ] Method accepts component, operation, and data object
-- [ ] Output format is consistent and readable
-- [ ] Respects debug mode setting
-- [ ] Handles nested objects correctly
-- [ ] Performance acceptable for production use
+- [x] Method accepts component, operation, and data object (already exists as Logger.debug())
+- [x] Output format is consistent and readable
+- [x] Respects debug mode setting
+- [x] Handles nested objects correctly
+- [x] Performance acceptable for production use
 
 **Implementation (if needed):**
 ```typescript
