@@ -14,6 +14,15 @@
 - [x] Iterative Simplicity - Scope focused on safe, minimal fast-forward-only approach
 - [x] Documentation as Context - Provides clear context for implementation and future enhancements
 
+## Clarifications
+
+### Session 2025-12-15
+- Q: During automatic pull, if git prompts for credentials (expired SSH key, HTTPS password, etc.), how should the plugin respond? → A: Fail gracefully - abort pull, notify user to authenticate manually via terminal
+- Q: When multiple repositories have remote changes simultaneously, should pulls execute sequentially or concurrently? → A: Fully sequential - one repository completes before next begins. Use Obsidian SuggestModal selector (like RepositoryPickerModal) for any UI requiring repository selection.
+- Q: When an automatic pull fails due to transient issues (network timeout, temporary lock), should the plugin retry automatically? → A: Retry with exponential backoff (3 attempts maximum)
+- Q: When a repository is in "Remote updates available" state (auto-pull disabled or safety check failed), how should the status panel indicate this? → A: "Updates Available" with info icon and "Pull" action button
+- Q: Where should users access the pull history/activity log for troubleshooting? → A: Status panel expandable section showing last 10 operations
+
 ## Overview
 
 ### Purpose
@@ -61,7 +70,8 @@ As an Obsidian user managing multiple git repositories, I want remote changes to
   - [ ] Pull operation does not interrupt active user editing or other git operations
   - [ ] Pull completes within 5 seconds for repositories up to 1000 files
   - [ ] User receives notification confirming successful pull with commit count
-  - [ ] Failed pulls (network issues, permissions) are handled gracefully with clear error messages
+  - [ ] Failed pulls retry automatically with exponential backoff (3 attempts: immediate, 10s, 30s delays)
+  - [ ] After 3 failed attempts, user notified with clear error message and guidance
 
 ### FR-3: Manual Intervention Notification
 - **Description:** When remote changes cannot be safely fast-forwarded, users must be clearly notified and provided with guidance for manual resolution
@@ -73,7 +83,8 @@ As an Obsidian user managing multiple git repositories, I want remote changes to
   - [ ] Notification provides actionable next steps (open terminal, resolve manually)
   - [ ] Optional action button to open terminal at repository location
   - [ ] Notification does not auto-dismiss (requires user acknowledgment)
-  - [ ] Status panel shows "Manual merge required" indicator for affected repository
+  - [ ] Status panel shows "Manual merge required" indicator with warning icon for divergent branches
+  - [ ] Status panel shows "Updates Available" with info icon and "Pull" action button when auto-pull disabled or safety checks prevent automatic pull
 
 ### FR-4: Pull Operation Logging
 - **Description:** All automatic pull operations must be logged for debugging and audit purposes
@@ -117,17 +128,19 @@ As an Obsidian user managing multiple git repositories, I want remote changes to
 - **Acceptance Criteria:**
   - [ ] Fast-forward detection completes in under 500ms
   - [ ] Pull operations execute in background without blocking UI
-  - [ ] Multiple repository pulls can execute concurrently
+  - [ ] Pull operations execute sequentially (one repository at a time) to prevent resource contention
   - [ ] No noticeable lag when editing files during background pulls
   - [ ] Memory usage increase less than 10MB during pull operations
   - [ ] Performance acceptable for repositories up to 10,000 files
+  - [ ] Sequential processing of multiple repositories completes within reasonable time (under 30 seconds for 5 repositories)
 
 ### NFR-3: Reliability
 - **Description:** Automatic pull feature must operate reliably across diverse git configurations
 - **Priority:** High
 - **Acceptance Criteria:**
-  - [ ] Works with SSH authentication
-  - [ ] Works with HTTPS authentication  
+  - [ ] Works with SSH authentication (when credentials already cached)
+  - [ ] Works with HTTPS authentication (when credentials already cached)
+  - [ ] If git prompts for credentials, abort pull and notify user to authenticate manually
   - [ ] Works with various git versions (2.20.0+)
   - [ ] Handles network interruptions gracefully
   - [ ] Handles repository locked scenarios (concurrent access)
@@ -141,8 +154,10 @@ As an Obsidian user managing multiple git repositories, I want remote changes to
   - [ ] Notifications are informative but not overwhelming
   - [ ] Success notifications are subtle and non-intrusive
   - [ ] Failure notifications are prominent and actionable
-  - [ ] Status panel clearly indicates pull state for each repository
-  - [ ] User can see pull history/activity log for troubleshooting
+  - [ ] Status panel uses clear visual indicators: info icon for "Updates Available", warning icon for "Manual merge required", success icon for completed pulls
+  - [ ] Status panel provides contextual action buttons: "Pull" button for manual pull, "Open Terminal" for merge conflicts
+  - [ ] Status panel includes expandable section showing last 10 pull operations per repository for troubleshooting
+  - [ ] Activity log shows timestamp, operation result, commits pulled, and any error messages
   - [ ] All messages use clear, non-technical language
 
 ## Scope
@@ -182,6 +197,7 @@ The plugin uses a conservative "fail-safe" approach:
 - Existing FetchSchedulerService for detecting remote changes
 - Existing NotificationService for user feedback
 - Existing StatusPanelView for displaying pull status
+- Existing RepositoryPickerModal pattern (SuggestModal) for any repository selection UI
 - Git 2.20.0+ with support for `--ff-only` flag
 
 ### Risks & Mitigations
@@ -192,11 +208,14 @@ The plugin uses a conservative "fail-safe" approach:
 - **Risk:** Pull operation fails mid-operation due to network interruption
   - **Mitigation:** Use `--ff-only` flag which is atomic; comprehensive error handling; retry logic with exponential backoff
 
+- **Risk:** Git prompts for credentials during automatic pull
+  - **Mitigation:** Detect credential prompt scenarios; abort pull gracefully; notify user with clear message to authenticate via terminal; disable auto-pull for that repository until credentials cached
+
 - **Risk:** User has unsaved file open in Obsidian when files are updated by pull
   - **Mitigation:** Obsidian handles external file changes gracefully; pull only when working directory clean; test extensively with real-world editing scenarios
 
 - **Risk:** Performance impact with many repositories or large repositories
-  - **Mitigation:** Execute pulls in background; limit concurrent pulls; configurable per-repository; performance testing with realistic workloads
+  - **Mitigation:** Execute pulls sequentially in background; configurable per-repository enable/disable; performance testing with realistic workloads; optimize git command execution
 
 - **Risk:** User confusion about when automatic vs. manual pull is used
   - **Mitigation:** Clear documentation; visible settings; informative notifications; activity log for troubleshooting
@@ -297,10 +316,13 @@ The plugin uses a conservative "fail-safe" approach:
   - commitsPulled: number
   - errorMessage: string (nullable)
   - skipReason: 'divergent-branches' | 'uncommitted-changes' | 'concurrent-operation' | 'disabled' (nullable)
+  - retryCount: number (0-3, tracks retry attempts)
+  - lastRetryTime: timestamp (nullable)
 
 - **State Transitions:**
   - pending → success (fast-forward succeeded)
-  - pending → failed (network error, auth error, etc.)
+  - pending → pending (retry after failure, retryCount incremented)
+  - pending → failed (max retries exhausted or non-retryable error)
   - pending → skipped (safety checks failed, feature disabled)
 
 - **Validation:**
@@ -316,13 +338,13 @@ The plugin uses a conservative "fail-safe" approach:
   - enabled: boolean (global setting)
   - perRepositorySettings: Map<repositoryId, RepositoryPullConfig>
   - notificationVerbosity: 'all' | 'failures-only' | 'silent'
-  - maxConcurrentPulls: number (default: 3)
 
 - **RepositoryPullConfig:**
   - repositoryId: string
   - autoPullEnabled: boolean
   - lastPullTime: timestamp (nullable)
   - lastPullStatus: PullOperationStatus
+  - pullHistory: Array<PullOperationState> (last 10 operations, FIFO queue)
 
 ## Assumptions
 
