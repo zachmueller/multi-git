@@ -184,16 +184,16 @@ private async performSafetyChecks(
 **Files:** `src/services/AutoPullService.ts`
 **Dependencies:** FOUND-004
 **Acceptance Criteria:**
-- [ ] `executePull()` private method implemented
-- [ ] Captures commit hash before pull operation
-- [ ] Executes `git pull --ff-only` using GitCommandService
-- [ ] Captures commit hash after pull operation
-- [ ] Calculates number of commits pulled
-- [ ] Returns success boolean, commitsAfter hash, error code and message
-- [ ] Categorizes errors into PullErrorCode types
-- [ ] 5-second timeout enforced (per specification)
-- [ ] Atomic operation guarantee maintained
-- [ ] Performance timing logged
+- [x] `executePull()` private method implemented
+- [x] Captures commit hash before pull operation
+- [x] Executes `git pull --ff-only` using GitCommandService
+- [x] Captures commit hash after pull operation
+- [x] Calculates number of commits pulled
+- [x] Returns success boolean, commitsAfter hash, error code and message
+- [x] Categorizes errors into PullErrorCode types
+- [x] 5-second timeout enforced (per specification)
+- [x] Atomic operation guarantee maintained
+- [x] Performance timing logged
 
 **Pull Execution Flow:**
 ```typescript
@@ -217,18 +217,18 @@ private async executePull(repoPath: string): Promise<{
 **Files:** `src/services/AutoPullService.ts`
 **Dependencies:** CORE-001
 **Acceptance Criteria:**
-- [ ] `calculateRetryDelay()` method implemented
-- [ ] Returns delays: 0ms (immediate), 10000ms, 30000ms based on retryCount
-- [ ] `scheduleRetry()` method implemented
-- [ ] Updates PullOperationState with retry information
-- [ ] Increments retryCount (maximum 3)
-- [ ] Sets nextRetryTime based on exponential backoff
-- [ ] Sets lastRetryTime to current time
-- [ ] Differentiates retryable vs non-retryable errors
-- [ ] AUTH_ERROR never triggers retry (fail fast)
-- [ ] NETWORK_ERROR and LOCK_ERROR trigger retry
-- [ ] Guards against infinite retry loops
-- [ ] Comprehensive retry logging
+- [x] `calculateRetryDelay()` method implemented
+- [x] Returns delays: 0ms (immediate), 10000ms, 30000ms based on retryCount
+- [x] Retry logic integrated into attemptAutoPull (inline, not separate method)
+- [x] Updates PullOperationState with retry information
+- [x] Increments retryCount (maximum 3)
+- [x] Sets nextRetryTime based on exponential backoff
+- [x] Sets lastRetryTime to current time
+- [x] Differentiates retryable vs non-retryable errors
+- [x] AUTH_ERROR never triggers retry (fail fast)
+- [x] NETWORK_ERROR and LOCK_ERROR trigger retry
+- [x] Guards against infinite retry loops
+- [x] Comprehensive retry logging
 
 **Retry Logic:**
 ```typescript
@@ -252,16 +252,16 @@ private async scheduleRetry(operation: PullOperationState): Promise<void> {
 **Files:** `src/services/AutoPullService.ts`
 **Dependencies:** FOUND-002
 **Acceptance Criteria:**
-- [ ] In-memory storage using Map<repositoryId, PullHistoryEntry[]>
-- [ ] `addToHistory()` private method implemented
-- [ ] `getPullHistory()` public method implemented
-- [ ] History limited to last 10 entries per repository (FIFO queue)
-- [ ] Oldest entries removed when exceeding 10
-- [ ] Entries include timestamp, result, commits pulled, errors
-- [ ] Empty history handled gracefully
-- [ ] Memory usage bounded (no unbounded growth)
-- [ ] History survives multiple pull operations
-- [ ] Thread-safe for concurrent access
+- [x] In-memory storage using Map<repositoryId, PullHistoryEntry[]>
+- [x] `addToHistory()` private method implemented
+- [x] `getPullHistory()` public method implemented
+- [x] History limited to last 10 entries per repository (FIFO queue)
+- [x] Oldest entries removed when exceeding 10
+- [x] Entries include timestamp, result, commits pulled, errors
+- [x] Empty history handled gracefully
+- [x] Memory usage bounded (no unbounded growth)
+- [x] History survives multiple pull operations
+- [x] Thread-safe for concurrent access
 
 **History Management:**
 ```typescript
@@ -285,20 +285,20 @@ getPullHistory(repositoryId: string): PullHistoryEntry[] {
 **Files:** `src/services/AutoPullService.ts`
 **Dependencies:** CORE-001, CORE-002, CORE-003, FOUND-003
 **Acceptance Criteria:**
-- [ ] `attemptAutoPull()` public method implemented
-- [ ] Layer 1: Checks global and per-repository auto-pull enabled
-- [ ] Layer 2: Performs all safety checks (working directory, concurrent ops)
-- [ ] Layer 3: Executes fast-forward detection via FR-1
-- [ ] Layer 4: Executes pull if all checks pass
-- [ ] Creates PullOperationState with initial 'pending' status
-- [ ] Handles all status outcomes (success, failed, skipped)
-- [ ] Updates status to success/failed/skipped based on result
-- [ ] Records operation in pull history
-- [ ] Implements retry loop for failed operations
-- [ ] Triggers appropriate notifications for each outcome
-- [ ] Returns comprehensive PullOperationState
-- [ ] All decision points logged
-- [ ] Method completes within 5 seconds (excluding retries)
+- [x] `attemptAutoPull()` public method implemented
+- [x] Layer 1: Checks global and per-repository auto-pull enabled
+- [x] Layer 2: Performs all safety checks (working directory, concurrent ops)
+- [x] Layer 3: Executes fast-forward detection via FR-1
+- [x] Layer 4: Executes pull if all checks pass
+- [x] Creates PullOperationState with initial 'pending' status
+- [x] Handles all status outcomes (success, failed, skipped)
+- [x] Updates status to success/failed/skipped based on result
+- [x] Records operation in pull history
+- [x] Implements retry loop for failed operations
+- [x] Triggers appropriate notifications for each outcome
+- [x] Returns comprehensive PullOperationState
+- [x] All decision points logged
+- [x] Method completes within 5 seconds (excluding retries)
 
 **Orchestration Flow:**
 ```typescript
@@ -320,19 +320,19 @@ async attemptAutoPull(repositoryId: string): Promise<PullOperationState> {
 **Files:** `src/services/AutoPullService.ts`
 **Dependencies:** FOUND-002
 **Acceptance Criteria:**
-- [ ] `notifyPullSuccess()` private method implemented
-- [ ] Success notifications are subtle (transient)
-- [ ] Includes repository name and commit count
-- [ ] Example: "Pulled 3 commits for Vault Repository"
-- [ ] `notifyPullFailed()` private method implemented
-- [ ] Failure notifications are prominent (persistent)
-- [ ] Includes clear error message and guidance
-- [ ] `notifyManualInterventionRequired()` private method implemented
-- [ ] Manual intervention notifications explain why and what to do
-- [ ] Respects notification verbosity settings (all/failures-only/silent)
-- [ ] Uses appropriate NotificationService methods
-- [ ] Messages use clear, non-technical language
-- [ ] No notifications when verbosity is 'silent'
+- [x] `notifyPullSuccess()` private method implemented
+- [x] Success notifications are subtle (transient)
+- [x] Includes repository name and commit count
+- [x] Example: "Pulled 3 commits for Vault Repository"
+- [x] `notifyPullFailed()` private method implemented
+- [x] Failure notifications are prominent (persistent)
+- [x] Includes clear error message and guidance
+- [x] `notifyManualInterventionRequired()` private method implemented
+- [x] Manual intervention notifications explain why and what to do
+- [x] Respects notification verbosity settings (all/failures-only/silent)
+- [x] Uses Obsidian Notice for notifications
+- [x] Messages use clear, non-technical language
+- [x] No notifications when verbosity is 'silent'
 
 **Notification Methods:**
 ```typescript
@@ -358,15 +358,15 @@ private notifyManualInterventionRequired(repositoryName: string, reason: string)
 **Files:** `src/services/AutoPullService.ts`
 **Dependencies:** CORE-004
 **Acceptance Criteria:**
-- [ ] `manualPull()` public method implemented
-- [ ] Bypasses auto-pull enabled check (manual always allowed)
-- [ ] Performs same safety checks as automatic pull
-- [ ] Uses same pull execution logic
-- [ ] Does NOT use retry logic (provides immediate feedback)
-- [ ] Returns detailed PullOperationState for UI display
-- [ ] Triggers appropriate notifications
-- [ ] Logs distinguish manual vs automatic pulls
-- [ ] Works even when auto-pull globally disabled
+- [x] `manualPull()` public method implemented
+- [x] Bypasses auto-pull enabled check (manual always allowed)
+- [x] Performs same safety checks as automatic pull
+- [x] Uses same pull execution logic
+- [x] Does NOT use retry logic (provides immediate feedback)
+- [x] Returns detailed PullOperationState for UI display
+- [x] Triggers appropriate notifications
+- [x] Logs distinguish manual vs automatic pulls
+- [x] Works even when auto-pull globally disabled
 
 **Manual Pull:**
 ```typescript
