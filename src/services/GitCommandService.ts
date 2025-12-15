@@ -16,6 +16,8 @@ import {
 } from '../utils/errors';
 import { Logger } from '../utils/logger';
 import { MultiGitSettings, RepositoryStatus } from '../settings/data';
+import { ErrorClassificationService } from './ErrorClassificationService';
+import { ErrorPresentationService } from './ErrorPresentationService';
 
 const execPromise = promisify(exec);
 
@@ -53,13 +55,23 @@ export interface RemoteChangeStatus {
 export class GitCommandService {
     private readonly defaultTimeout = 10000; // 10 seconds
     private readonly settings: MultiGitSettings;
+    private readonly errorClassificationService?: ErrorClassificationService;
+    private readonly errorPresentationService?: ErrorPresentationService;
 
     /**
      * Create a new GitCommandService
      * @param settings Plugin settings containing PATH configuration
+     * @param errorClassificationService Optional error classification service for enhanced error handling
+     * @param errorPresentationService Optional error presentation service for user-facing error display
      */
-    constructor(settings: MultiGitSettings) {
+    constructor(
+        settings: MultiGitSettings,
+        errorClassificationService?: ErrorClassificationService,
+        errorPresentationService?: ErrorPresentationService
+    ) {
         this.settings = settings;
+        this.errorClassificationService = errorClassificationService;
+        this.errorPresentationService = errorPresentationService;
     }
 
     /**
@@ -341,17 +353,24 @@ export class GitCommandService {
     /**
      * Fetch remote changes for a repository
      * @param repoPath Absolute path to repository
+     * @param repositoryId Repository ID for error classification
+     * @param repositoryName Repository name for error classification
      * @param timeout Timeout in milliseconds (default: 30000ms)
      * @returns True if fetch succeeded, false otherwise
      * @throws FetchError with categorized error code if fetch fails
      */
-    async fetchRepository(repoPath: string, timeout: number = 30000): Promise<boolean> {
+    async fetchRepository(
+        repoPath: string,
+        repositoryId: string,
+        repositoryName: string,
+        timeout: number = 30000
+    ): Promise<boolean> {
         Logger.debug('GitCommand', `Starting fetch for repository: ${repoPath}`);
         const startTime = Date.now();
 
         try {
             // Use --all to fetch all remotes, --tags to include tags, --prune to remove stale refs
-            await this.executeGitCommand('fetch --all --tags --prune', {
+            const result = await this.executeGitCommand('fetch --all --tags --prune', {
                 cwd: repoPath,
                 timeout,
             });
@@ -363,6 +382,20 @@ export class GitCommandService {
         } catch (error) {
             const duration = Date.now() - startTime;
             Logger.error('GitCommand', `Fetch failed after ${duration}ms for ${repoPath}`, error);
+
+            // If error classification service is available, classify and present error
+            if (this.errorClassificationService && this.errorPresentationService && error instanceof Error) {
+                const classified = this.errorClassificationService.classifyError(error, {
+                    repositoryId,
+                    repositoryName,
+                    operation: 'fetch',
+                    stderr: error.message
+                });
+
+                // Present error to user (modal for critical, notification for minor)
+                this.errorPresentationService.presentError(classified);
+            }
+
             // Categorize the error and throw FetchError with appropriate code
             const errorMessage = error instanceof Error ? error.message : String(error);
             const errorStr = errorMessage.toLowerCase();
@@ -875,10 +908,17 @@ export class GitCommandService {
     /**
      * Create a commit with the given message
      * @param repoPath Absolute path to repository
+     * @param repositoryId Repository ID for error classification
+     * @param repositoryName Repository name for error classification
      * @param message Commit message (supports multi-line messages)
      * @throws GitCommitError if commit fails
      */
-    async createCommit(repoPath: string, message: string): Promise<void> {
+    async createCommit(
+        repoPath: string,
+        repositoryId: string,
+        repositoryName: string,
+        message: string
+    ): Promise<void> {
         Logger.debug('GitCommand', `Creating commit for: ${repoPath}`);
 
         // Validate commit message is not empty
@@ -908,6 +948,24 @@ export class GitCommandService {
             Logger.debug('GitCommand', `Successfully created commit for ${repoPath}`);
         } catch (error) {
             Logger.error('GitCommand', `Failed to create commit for ${repoPath}`, error);
+
+            // If error classification service is available, classify and present error
+            // Note: For commit errors, we typically keep them inline in CommitMessageModal
+            // Classification helps determine if it's a critical issue (e.g., merge conflict)
+            if (this.errorClassificationService && this.errorPresentationService && error instanceof Error) {
+                const classified = this.errorClassificationService.classifyError(error, {
+                    repositoryId,
+                    repositoryName,
+                    operation: 'commit',
+                    stderr: error.message
+                });
+
+                // Only show modal for critical errors during commit (e.g., merge conflicts)
+                // Minor errors stay inline in the CommitMessageModal
+                if (classified.scenario === 'MERGE_CONFLICT') {
+                    this.errorPresentationService.presentError(classified);
+                }
+            }
 
             const errorMessage = error instanceof Error ? error.message : String(error);
             const errorStr = errorMessage.toLowerCase();
@@ -948,10 +1006,17 @@ export class GitCommandService {
     /**
      * Push commits to remote repository
      * @param repoPath Absolute path to repository
+     * @param repositoryId Repository ID for error classification
+     * @param repositoryName Repository name for error classification
      * @param timeout Timeout in milliseconds (default: 60000ms)
      * @throws GitPushError if push fails
      */
-    async pushToRemote(repoPath: string, timeout: number = 60000): Promise<void> {
+    async pushToRemote(
+        repoPath: string,
+        repositoryId: string,
+        repositoryName: string,
+        timeout: number = 60000
+    ): Promise<void> {
         Logger.debug('GitCommand', `Pushing to remote for: ${repoPath}`);
 
         try {
@@ -963,6 +1028,19 @@ export class GitCommandService {
             Logger.debug('GitCommand', `Successfully pushed to remote for ${repoPath}`);
         } catch (error) {
             Logger.error('GitCommand', `Failed to push to remote for ${repoPath}`, error);
+
+            // If error classification service is available, classify and present error
+            if (this.errorClassificationService && this.errorPresentationService && error instanceof Error) {
+                const classified = this.errorClassificationService.classifyError(error, {
+                    repositoryId,
+                    repositoryName,
+                    operation: 'push',
+                    stderr: error.message
+                });
+
+                // Present error to user (modal for auth failures, notification for others)
+                this.errorPresentationService.presentError(classified);
+            }
 
             const errorMessage = error instanceof Error ? error.message : String(error);
             const errorStr = errorMessage.toLowerCase();
@@ -1035,6 +1113,8 @@ export class GitCommandService {
     /**
      * Combined operation: stage all changes, commit, and push to remote
      * @param repoPath Absolute path to repository
+     * @param repositoryId Repository ID for error classification
+     * @param repositoryName Repository name for error classification
      * @param message Commit message
      * @param timeout Timeout for push operation in milliseconds (default: 60000ms)
      * @throws GitCommitError if staging or commit fails
@@ -1042,6 +1122,8 @@ export class GitCommandService {
      */
     async commitAndPush(
         repoPath: string,
+        repositoryId: string,
+        repositoryName: string,
         message: string,
         timeout: number = 60000
     ): Promise<void> {
@@ -1055,12 +1137,12 @@ export class GitCommandService {
             Logger.debug('GitCommand', 'Stage complete, proceeding to commit');
 
             // Step 2: Create commit
-            await this.createCommit(repoPath, message);
+            await this.createCommit(repoPath, repositoryId, repositoryName, message);
             commitSucceeded = true;
             Logger.debug('GitCommand', 'Commit complete, proceeding to push');
 
             // Step 3: Push to remote
-            await this.pushToRemote(repoPath, timeout);
+            await this.pushToRemote(repoPath, repositoryId, repositoryName, timeout);
             Logger.debug('GitCommand', `Commit and push workflow complete for ${repoPath}`);
         } catch (error) {
             // If commit succeeded but push failed, enhance the error message
