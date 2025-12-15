@@ -88,18 +88,18 @@ grep -n "openRepositoryInExplorer" src/ui/MergeConflictModal.ts
 
 ## Phase 2: Core Modal Implementation
 
-### MODAL-001: Create ManualInterventionModal Component
+### MODAL-001: Create ManualInterventionModal Component ✅
 **Description:** Build modal for critical manual intervention scenarios
 **Files:** `src/ui/ManualInterventionModal.ts` (new file)
 **Dependencies:** UTIL-001
 **Acceptance Criteria:**
-- [ ] Extends CriticalErrorModal for non-dismissible behavior
-- [ ] Accepts PullOperationState in constructor
-- [ ] Renders different content based on skipReason
-- [ ] Shows repository name and current branch
-- [ ] Includes "Open Terminal" button
-- [ ] Includes "I'll Handle This" acknowledgment button
-- [ ] Uses clear, non-technical language
+- [x] Extends CriticalErrorModal for non-dismissible behavior
+- [x] Accepts PullOperationState in constructor
+- [x] Renders different content based on skipReason
+- [x] Shows repository name and current branch
+- [x] Includes "Open Terminal" button
+- [x] Includes "I'll Handle This" acknowledgment button
+- [x] Uses clear, non-technical language
 
 **Content Variations by Skip Reason:**
 - DIVERGED_BRANCHES: Explain merge/rebase needed, show commit counts
@@ -108,40 +108,40 @@ grep -n "openRepositoryInExplorer" src/ui/MergeConflictModal.ts
 - CONCURRENT_OPERATION: Explain operation conflict
 - LOCK_ERROR: Similar to concurrent operation
 
-### MODAL-002: Add Modal Rendering Logic
+### MODAL-002: Add Modal Rendering Logic ✅
 **Description:** Implement renderHeader() and content rendering methods
 **Files:** `src/ui/ManualInterventionModal.ts`
 **Dependencies:** MODAL-001
 **Acceptance Criteria:**
-- [ ] renderHeader() shows appropriate icon and title
-- [ ] renderContent() varies by skipReason
-- [ ] renderActionButtons() includes terminal and acknowledgment
-- [ ] All text is user-friendly and actionable
-- [ ] Proper CSS classes applied for styling
+- [x] renderHeader() shows appropriate icon and title
+- [x] renderContent() varies by skipReason
+- [x] renderActionButtons() includes terminal and acknowledgment
+- [x] All text is user-friendly and actionable
+- [x] Proper CSS classes applied for styling
 
-### MODAL-003: Implement Terminal Launch Action
+### MODAL-003: Implement Terminal Launch Action ✅
 **Description:** Wire up "Open Terminal" button to terminal utility
 **Files:** `src/ui/ManualInterventionModal.ts`
 **Dependencies:** MODAL-002, UTIL-001
 **Acceptance Criteria:**
-- [ ] Button click calls openRepositoryInTerminal()
-- [ ] Shows success notice on successful launch
-- [ ] Shows error notice on launch failure
-- [ ] Logs action for debugging
-- [ ] Button disabled while operation in progress
+- [x] Button click calls openRepositoryInTerminal()
+- [x] Shows success notice on successful launch
+- [x] Shows error notice on launch failure
+- [x] Logs action for debugging
+- [x] Button disabled while operation in progress
 
-### MODAL-004 [P]: Create Modal Unit Tests
+### MODAL-004 [P]: Create Modal Unit Tests ✅
 **Description:** Comprehensive tests for ManualInterventionModal
 **Files:** `test/ui/ManualInterventionModal.test.ts` (new file)
 **Dependencies:** MODAL-003
 **Acceptance Criteria:**
-- [ ] Test modal renders for each skipReason
-- [ ] Test terminal launch button functionality
-- [ ] Test acknowledgment button closes modal
-- [ ] Test content varies correctly by skipReason
-- [ ] Mock terminal utility
-- [ ] Verify non-dismissible behavior
-- [ ] Coverage above 90%
+- [x] Test modal renders for each skipReason
+- [x] Test terminal launch button functionality
+- [x] Test acknowledgment button closes modal
+- [x] Test content varies correctly by skipReason
+- [x] Mock terminal utility
+- [x] Verify non-dismissible behavior
+- [x] Coverage above 90%
 
 ## Phase 3: Service Layer Integration
 
@@ -546,12 +546,12 @@ Each phase has validation checkpoints:
 
 ## Progress Tracking
 
-**Current Status:** In Progress (4/28 tasks complete)
+**Current Status:** In Progress (8/28 tasks complete)
 
 **Phase Completion:**
 - [x] Phase 0: Setup (2/2) ✅
 - [x] Phase 1: Foundation (2/2) ✅
-- [ ] Phase 2: Core Modal (0/4)
+- [x] Phase 2: Core Modal (4/4) ✅
 - [ ] Phase 3: Service Integration (0/4)
 - [ ] Phase 4: UI Enhancement (0/5)
 - [ ] Phase 5: Integration (0/3)
