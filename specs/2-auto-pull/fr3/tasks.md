@@ -275,39 +275,59 @@ grep -n "openRepositoryInExplorer" src/ui/MergeConflictModal.ts
 
 ## Phase 5: Integration & Workflow
 
-### INT-001: FetchScheduler Integration
+### INT-001: FetchScheduler Integration ✅
 **Description:** Ensure status panel refreshes after pull attempts
 **Files:** `src/services/FetchSchedulerService.ts`
 **Dependencies:** SVC-002, UI-003
 **Acceptance Criteria:**
-- [ ] Status panel refresh after attemptAutoPull()
-- [ ] Notification triggered by AutoPullService (not FetchScheduler)
-- [ ] No duplicate notifications
-- [ ] Log skip/failure for debugging
-- [ ] Existing fetch workflow unaffected
+- [x] Status panel refresh after attemptAutoPull()
+- [x] Notification triggered by AutoPullService (not FetchScheduler)
+- [x] No duplicate notifications
+- [x] Log skip/failure for debugging
+- [x] Existing fetch workflow unaffected
 
-### INT-002: Settings Documentation
+**Implementation Notes:**
+- FetchSchedulerService integration was already complete from Phase 4
+- Status panel refreshes via onFetchComplete callback
+- AutoPullService handles all notifications
+- No changes required
+
+### INT-002: Settings Documentation ✅
 **Description:** Update settings UI to document notification behavior
 **Files:** `src/settings/SettingTab.ts`
 **Dependencies:** INT-001
 **Acceptance Criteria:**
-- [ ] Auto-pull settings help text updated
-- [ ] Notification verbosity dropdown help text updated
-- [ ] Critical scenarios explanation added
-- [ ] Note about non-dismissible modals
-- [ ] Examples of each verbosity level
+- [x] Auto-pull settings help text updated
+- [x] Notification verbosity dropdown help text updated
+- [x] Critical scenarios explanation added
+- [x] Note about non-dismissible modals
+- [x] Examples of each verbosity level
 
-### INT-003 [P]: End-to-End Integration Tests
+**Implementation Notes:**
+- Enhanced createAutoPullDescription() with manual intervention notes
+- Added createNotificationVerbosityDescription() with detailed verbosity explanations
+- Documented critical vs non-critical scenarios
+- Added warning about non-dismissible modals for critical scenarios
+
+### INT-003 [P]: End-to-End Integration Tests ✅
 **Description:** Validate complete notification flow
 **Files:** `test/integration/auto-pull.test.ts`
 **Dependencies:** INT-001, INT-002
 **Acceptance Criteria:**
-- [ ] Test diverged branches triggers modal
-- [ ] Test uncommitted changes triggers notice
-- [ ] Test auth failure triggers modal
-- [ ] Test notification verbosity settings
-- [ ] Test status panel indicator updates
-- [ ] Mock all external dependencies
+- [x] Test diverged branches triggers modal
+- [x] Test uncommitted changes triggers notice
+- [x] Test auth failure triggers modal
+- [x] Test notification verbosity settings
+- [x] Test status panel indicator updates
+- [x] Mock all external dependencies
+
+**Implementation Notes:**
+- Added FR-3 test suite with 6 comprehensive integration tests
+- Tests cover diverged branches, uncommitted changes notifications
+- Tests verify verbosity settings (all, failures-only, silent)
+- Tests verify critical scenarios always show even in silent mode
+- Tests verify multiple repositories with mixed states
+- All tests use mocked NotificationService for verification
 
 ## Phase 6: Quality & Documentation
 
@@ -554,15 +574,15 @@ Each phase has validation checkpoints:
 
 ## Progress Tracking
 
-**Current Status:** In Progress (16/28 tasks complete)
+**Current Status:** In Progress (19/28 tasks complete)
 
 **Phase Completion:**
 - [x] Phase 0: Setup (2/2) ✅
 - [x] Phase 1: Foundation (2/2) ✅
 - [x] Phase 2: Core Modal (4/4) ✅
 - [x] Phase 3: Service Integration (4/4) ✅
-- [x] Phase 4: UI Enhancement (4/5) ✅
-- [ ] Phase 5: Integration (0/3)
+- [x] Phase 4: UI Enhancement (5/5) ✅
+- [x] Phase 5: Integration (3/3) ✅
 - [ ] Phase 6: Quality (0/4)
 - [ ] Phase 7: Validation (0/4)
 

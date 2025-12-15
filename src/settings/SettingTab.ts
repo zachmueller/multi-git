@@ -63,7 +63,7 @@ export class MultiGitSettingTab extends PluginSettingTab {
         // Notification verbosity setting
         new Setting(containerEl)
             .setName('Auto-Pull Notifications')
-            .setDesc('Choose which auto-pull operations trigger notifications')
+            .setDesc(this.createNotificationVerbosityDescription())
             .addDropdown(dropdown => {
                 dropdown
                     .addOption('all', 'All operations')
@@ -87,6 +87,44 @@ export class MultiGitSettingTab extends PluginSettingTab {
         frag.createEl('br');
         frag.createEl('br');
         frag.appendText('⚠️ Safety: Only fast-forward pulls are performed. If branches have diverged or you have uncommitted changes, auto-pull will be skipped and you\'ll be notified to merge manually.');
+        frag.createEl('br');
+        frag.createEl('br');
+        frag.appendText('📢 Manual Intervention: Critical scenarios (diverged branches, authentication failures) will show non-dismissible modal dialogs requiring acknowledgment, regardless of notification settings. Less critical scenarios (uncommitted changes) show dismissible notices. Status panel indicators persist until issues are resolved.');
+
+        return frag;
+    }
+
+    /**
+     * Create description for notification verbosity setting
+     */
+    private createNotificationVerbosityDescription(): DocumentFragment {
+        const frag = document.createDocumentFragment();
+
+        frag.appendText('Control which auto-pull operations trigger notifications:');
+        frag.createEl('br');
+        frag.createEl('br');
+
+        // All operations
+        const allLabel = frag.createEl('strong');
+        allLabel.appendText('All operations: ');
+        frag.appendText('Shows notifications for successes and failures');
+        frag.createEl('br');
+
+        // Failures only
+        const failuresLabel = frag.createEl('strong');
+        failuresLabel.appendText('Failures only: ');
+        frag.appendText('Shows only failures and manual intervention scenarios');
+        frag.createEl('br');
+
+        // Silent
+        const silentLabel = frag.createEl('strong');
+        silentLabel.appendText('Silent: ');
+        frag.appendText('Shows only critical issues requiring immediate action');
+        frag.createEl('br');
+        frag.createEl('br');
+
+        // Note about critical scenarios
+        frag.appendText('⚠️ Note: Critical scenarios (diverged branches, authentication failures) always show modal dialogs that require acknowledgment, even in Silent mode. These cannot be dismissed without user action.');
 
         return frag;
     }
