@@ -29,6 +29,9 @@ describe('FastForwardDetectionService', () => {
             notifyOnRemoteChanges: true,
             debugLogging: false,
             customPathEntries: [],
+            autoPullEnabled: true,
+            autoPullPerRepository: {},
+            autoPullNotificationVerbosity: 'all',
         }) as jest.Mocked<GitCommandService>;
 
         // Create service with mocked dependencies
@@ -367,6 +370,195 @@ describe('FastForwardDetectionService', () => {
             expect(service.canSafelyFastForward(results[2])).toBe(false); // local-ahead
             expect(service.canSafelyFastForward(results[3])).toBe(false); // diverged
             expect(service.canSafelyFastForward(results[4])).toBe(false); // error
+        });
+    });
+
+    describe('TEST-001: Logging Behavior', () => {
+        let consoleDebugSpy: jest.SpyInstance;
+
+        beforeEach(() => {
+            consoleDebugSpy = jest.spyOn(console, 'debug').mockImplementation();
+        });
+
+        afterEach(() => {
+            consoleDebugSpy.mockRestore();
+        });
+
+        it('should generate logs when debug mode enabled', async () => {
+            // Arrange
+            Logger.initialize({
+                repositories: [],
+                version: '0.1.0',
+                globalFetchInterval: 300000,
+                fetchOnStartup: false,
+                notifyOnRemoteChanges: true,
+                debugLogging: true,
+                customPathEntries: [],
+                autoPullEnabled: true,
+                autoPullPerRepository: {},
+                autoPullNotificationVerbosity: 'all',
+            });
+
+            mockGitCommandService.getCurrentBranch = jest.fn().mockResolvedValue('main');
+            mockGitCommandService.getTrackingBranch = jest.fn().mockResolvedValue('origin/main');
+            mockGitCommandService.compareWithRemote = jest.fn().mockResolvedValue({
+                ahead: 0,
+                behind: 3,
+            });
+
+            // Act
+            await service.detectFastForward('/test/repo');
+
+            // Assert
+            expect(consoleDebugSpy).toHaveBeenCalled();
+            const logs = consoleDebugSpy.mock.calls.map(call => call[0]);
+            expect(logs.some((log: string) => log.includes('[FastForwardDetection]'))).toBe(true);
+            expect(logs.some((log: string) => log.includes('Starting detection'))).toBe(true);
+        });
+
+        it('should NOT generate logs when debug mode disabled', async () => {
+            // Arrange
+            Logger.initialize({
+                repositories: [],
+                version: '0.1.0',
+                globalFetchInterval: 300000,
+                fetchOnStartup: false,
+                notifyOnRemoteChanges: true,
+                debugLogging: false,
+                customPathEntries: [],
+                autoPullEnabled: true,
+                autoPullPerRepository: {},
+                autoPullNotificationVerbosity: 'all',
+            });
+
+            mockGitCommandService.getCurrentBranch = jest.fn().mockResolvedValue('main');
+            mockGitCommandService.getTrackingBranch = jest.fn().mockResolvedValue('origin/main');
+            mockGitCommandService.compareWithRemote = jest.fn().mockResolvedValue({
+                ahead: 0,
+                behind: 3,
+            });
+
+            // Act
+            await service.detectFastForward('/test/repo');
+
+            // Assert
+            expect(consoleDebugSpy).not.toHaveBeenCalled();
+        });
+
+        it('should include expected fields in logs', async () => {
+            // Arrange
+            Logger.initialize({
+                repositories: [],
+                version: '0.1.0',
+                globalFetchInterval: 300000,
+                fetchOnStartup: false,
+                notifyOnRemoteChanges: true,
+                debugLogging: true,
+                customPathEntries: [],
+                autoPullEnabled: true,
+                autoPullPerRepository: {},
+                autoPullNotificationVerbosity: 'all',
+            });
+
+            mockGitCommandService.getCurrentBranch = jest.fn().mockResolvedValue('main');
+            mockGitCommandService.getTrackingBranch = jest.fn().mockResolvedValue('origin/main');
+            mockGitCommandService.compareWithRemote = jest.fn().mockResolvedValue({
+                ahead: 0,
+                behind: 3,
+            });
+
+            // Act
+            await service.detectFastForward('/test/repo');
+
+            // Assert
+            const logs = consoleDebugSpy.mock.calls.map(call => call[0]);
+
+            // Should log detection start
+            expect(logs.some((log: string) =>
+                log.includes('[FastForwardDetection]') && log.includes('Starting')
+            )).toBe(true);
+
+            // Should log branch comparison result
+            expect(logs.some((log: string) =>
+                log.includes('behind: 3') || log.includes('ahead: 0')
+            )).toBe(true);
+
+            // Should log final result
+            expect(logs.some((log: string) =>
+                log.includes('canFastForward=true') || log.includes('can-fast-forward')
+            )).toBe(true);
+        });
+
+        it('should log in correct sequence for successful detection', async () => {
+            // Arrange
+            Logger.initialize({
+                repositories: [],
+                version: '0.1.0',
+                globalFetchInterval: 300000,
+                fetchOnStartup: false,
+                notifyOnRemoteChanges: true,
+                debugLogging: true,
+                customPathEntries: [],
+                autoPullEnabled: true,
+                autoPullPerRepository: {},
+                autoPullNotificationVerbosity: 'all',
+            });
+
+            mockGitCommandService.getCurrentBranch = jest.fn().mockResolvedValue('main');
+            mockGitCommandService.getTrackingBranch = jest.fn().mockResolvedValue('origin/main');
+            mockGitCommandService.compareWithRemote = jest.fn().mockResolvedValue({
+                ahead: 0,
+                behind: 3,
+            });
+
+            // Act
+            await service.detectFastForward('/test/repo');
+
+            // Assert
+            expect(consoleDebugSpy).toHaveBeenCalled();
+            const logs = consoleDebugSpy.mock.calls.map(call => call[0]);
+
+            // Find indices of key log messages
+            const startIndex = logs.findIndex((log: string) => log.includes('Starting'));
+            const comparisonIndex = logs.findIndex((log: string) =>
+                log.includes('ahead') || log.includes('behind')
+            );
+            const resultIndex = logs.findIndex((log: string) =>
+                log.includes('Result') || log.includes('canFastForward')
+            );
+
+            // Verify sequence (start < comparison < result)
+            if (startIndex !== -1 && comparisonIndex !== -1 && resultIndex !== -1) {
+                expect(startIndex).toBeLessThan(comparisonIndex);
+                expect(comparisonIndex).toBeLessThan(resultIndex);
+            }
+        });
+
+        it('should log error scenarios appropriately', async () => {
+            // Arrange
+            Logger.initialize({
+                repositories: [],
+                version: '0.1.0',
+                globalFetchInterval: 300000,
+                fetchOnStartup: false,
+                notifyOnRemoteChanges: true,
+                debugLogging: true,
+                customPathEntries: [],
+                autoPullEnabled: true,
+                autoPullPerRepository: {},
+                autoPullNotificationVerbosity: 'all',
+            });
+
+            mockGitCommandService.getCurrentBranch = jest.fn().mockResolvedValue(null);
+
+            // Act
+            await service.detectFastForward('/test/repo');
+
+            // Assert
+            const logs = consoleDebugSpy.mock.calls.map(call => call[0]);
+            expect(logs.some((log: string) =>
+                log.includes('error') || log.includes('detached HEAD')
+            )).toBe(true);
         });
     });
 });

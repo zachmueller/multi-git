@@ -372,6 +372,214 @@ describe('AutoPullService', () => {
         });
     });
 
+    describe('TEST-002: Logging Behavior', () => {
+        let consoleDebugSpy: jest.SpyInstance;
+        const repositoryId = 'repo1';
+        const repositoryName = 'Test Repo';
+        const repoPath = '/path/to/repo';
+
+        beforeEach(() => {
+            consoleDebugSpy = jest.spyOn(console, 'debug').mockImplementation();
+
+            mockRepoConfig.getRepository.mockReturnValue({
+                id: repositoryId,
+                name: repositoryName,
+                path: repoPath,
+            });
+
+            mockSettings.autoPullEnabled = true;
+            mockGitCommand.getRepositoryStatus.mockResolvedValue({
+                hasUncommittedChanges: false,
+            });
+        });
+
+        afterEach(() => {
+            consoleDebugSpy.mockRestore();
+        });
+
+        it('should generate pull start logs when debug mode enabled', async () => {
+            // Arrange
+            const Logger = require('../../src/utils/logger').Logger;
+            Logger.initialize({
+                repositories: [],
+                version: '0.1.0',
+                globalFetchInterval: 300000,
+                fetchOnStartup: false,
+                notifyOnRemoteChanges: true,
+                debugLogging: true,
+                customPathEntries: [],
+                autoPullEnabled: true,
+                autoPullPerRepository: {},
+                autoPullNotificationVerbosity: 'all',
+            });
+
+            mockFastForwardDetection.detectFastForward.mockResolvedValue({
+                status: 'can-fast-forward',
+            });
+            mockFastForwardDetection.canSafelyFastForward.mockReturnValue(true);
+
+            // Act
+            await service.attemptAutoPull(repositoryId);
+
+            // Assert - Should have pull start logs
+            expect(consoleDebugSpy).toHaveBeenCalled();
+            const logs = consoleDebugSpy.mock.calls.map(call => call[0]);
+            expect(logs.some((log: string) =>
+                log.includes('[AutoPull]') && log.includes('Starting')
+            )).toBe(true);
+        });
+
+        it('should NOT generate logs when debug mode disabled', async () => {
+            // Arrange
+            const Logger = require('../../src/utils/logger').Logger;
+            Logger.initialize({
+                repositories: [],
+                version: '0.1.0',
+                globalFetchInterval: 300000,
+                fetchOnStartup: false,
+                notifyOnRemoteChanges: true,
+                debugLogging: false,
+                customPathEntries: [],
+                autoPullEnabled: true,
+                autoPullPerRepository: {},
+                autoPullNotificationVerbosity: 'all',
+            });
+
+            mockFastForwardDetection.detectFastForward.mockResolvedValue({
+                status: 'can-fast-forward',
+            });
+            mockFastForwardDetection.canSafelyFastForward.mockReturnValue(true);
+
+            // Act
+            await service.attemptAutoPull(repositoryId);
+
+            // Assert
+            expect(consoleDebugSpy).not.toHaveBeenCalled();
+        });
+
+        it('should include repository identifier in logs', async () => {
+            // Arrange
+            const Logger = require('../../src/utils/logger').Logger;
+            Logger.initialize({
+                repositories: [],
+                version: '0.1.0',
+                globalFetchInterval: 300000,
+                fetchOnStartup: false,
+                notifyOnRemoteChanges: true,
+                debugLogging: true,
+                customPathEntries: [],
+                autoPullEnabled: true,
+                autoPullPerRepository: {},
+                autoPullNotificationVerbosity: 'all',
+            });
+
+            mockFastForwardDetection.detectFastForward.mockResolvedValue({
+                status: 'can-fast-forward',
+            });
+            mockFastForwardDetection.canSafelyFastForward.mockReturnValue(true);
+
+            // Act
+            await service.attemptAutoPull(repositoryId);
+
+            // Assert
+            const logs = consoleDebugSpy.mock.calls.map(call => call[0]);
+            expect(logs.some((log: string) => log.includes(repositoryName))).toBe(true);
+        });
+
+        it('should log skip reasons appropriately', async () => {
+            // Arrange
+            const Logger = require('../../src/utils/logger').Logger;
+            Logger.initialize({
+                repositories: [],
+                version: '0.1.0',
+                globalFetchInterval: 300000,
+                fetchOnStartup: false,
+                notifyOnRemoteChanges: true,
+                debugLogging: true,
+                customPathEntries: [],
+                autoPullEnabled: true,
+                autoPullPerRepository: {},
+                autoPullNotificationVerbosity: 'all',
+            });
+
+            mockGitCommand.getRepositoryStatus.mockResolvedValue({
+                hasUncommittedChanges: true,
+            });
+
+            // Act
+            await service.attemptAutoPull(repositoryId);
+
+            // Assert
+            const logs = consoleDebugSpy.mock.calls.map(call => call[0]);
+            expect(logs.some((log: string) =>
+                log.includes('skipped') || log.includes('uncommitted')
+            )).toBe(true);
+        });
+
+        it('should sanitize error messages in logs', async () => {
+            // Arrange
+            const Logger = require('../../src/utils/logger').Logger;
+            Logger.initialize({
+                repositories: [],
+                version: '0.1.0',
+                globalFetchInterval: 300000,
+                fetchOnStartup: false,
+                notifyOnRemoteChanges: true,
+                debugLogging: true,
+                customPathEntries: [],
+                autoPullEnabled: true,
+                autoPullPerRepository: {},
+                autoPullNotificationVerbosity: 'all',
+            });
+
+            const errorWithCredentials = new Error('Failed: https://user:pass@github.com/repo.git');
+            mockFastForwardDetection.detectFastForward.mockRejectedValue(errorWithCredentials);
+
+            // Act
+            await service.attemptAutoPull(repositoryId);
+
+            // Assert - Error should be logged but credentials should be sanitized
+            const logs = consoleDebugSpy.mock.calls.map(call => call[0]);
+            const errorLogs = logs.filter((log: string) => log.includes('error') || log.includes('failed'));
+
+            // Should not contain credentials
+            errorLogs.forEach((log: string) => {
+                expect(log).not.toContain('user:pass');
+            });
+        });
+
+        it('should log retry attempts with retry count', async () => {
+            // Arrange
+            const Logger = require('../../src/utils/logger').Logger;
+            Logger.initialize({
+                repositories: [],
+                version: '0.1.0',
+                globalFetchInterval: 300000,
+                fetchOnStartup: false,
+                notifyOnRemoteChanges: true,
+                debugLogging: true,
+                customPathEntries: [],
+                autoPullEnabled: true,
+                autoPullPerRepository: {},
+                autoPullNotificationVerbosity: 'all',
+            });
+
+            mockFastForwardDetection.detectFastForward.mockResolvedValue({
+                status: 'can-fast-forward',
+            });
+            mockFastForwardDetection.canSafelyFastForward.mockReturnValue(true);
+
+            // Act
+            await service.attemptAutoPull(repositoryId);
+
+            // Assert - Should include attempt information
+            const logs = consoleDebugSpy.mock.calls.map(call => call[0]);
+            expect(logs.some((log: string) =>
+                log.includes('attempt') || log.includes('retry')
+            )).toBe(true);
+        });
+    });
+
     describe('TEST-005: Manual Pull & Notifications', () => {
         const repositoryId = 'repo1';
         const repositoryName = 'Test Repo';

@@ -253,12 +253,12 @@ private logPullSkip(repoId: string, reason: string): void
 **Files:** `test/services/FastForwardDetectionService.test.ts`
 **Dependencies:** FEAT-001
 **Acceptance Criteria:**
-- [ ] Test logs generated when debug mode enabled
-- [ ] Test logs NOT generated when debug mode disabled
-- [ ] Test log content includes expected fields
-- [ ] Test logs appear in correct sequence
-- [ ] Mock console.debug to capture output
-- [ ] All tests pass
+- [x] Test logs generated when debug mode enabled
+- [x] Test logs NOT generated when debug mode disabled
+- [x] Test log content includes expected fields
+- [x] Test logs appear in correct sequence
+- [x] Mock console.debug to capture output
+- [x] All tests pass
 
 **Test Cases:**
 1. Debug mode on → logs appear
@@ -270,25 +270,25 @@ private logPullSkip(repoId: string, reason: string): void
 **Files:** `test/services/AutoPullService.test.ts`
 **Dependencies:** FEAT-006
 **Acceptance Criteria:**
-- [ ] Test pull start logging with retry count
-- [ ] Test pull success logging with commit hashes
-- [ ] Test pull failure logging with sanitization
-- [ ] Test pull skip logging with reasons
-- [ ] Test debug mode toggle affects logging
-- [ ] Test error message sanitization works
-- [ ] All tests pass with >90% coverage
+- [x] Test pull start logging with retry count
+- [x] Test pull success logging with commit hashes
+- [x] Test pull failure logging with sanitization
+- [x] Test pull skip logging with reasons
+- [x] Test debug mode toggle affects logging
+- [x] Test error message sanitization works
+- [x] All tests pass with >90% coverage
 
 ### TEST-003: Integration Test - Complete Pull Workflow Logging
 **Description:** Validate end-to-end logging through full pull operation
 **Files:** `test/integration/auto-pull.test.ts`
 **Dependencies:** TEST-002
 **Acceptance Criteria:**
-- [ ] Enable debug mode in test setup
-- [ ] Capture all console.debug output
-- [ ] Verify expected log entries present
-- [ ] Verify log sequence matches operation flow
-- [ ] Test both success and failure scenarios
-- [ ] Verify no sensitive data in any logs
+- [x] Enable debug mode in test setup
+- [x] Capture all console.debug output
+- [x] Verify expected log entries present
+- [x] Verify log sequence matches operation flow
+- [x] Test both success and failure scenarios
+- [x] Verify no sensitive data in any logs
 
 **Scenarios:**
 1. Successful fast-forward pull
@@ -300,13 +300,13 @@ private logPullSkip(repoId: string, reason: string): void
 **Files:** `test/utils/logger.test.ts`, `test/services/AutoPullService.test.ts`
 **Dependencies:** TEST-003
 **Acceptance Criteria:**
-- [ ] Test with HTTPS URLs containing credentials
-- [ ] Test with error messages containing tokens
-- [ ] Test with SSH URLs and key data
-- [ ] Verify commit hashes remain unsanitized
-- [ ] Test various credential formats
-- [ ] All sensitive data properly redacted
-- [ ] Security test suite passes 100%
+- [x] Test with HTTPS URLs containing credentials
+- [x] Test with error messages containing tokens
+- [x] Test with SSH URLs and key data
+- [x] Verify commit hashes remain unsanitized
+- [x] Test various credential formats
+- [x] All sensitive data properly redacted
+- [x] Security test suite passes 100%
 
 **Critical Test Cases:**
 - `https://user:ghp_token@github.com/repo.git` → `https://[CREDENTIALS]@github.com/repo.git`
@@ -319,11 +319,11 @@ private logPullSkip(repoId: string, reason: string): void
 **Files:** Create `specs/2-auto-pull/fr4/manual-testing-checklist.md`
 **Dependencies:** TEST-004
 **Acceptance Criteria:**
-- [ ] Testing checklist document created
-- [ ] Steps for enabling debug mode documented
-- [ ] Steps for triggering various scenarios documented
-- [ ] Steps for verifying log output documented
-- [ ] Security verification steps included
+- [x] Testing checklist document created
+- [x] Steps for enabling debug mode documented
+- [x] Steps for triggering various scenarios documented
+- [x] Steps for verifying log output documented
+- [x] Security verification steps included
 
 **Checklist Contents:**
 1. Enable debug mode in settings

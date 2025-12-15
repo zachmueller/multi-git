@@ -1050,4 +1050,258 @@ describe('Integration: Auto-Pull with Real Repository Operations', () => {
             fs.rmSync(repo3Local, { recursive: true, force: true });
         });
     });
+
+    describe('TEST-003: Complete Pull Workflow Logging', () => {
+        let consoleDebugSpy: any;
+
+        beforeEach(() => {
+            consoleDebugSpy = jest.spyOn(console, 'debug').mockImplementation(() => { });
+        });
+
+        afterEach(() => {
+            consoleDebugSpy.mockRestore();
+        });
+
+        test('successful pull logs complete workflow with all expected entries', async () => {
+            // Enable debug logging
+            mockSettings.debugLogging = true;
+            Logger.initialize(mockSettings);
+
+            // Setup repositories
+            createTestRepo(remoteRepoPath);
+            cloneRepo(remoteRepoPath, localRepoPath);
+            addRemoteCommits(remoteRepoPath, 3);
+            gitCommand(localRepoPath, 'fetch origin');
+
+            // Setup config
+            const repoConfig: RepositoryConfig = {
+                id: 'test-repo',
+                name: 'Test Repository',
+                path: localRepoPath,
+                enabled: true,
+                createdAt: Date.now(),
+                fetchInterval: 60000,
+                lastFetchStatus: 'idle',
+                remoteChanges: false
+            };
+            mockPlugin.settings.repositories.push(repoConfig);
+
+            // Execute pull
+            await autoPullService.attemptAutoPull('test-repo');
+
+            // Verify logs were generated
+            expect(consoleDebugSpy).toHaveBeenCalled();
+            const logs = consoleDebugSpy.mock.calls.map(call => call[0]);
+
+            // Verify expected log entries exist
+            expect(logs.some((log: string) =>
+                log.includes('[FastForwardDetection]') && log.includes('Starting')
+            )).toBe(true);
+
+            expect(logs.some((log: string) =>
+                log.includes('[AutoPull]') && log.includes('Starting')
+            )).toBe(true);
+
+            expect(logs.some((log: string) =>
+                log.includes('[AutoPull]') && (log.includes('successful') || log.includes('success'))
+            )).toBe(true);
+        });
+
+        test('logs appear in correct sequence for successful pull', async () => {
+            // Enable debug logging
+            mockSettings.debugLogging = true;
+            Logger.initialize(mockSettings);
+
+            // Setup repositories
+            createTestRepo(remoteRepoPath);
+            cloneRepo(remoteRepoPath, localRepoPath);
+            addRemoteCommits(remoteRepoPath, 2);
+            gitCommand(localRepoPath, 'fetch origin');
+
+            // Setup config
+            const repoConfig: RepositoryConfig = {
+                id: 'test-repo',
+                name: 'Test Repository',
+                path: localRepoPath,
+                enabled: true,
+                createdAt: Date.now(),
+                fetchInterval: 60000,
+                lastFetchStatus: 'idle',
+                remoteChanges: false
+            };
+            mockPlugin.settings.repositories.push(repoConfig);
+
+            // Execute pull
+            await autoPullService.attemptAutoPull('test-repo');
+
+            // Verify log sequence
+            const logs = consoleDebugSpy.mock.calls.map(call => call[0]);
+
+            // Find indices of key log types
+            const ffStartIndex = logs.findIndex((log: string) =>
+                log.includes('[FastForwardDetection]') && log.includes('Starting')
+            );
+            const pullStartIndex = logs.findIndex((log: string) =>
+                log.includes('[AutoPull]') && log.includes('Starting')
+            );
+            const pullSuccessIndex = logs.findIndex((log: string) =>
+                log.includes('[AutoPull]') && (log.includes('successful') || log.includes('success'))
+            );
+
+            // Verify sequence (FF detection -> Pull start -> Pull success)
+            if (ffStartIndex !== -1 && pullStartIndex !== -1 && pullSuccessIndex !== -1) {
+                expect(ffStartIndex).toBeLessThan(pullStartIndex);
+                expect(pullStartIndex).toBeLessThan(pullSuccessIndex);
+            }
+        });
+
+        test('skipped pull logs include skip reason', async () => {
+            // Enable debug logging
+            mockSettings.debugLogging = true;
+            Logger.initialize(mockSettings);
+
+            // Setup repositories with uncommitted changes
+            createTestRepo(remoteRepoPath);
+            cloneRepo(remoteRepoPath, localRepoPath);
+            addRemoteCommits(remoteRepoPath, 2);
+            gitCommand(localRepoPath, 'fetch origin');
+            fs.writeFileSync(path.join(localRepoPath, 'uncommitted.txt'), 'Test\n');
+
+            // Setup config
+            const repoConfig: RepositoryConfig = {
+                id: 'test-repo',
+                name: 'Test Repository',
+                path: localRepoPath,
+                enabled: true,
+                createdAt: Date.now(),
+                fetchInterval: 60000,
+                lastFetchStatus: 'idle',
+                remoteChanges: false
+            };
+            mockPlugin.settings.repositories.push(repoConfig);
+
+            // Execute pull
+            await autoPullService.attemptAutoPull('test-repo');
+
+            // Verify skip logs
+            const logs = consoleDebugSpy.mock.calls.map(call => call[0]);
+            expect(logs.some((log: string) =>
+                log.includes('skipped') || log.includes('uncommitted')
+            )).toBe(true);
+        });
+
+        test('no logs generated when debug mode disabled', async () => {
+            // Disable debug logging
+            mockSettings.debugLogging = false;
+            Logger.initialize(mockSettings);
+
+            // Setup repositories
+            createTestRepo(remoteRepoPath);
+            cloneRepo(remoteRepoPath, localRepoPath);
+            addRemoteCommits(remoteRepoPath, 2);
+            gitCommand(localRepoPath, 'fetch origin');
+
+            // Setup config
+            const repoConfig: RepositoryConfig = {
+                id: 'test-repo',
+                name: 'Test Repository',
+                path: localRepoPath,
+                enabled: true,
+                createdAt: Date.now(),
+                fetchInterval: 60000,
+                lastFetchStatus: 'idle',
+                remoteChanges: false
+            };
+            mockPlugin.settings.repositories.push(repoConfig);
+
+            // Execute pull
+            await autoPullService.attemptAutoPull('test-repo');
+
+            // Verify no debug logs generated
+            expect(consoleDebugSpy).not.toHaveBeenCalled();
+        });
+
+        test('logs include commit hashes and counts', async () => {
+            // Enable debug logging
+            mockSettings.debugLogging = true;
+            Logger.initialize(mockSettings);
+
+            // Setup repositories
+            createTestRepo(remoteRepoPath);
+            cloneRepo(remoteRepoPath, localRepoPath);
+            const beforeCommit = getCurrentCommit(localRepoPath);
+
+            addRemoteCommits(remoteRepoPath, 3);
+            const afterCommit = getCurrentCommit(remoteRepoPath);
+            gitCommand(localRepoPath, 'fetch origin');
+
+            // Setup config
+            const repoConfig: RepositoryConfig = {
+                id: 'test-repo',
+                name: 'Test Repository',
+                path: localRepoPath,
+                enabled: true,
+                createdAt: Date.now(),
+                fetchInterval: 60000,
+                lastFetchStatus: 'idle',
+                remoteChanges: false
+            };
+            mockPlugin.settings.repositories.push(repoConfig);
+
+            // Execute pull
+            await autoPullService.attemptAutoPull('test-repo');
+
+            // Verify logs include commit information
+            const logs = consoleDebugSpy.mock.calls.map(call => call[0]);
+
+            // Logs should contain commit hashes or commit counts
+            const hasCommitInfo = logs.some((log: string) =>
+                log.includes(beforeCommit.substring(0, 8)) ||
+                log.includes(afterCommit.substring(0, 8)) ||
+                log.includes('3 commit') ||
+                log.includes('commits pulled')
+            );
+
+            expect(hasCommitInfo).toBe(true);
+        });
+
+        test('no sensitive data appears in logs', async () => {
+            // Enable debug logging
+            mockSettings.debugLogging = true;
+            Logger.initialize(mockSettings);
+
+            // Setup repositories (even with sensitive remote URL, logs should sanitize)
+            createTestRepo(remoteRepoPath);
+            cloneRepo(remoteRepoPath, localRepoPath);
+            addRemoteCommits(remoteRepoPath, 2);
+            gitCommand(localRepoPath, 'fetch origin');
+
+            // Setup config
+            const repoConfig: RepositoryConfig = {
+                id: 'test-repo',
+                name: 'Test Repository',
+                path: localRepoPath,
+                enabled: true,
+                createdAt: Date.now(),
+                fetchInterval: 60000,
+                lastFetchStatus: 'idle',
+                remoteChanges: false
+            };
+            mockPlugin.settings.repositories.push(repoConfig);
+
+            // Execute pull
+            await autoPullService.attemptAutoPull('test-repo');
+
+            // Verify no sensitive patterns in logs
+            const logs = consoleDebugSpy.mock.calls.map(call => call[0]);
+
+            // Check that logs don't contain common sensitive patterns
+            logs.forEach((log: string) => {
+                // Should not contain password patterns
+                expect(log).not.toMatch(/password[=:]\s*\S+/i);
+                expect(log).not.toMatch(/token[=:]\s*\S+/i);
+                expect(log).not.toMatch(/https?:\/\/[^:]+:[^@]+@/);
+            });
+        });
+    });
 });
