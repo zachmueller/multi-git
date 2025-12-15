@@ -1144,3 +1144,194 @@ button:focus-visible {
     background: rgba(255, 255, 255, 0.05);
     border-color: rgba(255, 255, 255, 0.1);
 }
+
+/* FR-3: Manual Intervention Notification Styles */
+
+/* Pull button in repository header */
+.multi-git-repo-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.75em;
+}
+
+.multi-git-pull-button,
+.multi-git-terminal-button {
+    padding: 0.4em 1em;
+    font-size: 0.85em;
+    background: var(--interactive-accent);
+    color: var(--text-on-accent);
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    white-space: nowrap;
+    font-weight: 500;
+}
+
+.multi-git-pull-button:hover,
+.multi-git-terminal-button:hover {
+    background: var(--interactive-accent-hover);
+    transform: translateY(-1px);
+}
+
+.multi-git-pull-button:active,
+.multi-git-terminal-button:active {
+    transform: translateY(0);
+}
+
+.multi-git-pull-button:disabled,
+.multi-git-terminal-button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.multi-git-pull-button:focus,
+.multi-git-terminal-button:focus {
+    outline: 2px solid var(--interactive-accent);
+    outline-offset: 2px;
+}
+
+/* Terminal button styling (secondary action) */
+.multi-git-terminal-button {
+    background: var(--background-secondary);
+    color: var(--text-normal);
+    border: 1px solid var(--background-modifier-border);
+}
+
+.multi-git-terminal-button:hover {
+    background: var(--background-secondary-alt);
+    border-color: var(--interactive-accent);
+}
+
+/* Manual intervention indicators */
+.multi-git-status-indicator.multi-git-manual-merge-required {
+    color: var(--color-orange);
+    font-weight: 500;
+}
+
+.multi-git-status-indicator.multi-git-manual-merge-required .multi-git-status-icon {
+    color: var(--color-orange);
+}
+
+.multi-git-status-indicator.multi-git-auth-needed {
+    color: var(--text-error);
+    font-weight: 500;
+}
+
+.multi-git-status-indicator.multi-git-auth-needed .multi-git-status-icon {
+    color: var(--text-error);
+}
+
+.multi-git-status-indicator.multi-git-repo-busy {
+    color: var(--text-muted);
+    font-weight: 500;
+}
+
+.multi-git-status-indicator.multi-git-repo-busy .multi-git-status-icon {
+    color: var(--text-muted);
+}
+
+.multi-git-status-indicator.multi-git-updates-available {
+    color: var(--text-accent);
+    font-weight: 500;
+}
+
+.multi-git-status-indicator.multi-git-updates-available .multi-git-status-icon {
+    color: var(--text-accent);
+}
+
+.multi-git-status-indicator.multi-git-pull-failed {
+    color: var(--text-error);
+    font-weight: 500;
+}
+
+.multi-git-status-indicator.multi-git-pull-failed .multi-git-status-icon {
+    color: var(--text-error);
+}
+
+/* Theme-specific colors for manual intervention indicators */
+.theme-light .multi-git-status-indicator.multi-git-manual-merge-required {
+    color: #d97706;
+}
+
+.theme-light .multi-git-status-indicator.multi-git-manual-merge-required .multi-git-status-icon {
+    color: #d97706;
+}
+
+.theme-light .multi-git-status-indicator.multi-git-auth-needed {
+    color: #dc2626;
+}
+
+.theme-light .multi-git-status-indicator.multi-git-auth-needed .multi-git-status-icon {
+    color: #dc2626;
+}
+
+.theme-light .multi-git-status-indicator.multi-git-updates-available {
+    color: #6366f1;
+}
+
+.theme-light .multi-git-status-indicator.multi-git-updates-available .multi-git-status-icon {
+    color: #6366f1;
+}
+
+.theme-light .multi-git-status-indicator.multi-git-pull-failed {
+    color: #dc2626;
+}
+
+.theme-light .multi-git-status-indicator.multi-git-pull-failed .multi-git-status-icon {
+    color: #dc2626;
+}
+
+/* Enhanced visibility for critical indicators */
+.multi-git-status-indicator.multi-git-manual-merge-required,
+.multi-git-status-indicator.multi-git-auth-needed,
+.multi-git-status-indicator.multi-git-pull-failed {
+    padding: 0.5em;
+    border-radius: 4px;
+    background: rgba(var(--color-orange-rgb), 0.1);
+}
+
+.multi-git-status-indicator.multi-git-auth-needed,
+.multi-git-status-indicator.multi-git-pull-failed {
+    background: rgba(220, 38, 38, 0.1);
+}
+
+.theme-dark .multi-git-status-indicator.multi-git-auth-needed,
+.theme-dark .multi-git-status-indicator.multi-git-pull-failed {
+    background: rgba(220, 38, 38, 0.15);
+}
+
+/* Help link styling */
+.multi-git-help-link {
+    color: var(--text-accent);
+    text-decoration: none;
+    font-size: 0.85em;
+    font-weight: 500;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.multi-git-help-link:hover {
+    text-decoration: underline;
+}
+
+.multi-git-help-link:focus {
+    outline: 2px solid var(--interactive-accent);
+    outline-offset: 2px;
+    border-radius: 2px;
+}
+
+/* Responsive adjustments for FR-3 elements */
+@media (max-width: 500px) {
+    .multi-git-repo-header {
+        flex-wrap: wrap;
+    }
+
+    .multi-git-pull-button,
+    .multi-git-terminal-button {
+        flex: 1 1 auto;
+        min-width: 100px;
+    }
+}

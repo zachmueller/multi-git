@@ -1,4 +1,4 @@
-import { ItemView, WorkspaceLeaf, setIcon } from 'obsidian';
+import { ItemView, WorkspaceLeaf, setIcon, Notice } from 'obsidian';
 import type MultiGitPlugin from '../main';
 import { RepositoryStatus } from '../settings/data';
 import { Logger } from '../utils/logger';
@@ -426,8 +426,13 @@ export class StatusPanelView extends ItemView {
             cls: 'multi-git-repo-name'
         });
 
-        // Add pull button if updates available (remote changes detected)
-        if (status.remoteChanges && status.remoteChanges > 0) {
+        // Get most recent pull history entry to determine if action buttons needed
+        const history = this.plugin.autoPullService.getPullHistory(status.repositoryId);
+        const lastPullEntry = history.length > 0 ? history[0] : null;
+
+        // Check if we should show Pull button (updates available scenarios)
+        const shouldShowPullButton = this.shouldShowPullButton(status, lastPullEntry);
+        if (shouldShowPullButton) {
             const pullButton = headerEl.createEl('button', {
                 cls: 'multi-git-pull-button',
                 text: 'Pull',
@@ -440,6 +445,24 @@ export class StatusPanelView extends ItemView {
             pullButton.addEventListener('click', async (e) => {
                 e.stopPropagation();
                 await this.handleManualPull(status.repositoryId, status.repositoryName, pullButton);
+            });
+        }
+
+        // Check if we should show "Open Terminal" button for critical scenarios
+        const shouldShowTerminalButton = this.shouldShowTerminalButton(lastPullEntry);
+        if (shouldShowTerminalButton) {
+            const terminalButton = headerEl.createEl('button', {
+                cls: 'multi-git-terminal-button',
+                text: 'Open Terminal',
+                attr: {
+                    'aria-label': `Open terminal for ${status.repositoryName}`,
+                    'type': 'button'
+                }
+            });
+
+            terminalButton.addEventListener('click', async (e) => {
+                e.stopPropagation();
+                await this.handleOpenTerminal(status.repositoryPath, status.repositoryName, terminalButton);
             });
         }
 
@@ -463,6 +486,28 @@ export class StatusPanelView extends ItemView {
             cls: 'multi-git-repo-status',
             attr: { 'role': 'list', 'aria-label': 'Repository status indicators' }
         });
+
+        // Check for manual intervention scenarios (highest priority after errors)
+        const interventionIndicator = this.getManualInterventionIndicator(lastPullEntry, status);
+        if (interventionIndicator) {
+            const interventionEl = statusEl.createDiv({
+                cls: `multi-git-status-indicator ${interventionIndicator.className}`,
+                attr: { 'role': 'listitem' }
+            });
+            const icon = interventionEl.createSpan({
+                cls: 'multi-git-status-icon',
+                attr: { 'aria-hidden': 'true' }
+            });
+            setIcon(icon, interventionIndicator.icon);
+            interventionEl.createSpan({
+                text: interventionIndicator.text,
+                cls: 'multi-git-status-text',
+                attr: {
+                    'aria-label': interventionIndicator.ariaLabel,
+                    'title': interventionIndicator.tooltip
+                }
+            });
+        }
 
         // Error state (highest priority)
         if (status.fetchStatus === 'error' && status.lastFetchError) {
@@ -573,7 +618,8 @@ export class StatusPanelView extends ItemView {
         }
 
         // If everything is clean and up to date, show a status message
-        if (!status.hasUncommittedChanges &&
+        if (!interventionIndicator &&
+            !status.hasUncommittedChanges &&
             (!status.unpushedCommits || status.unpushedCommits === 0) &&
             (!status.remoteChanges || status.remoteChanges === 0) &&
             status.fetchStatus !== 'error') {
@@ -935,6 +981,203 @@ export class StatusPanelView extends ItemView {
                 const minutes = Math.floor(seconds / 60);
                 lastRefreshEl.textContent = `${minutes}m`;
             }
+        }
+    }
+
+    /**
+     * Determine if we should show the Pull button
+     * @param status Repository status
+     * @param lastPullEntry Most recent pull history entry
+     * @returns true if Pull button should be displayed
+     */
+    private shouldShowPullButton(status: RepositoryStatus, lastPullEntry: PullHistoryEntry | null): boolean {
+        // Show Pull button if remote changes available
+        if (status.remoteChanges && status.remoteChanges > 0) {
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * Determine if we should show the "Open Terminal" button
+     * @param lastPullEntry Most recent pull history entry
+     * @returns true if terminal button should be displayed
+     */
+    private shouldShowTerminalButton(lastPullEntry: PullHistoryEntry | null): boolean {
+        if (!lastPullEntry || lastPullEntry.result !== 'skipped') {
+            return false;
+        }
+
+        // Show terminal button for critical scenarios that require manual intervention
+        const criticalReasons = [
+            'DIVERGED_BRANCHES',
+            'AUTH_ERROR',
+            'CONCURRENT_OPERATION',
+            'LOCK_ERROR'
+        ];
+
+        return criticalReasons.includes(lastPullEntry.skipReason || '');
+    }
+
+    /**
+     * Get manual intervention indicator based on pull history
+     * @param lastPullEntry Most recent pull history entry
+     * @param status Repository status for context
+     * @returns Indicator configuration or null if no indicator needed
+     */
+    private getManualInterventionIndicator(
+        lastPullEntry: PullHistoryEntry | null,
+        status: RepositoryStatus
+    ): { icon: string; text: string; className: string; ariaLabel: string; tooltip: string } | null {
+        // No indicator if no history or last operation succeeded
+        if (!lastPullEntry) {
+            return null;
+        }
+
+        // Handle skipped operations with specific reasons
+        if (lastPullEntry.result === 'skipped' && lastPullEntry.skipReason) {
+            const skipReason = lastPullEntry.skipReason;
+
+            // DIVERGED_BRANCHES - most critical, requires manual merge
+            if (skipReason === 'DIVERGED_BRANCHES') {
+                return {
+                    icon: 'alert-triangle',
+                    text: 'Manual merge required',
+                    className: 'multi-git-manual-merge-required',
+                    ariaLabel: 'Manual merge required - branches have diverged',
+                    tooltip: 'Branches have diverged. Manual merge or rebase needed.'
+                };
+            }
+
+            // AUTH_ERROR - needs credential setup
+            if (skipReason === 'AUTH_ERROR') {
+                return {
+                    icon: 'key',
+                    text: 'Authentication needed',
+                    className: 'multi-git-auth-needed',
+                    ariaLabel: 'Authentication needed',
+                    tooltip: 'Git credentials need to be configured.'
+                };
+            }
+
+            // CONCURRENT_OPERATION or LOCK_ERROR - repository busy
+            if (skipReason === 'CONCURRENT_OPERATION' || skipReason === 'LOCK_ERROR') {
+                return {
+                    icon: 'lock',
+                    text: 'Repository busy',
+                    className: 'multi-git-repo-busy',
+                    ariaLabel: 'Repository busy',
+                    tooltip: 'Another git operation is in progress.'
+                };
+            }
+
+            // DISABLED states with remote changes - show Updates Available
+            if ((skipReason === 'DISABLED_GLOBAL' || skipReason === 'DISABLED_REPO') &&
+                status.remoteChanges && status.remoteChanges > 0) {
+                return {
+                    icon: 'info',
+                    text: 'Updates Available',
+                    className: 'multi-git-updates-available',
+                    ariaLabel: 'Updates available - auto-pull disabled',
+                    tooltip: 'Remote changes available. Auto-pull is disabled.'
+                };
+            }
+
+            // UNCOMMITTED_CHANGES with remote changes
+            if (skipReason === 'UNCOMMITTED_CHANGES' &&
+                status.remoteChanges && status.remoteChanges > 0) {
+                return {
+                    icon: 'info',
+                    text: 'Updates Available',
+                    className: 'multi-git-updates-available',
+                    ariaLabel: 'Updates available - uncommitted changes present',
+                    tooltip: 'Remote changes available. Commit or stash local changes first.'
+                };
+            }
+        }
+
+        // Handle failed operations
+        if (lastPullEntry.result === 'failed' && lastPullEntry.errorMessage) {
+            const errorLower = lastPullEntry.errorMessage.toLowerCase();
+
+            // Auth failures
+            if (errorLower.includes('auth')) {
+                return {
+                    icon: 'key',
+                    text: 'Authentication needed',
+                    className: 'multi-git-auth-needed',
+                    ariaLabel: 'Authentication needed',
+                    tooltip: lastPullEntry.errorMessage
+                };
+            }
+
+            // Show generic failure indicator for other errors
+            return {
+                icon: 'alert-circle',
+                text: 'Pull failed',
+                className: 'multi-git-pull-failed',
+                ariaLabel: 'Pull operation failed',
+                tooltip: lastPullEntry.errorMessage
+            };
+        }
+
+        return null;
+    }
+
+    /**
+     * Handle opening terminal at repository location
+     * @param repositoryPath Repository filesystem path
+     * @param repositoryName Repository name for logging
+     * @param buttonEl Button element to show loading state
+     */
+    private async handleOpenTerminal(
+        repositoryPath: string,
+        repositoryName: string,
+        buttonEl: HTMLButtonElement
+    ): Promise<void> {
+        Logger.debug('StatusPanel', `Opening terminal for repository: ${repositoryName}`);
+
+        // Update button to loading state
+        const originalText = buttonEl.textContent;
+        buttonEl.textContent = 'Opening...';
+        buttonEl.disabled = true;
+
+        try {
+            // Use Node.js child_process to open terminal
+            const { exec } = require('child_process');
+            const platform = process.platform;
+
+            let command: string;
+            if (platform === 'darwin') {
+                // macOS - open Terminal.app
+                command = `open -a Terminal "${repositoryPath}"`;
+            } else if (platform === 'win32') {
+                // Windows - open Command Prompt
+                command = `start cmd /K "cd /d ${repositoryPath}"`;
+            } else {
+                // Linux - try common terminal emulators
+                command = `gnome-terminal --working-directory="${repositoryPath}" || xterm -e "cd ${repositoryPath} && bash"`;
+            }
+
+            await new Promise<void>((resolve, reject) => {
+                exec(command, (error: Error | null) => {
+                    if (error) {
+                        reject(error);
+                    } else {
+                        resolve();
+                    }
+                });
+            });
+
+            Logger.debug('StatusPanel', `Terminal opened successfully for ${repositoryName}`);
+            new Notice(`Terminal opened for ${repositoryName}`, 3000);
+        } catch (error) {
+            Logger.error('StatusPanel', `Failed to open terminal for ${repositoryName}`, error);
+            new Notice(`Failed to open terminal: ${error instanceof Error ? error.message : String(error)}`, 5000);
+        } finally {
+            // Restore button state
+            buttonEl.textContent = originalText;
+            buttonEl.disabled = false;
         }
     }
 
