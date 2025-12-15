@@ -2,6 +2,7 @@ import { ItemView, WorkspaceLeaf, setIcon } from 'obsidian';
 import type MultiGitPlugin from '../main';
 import { RepositoryStatus } from '../settings/data';
 import { Logger } from '../utils/logger';
+import type { PullHistoryEntry } from '../services/AutoPullService';
 
 /**
  * View type identifier for the Multi-Git status panel
@@ -418,12 +419,29 @@ export class StatusPanelView extends ItemView {
             }
         });
 
-        // Repository name header
+        // Repository name header with action buttons
         const headerEl = itemEl.createDiv({ cls: 'multi-git-repo-header' });
         headerEl.createEl('h5', {
             text: status.repositoryName,
             cls: 'multi-git-repo-name'
         });
+
+        // Add pull button if updates available (remote changes detected)
+        if (status.remoteChanges && status.remoteChanges > 0) {
+            const pullButton = headerEl.createEl('button', {
+                cls: 'multi-git-pull-button',
+                text: 'Pull',
+                attr: {
+                    'aria-label': `Pull updates for ${status.repositoryName}`,
+                    'type': 'button'
+                }
+            });
+
+            pullButton.addEventListener('click', async (e) => {
+                e.stopPropagation();
+                await this.handleManualPull(status.repositoryId, status.repositoryName, pullButton);
+            });
+        }
 
         // Branch information
         const branchEl = itemEl.createDiv({ cls: 'multi-git-repo-branch' });
@@ -573,6 +591,239 @@ export class StatusPanelView extends ItemView {
                 cls: 'multi-git-status-text',
                 attr: { 'aria-label': 'Repository is clean and up to date' }
             });
+        }
+
+        // Pull History Section
+        this.renderPullHistory(itemEl, status.repositoryId, status.repositoryName);
+    }
+
+    /**
+     * Handle manual pull trigger from UI button
+     * @param repositoryId Repository ID
+     * @param repositoryName Repository name for logging
+     * @param buttonEl Button element to show loading state
+     */
+    private async handleManualPull(
+        repositoryId: string,
+        repositoryName: string,
+        buttonEl: HTMLButtonElement
+    ): Promise<void> {
+        Logger.debug('StatusPanel', `Manual pull triggered for repository: ${repositoryName}`);
+
+        // Update button to loading state
+        const originalText = buttonEl.textContent;
+        buttonEl.textContent = 'Pulling...';
+        buttonEl.disabled = true;
+
+        try {
+            // Trigger manual pull via AutoPullService
+            const result = await this.plugin.autoPullService.manualPull(repositoryId);
+
+            Logger.debug('StatusPanel', `Manual pull completed for ${repositoryName}: ${result.status}`);
+
+            // Refresh repository status to reflect changes
+            await this.refreshRepository(repositoryId);
+
+            // Show result notification based on outcome
+            if (result.status === 'success') {
+                // Success notification already shown by AutoPullService
+            } else if (result.status === 'failed') {
+                // Failure notification already shown by AutoPullService
+            } else if (result.status === 'skipped') {
+                // Show skip reason to user
+                const skipReasonText = this.formatSkipReason(result.skipReason);
+                Logger.debug('StatusPanel', `Manual pull skipped for ${repositoryName}: ${skipReasonText}`);
+            }
+        } catch (error) {
+            Logger.error('StatusPanel', `Manual pull error for ${repositoryName}`, error);
+        } finally {
+            // Restore button state
+            buttonEl.textContent = originalText;
+            buttonEl.disabled = false;
+        }
+    }
+
+    /**
+     * Format skip reason for user-friendly display
+     * @param skipReason Skip reason enum value
+     * @returns User-friendly description
+     */
+    private formatSkipReason(skipReason: string | null): string {
+        if (!skipReason) return 'Unknown reason';
+
+        const reasons: Record<string, string> = {
+            'DISABLED_GLOBAL': 'Auto-pull disabled globally',
+            'DISABLED_REPO': 'Auto-pull disabled for this repository',
+            'UNCOMMITTED_CHANGES': 'Uncommitted changes present',
+            'NOT_FAST_FORWARD': 'Cannot fast-forward',
+            'DIVERGED_BRANCHES': 'Branches have diverged',
+            'NO_TRACKING_BRANCH': 'No tracking branch configured',
+            'DETACHED_HEAD': 'Detached HEAD state',
+            'CONCURRENT_OPERATION': 'Another git operation in progress'
+        };
+
+        return reasons[skipReason] || skipReason;
+    }
+
+    /**
+     * Render pull history section for a repository
+     * @param container Parent element
+     * @param repositoryId Repository ID
+     * @param repositoryName Repository name for display
+     */
+    private renderPullHistory(
+        container: HTMLElement,
+        repositoryId: string,
+        repositoryName: string
+    ): void {
+        // Get pull history from AutoPullService
+        const history = this.plugin.autoPullService.getPullHistory(repositoryId);
+
+        // Create collapsible pull history section
+        const historySection = container.createDiv({ cls: 'multi-git-pull-history-section' });
+
+        // History header (clickable to expand/collapse)
+        const historyHeader = historySection.createDiv({
+            cls: 'multi-git-pull-history-header',
+            attr: {
+                'role': 'button',
+                'aria-expanded': 'false',
+                'aria-label': 'Toggle pull history'
+            }
+        });
+
+        const headerIcon = historyHeader.createSpan({
+            cls: 'multi-git-pull-history-icon',
+            attr: { 'aria-hidden': 'true' }
+        });
+        setIcon(headerIcon, 'chevron-right');
+
+        historyHeader.createSpan({
+            text: `Pull History (${history.length})`,
+            cls: 'multi-git-pull-history-title'
+        });
+
+        // History content (collapsed by default)
+        const historyContent = historySection.createDiv({
+            cls: 'multi-git-pull-history-content',
+            attr: { 'aria-hidden': 'true' }
+        });
+        historyContent.style.display = 'none';
+
+        // Toggle expand/collapse
+        historyHeader.addEventListener('click', () => {
+            const isExpanded = historyContent.style.display !== 'none';
+
+            if (isExpanded) {
+                historyContent.style.display = 'none';
+                historyHeader.setAttribute('aria-expanded', 'false');
+                historyContent.setAttribute('aria-hidden', 'true');
+                setIcon(headerIcon, 'chevron-right');
+            } else {
+                historyContent.style.display = 'block';
+                historyHeader.setAttribute('aria-expanded', 'true');
+                historyContent.setAttribute('aria-hidden', 'false');
+                setIcon(headerIcon, 'chevron-down');
+            }
+        });
+
+        // Render history entries
+        if (history.length === 0) {
+            historyContent.createDiv({
+                cls: 'multi-git-pull-history-empty',
+                text: 'No pull operations yet'
+            });
+        } else {
+            // Render each history entry
+            for (const entry of history) {
+                this.renderPullHistoryEntry(historyContent, entry);
+            }
+        }
+    }
+
+    /**
+     * Render a single pull history entry
+     * @param container Parent element
+     * @param entry Pull history entry data
+     */
+    private renderPullHistoryEntry(
+        container: HTMLElement,
+        entry: PullHistoryEntry
+    ): void {
+        const entryEl = container.createDiv({
+            cls: `multi-git-pull-history-entry multi-git-pull-${entry.result}`,
+            attr: { 'role': 'listitem' }
+        });
+
+        // Result icon
+        const iconEl = entryEl.createSpan({
+            cls: 'multi-git-pull-history-entry-icon',
+            attr: { 'aria-hidden': 'true' }
+        });
+
+        let iconName: string;
+        if (entry.result === 'success') {
+            iconName = 'check-circle';
+        } else if (entry.result === 'failed') {
+            iconName = 'x-circle';
+        } else {
+            iconName = 'circle-slash';
+        }
+        setIcon(iconEl, iconName);
+
+        // Entry details
+        const detailsEl = entryEl.createDiv({ cls: 'multi-git-pull-history-entry-details' });
+
+        // Timestamp (relative)
+        const timestampEl = detailsEl.createDiv({
+            cls: 'multi-git-pull-history-entry-timestamp',
+            text: this.formatRelativeTime(entry.timestamp)
+        });
+
+        // Result-specific information
+        if (entry.result === 'success' && entry.commitsPulled !== undefined) {
+            detailsEl.createDiv({
+                cls: 'multi-git-pull-history-entry-info',
+                text: entry.commitsPulled === 1
+                    ? '1 commit pulled'
+                    : `${entry.commitsPulled} commits pulled`
+            });
+        } else if (entry.result === 'failed' && entry.errorMessage) {
+            detailsEl.createDiv({
+                cls: 'multi-git-pull-history-entry-error',
+                text: entry.errorMessage,
+                attr: { 'title': entry.errorMessage }
+            });
+        } else if (entry.result === 'skipped' && entry.skipReason) {
+            detailsEl.createDiv({
+                cls: 'multi-git-pull-history-entry-skip',
+                text: this.formatSkipReason(entry.skipReason)
+            });
+        }
+    }
+
+    /**
+     * Format timestamp as relative time
+     * @param timestamp Date to format
+     * @returns Human-readable relative time string
+     */
+    private formatRelativeTime(timestamp: Date): string {
+        const now = Date.now();
+        const then = timestamp.getTime();
+        const elapsed = now - then;
+        const seconds = Math.floor(elapsed / 1000);
+
+        if (seconds < 60) {
+            return 'Just now';
+        } else if (seconds < 3600) {
+            const minutes = Math.floor(seconds / 60);
+            return `${minutes} minute${minutes !== 1 ? 's' : ''} ago`;
+        } else if (seconds < 86400) {
+            const hours = Math.floor(seconds / 3600);
+            return `${hours} hour${hours !== 1 ? 's' : ''} ago`;
+        } else {
+            const days = Math.floor(seconds / 86400);
+            return `${days} day${days !== 1 ? 's' : ''} ago`;
         }
     }
 
