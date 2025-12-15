@@ -309,6 +309,71 @@ export class AutoPullService {
     }
 
     /**
+     * Log pull attempt start
+     * @param repositoryId Repository ID for identification
+     * @param commitHash Current commit hash before pull
+     * @param retryCount Current retry attempt (0 for first attempt)
+     */
+    private logPullStart(repositoryId: string, commitHash: string, retryCount: number): void {
+        const attemptNumber = retryCount + 1;
+        const maxAttempts = 4; // initial + 3 retries
+        Logger.debug(COMPONENT, `Starting pull for ${repositoryId} (attempt ${attemptNumber}/${maxAttempts})`);
+        Logger.debug(COMPONENT, `Current commit: ${commitHash} for ${repositoryId}`);
+    }
+
+    /**
+     * Log pull success
+     * @param repositoryId Repository ID for identification
+     * @param beforeHash Commit hash before pull
+     * @param afterHash Commit hash after pull
+     * @param commitsPulled Number of commits pulled
+     */
+    private logPullSuccess(
+        repositoryId: string,
+        beforeHash: string,
+        afterHash: string,
+        commitsPulled: number
+    ): void {
+        Logger.debug(COMPONENT, `Pull successful for ${repositoryId}`);
+        Logger.debug(COMPONENT, `Previous commit: ${beforeHash} for ${repositoryId}`);
+        Logger.debug(COMPONENT, `New commit: ${afterHash} for ${repositoryId}`);
+        Logger.debug(COMPONENT, `Commits pulled: ${commitsPulled} for ${repositoryId}`);
+    }
+
+    /**
+     * Log pull failure
+     * @param repositoryId Repository ID for identification
+     * @param error Error object from failed pull
+     * @param retryCount Current retry count
+     */
+    private logPullFailure(repositoryId: string, error: Error | string, retryCount: number): void {
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        const sanitizedMessage = Logger.sanitizeGitOutput(errorMessage);
+
+        Logger.debug(COMPONENT, `Pull failed for ${repositoryId}: ${sanitizedMessage}`);
+
+        const maxRetries = 3;
+        if (retryCount < maxRetries) {
+            const nextRetry = retryCount + 1;
+            const delay = this.calculateRetryDelay(retryCount);
+            Logger.debug(COMPONENT, `Retry count: ${nextRetry}/${maxRetries}, will retry in ${delay}ms for ${repositoryId}`);
+        } else {
+            Logger.debug(COMPONENT, `Max retries (${maxRetries}) exhausted for ${repositoryId}`);
+        }
+    }
+
+    /**
+     * Log pull skip
+     * @param repositoryId Repository ID for identification
+     * @param reason Skip reason enum value
+     */
+    private logPullSkip(repositoryId: string, reason: PullSkipReason): void {
+        // Convert enum to readable string
+        const reasonStr = reason.toLowerCase().replace(/_/g, '-');
+        Logger.debug(COMPONENT, `Pull skipped for ${repositoryId}: ${reasonStr}`);
+    }
+
+    /**
      * Execute git pull operation with fast-forward-only flag.
      * 
      * Captures commit hash before and after pull to verify operation success
@@ -317,11 +382,13 @@ export class AutoPullService {
      * 
      * @param repoPath Filesystem path to repository
      * @param repositoryId Repository ID for logging
+     * @param retryCount Current retry count (for logging)
      * @returns Pull execution result with success status and details
      */
     private async executePull(
         repoPath: string,
-        repositoryId: string
+        repositoryId: string,
+        retryCount: number = 0
     ): Promise<{
         success: boolean;
         commitsBefore: string;
@@ -331,12 +398,16 @@ export class AutoPullService {
         errorMessage?: string;
     }> {
         const startTime = Date.now();
-        Logger.debug(COMPONENT, `Executing pull for repository ${repositoryId}`);
 
         try {
             // Capture commit hash before pull
             const commitsBefore = await this.getCurrentCommitHash(repoPath);
-            Logger.debug(COMPONENT, `Commit before pull: ${commitsBefore} for ${repositoryId}`);
+
+            // Log pull attempt start
+            this.logPullStart(repositoryId, commitsBefore, retryCount);
+
+            // Log git command being executed
+            Logger.debug(COMPONENT, `Executing: git pull --ff-only in ${repoPath}`);
 
             // Execute git pull --ff-only with 5-second timeout
             await this.gitCommandService.runGitCommand(
@@ -348,7 +419,6 @@ export class AutoPullService {
 
             // Capture commit hash after pull
             const commitsAfter = await this.getCurrentCommitHash(repoPath);
-            Logger.debug(COMPONENT, `Commit after pull: ${commitsAfter} for ${repositoryId}`);
 
             // Calculate commits pulled
             const commitsPulled = await this.calculateCommitsPulled(
@@ -359,7 +429,9 @@ export class AutoPullService {
 
             const duration = Date.now() - startTime;
             Logger.timing(COMPONENT, 'Pull execution', duration, `repository ${repositoryId}`);
-            Logger.debug(COMPONENT, `Pull successful: ${commitsPulled} commits pulled for ${repositoryId}`);
+
+            // Log pull success with details
+            this.logPullSuccess(repositoryId, commitsBefore, commitsAfter, commitsPulled);
 
             return {
                 success: true,
@@ -369,13 +441,17 @@ export class AutoPullService {
             };
         } catch (error) {
             const duration = Date.now() - startTime;
-            Logger.error(COMPONENT, `Pull failed after ${duration}ms for ${repositoryId}`, error);
 
             // Capture current commit hash for error case
             const commitsBefore = await this.getCurrentCommitHashSafe(repoPath);
 
             // Categorize error
             const { errorCode, errorMessage } = this.categorizePullError(error);
+
+            // Log pull failure with sanitized error
+            this.logPullFailure(repositoryId, errorMessage, retryCount);
+
+            Logger.error(COMPONENT, `Pull failed after ${duration}ms for ${repositoryId}`, error);
 
             return {
                 success: false,
@@ -745,6 +821,7 @@ export class AutoPullService {
                 : PullSkipReason.DISABLED_GLOBAL;
 
             Logger.debug(COMPONENT, `Auto-pull disabled for ${repositoryId}: ${skipReason}`);
+            this.logPullSkip(repositoryId, skipReason);
 
             operation.status = 'skipped';
             operation.skipReason = skipReason;
@@ -774,6 +851,8 @@ export class AutoPullService {
             operation.status = 'skipped';
             operation.skipReason = safetyCheck.skipReason || PullSkipReason.UNCOMMITTED_CHANGES;
             operation.endTime = new Date();
+
+            this.logPullSkip(repositoryId, operation.skipReason);
 
             // Add to history
             this.addToHistory(repositoryId, {
@@ -816,6 +895,8 @@ export class AutoPullService {
             operation.skipReason = skipReason;
             operation.endTime = new Date();
 
+            this.logPullSkip(repositoryId, skipReason);
+
             // Add to history
             this.addToHistory(repositoryId, {
                 timestamp: operation.endTime,
@@ -848,8 +929,8 @@ export class AutoPullService {
                 operation.lastRetryTime = new Date();
             }
 
-            // Execute pull
-            const pullResult = await this.executePull(repositoryPath, repositoryId);
+            // Execute pull with retry count for logging
+            const pullResult = await this.executePull(repositoryPath, repositoryId, retry);
 
             if (pullResult.success) {
                 // Success!
@@ -977,6 +1058,8 @@ export class AutoPullService {
             operation.skipReason = safetyCheck.skipReason || PullSkipReason.UNCOMMITTED_CHANGES;
             operation.endTime = new Date();
 
+            this.logPullSkip(repositoryId, operation.skipReason);
+
             // Add to history
             this.addToHistory(repositoryId, {
                 timestamp: operation.endTime,
@@ -1009,6 +1092,8 @@ export class AutoPullService {
             operation.status = 'skipped';
             operation.skipReason = skipReason;
             operation.endTime = new Date();
+
+            this.logPullSkip(repositoryId, skipReason);
 
             // Add to history
             this.addToHistory(repositoryId, {

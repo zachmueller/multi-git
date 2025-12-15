@@ -138,13 +138,13 @@ debug(component: string, message: string, data?: Record<string, any>): void {
 **Files:** `src/services/FastForwardDetectionService.ts`
 **Dependencies:** LOG-003
 **Acceptance Criteria:**
-- [ ] Log detection start with repository context
-- [ ] Log working directory status check result
-- [ ] Log branch comparison (ahead/behind commits)
-- [ ] Log final detection decision with reason
-- [ ] All logs include repository identifier
-- [ ] All logs respect debug mode setting
-- [ ] Log messages follow format guidelines
+- [x] Log detection start with repository context
+- [x] Log working directory status check result
+- [x] Log branch comparison (ahead/behind commits)
+- [x] Log final detection decision with reason
+- [x] All logs include repository identifier
+- [x] All logs respect debug mode setting
+- [x] Log messages follow format guidelines
 
 **Log Points:**
 1. Detection start: `[FastForwardDetection] Starting check for ${repoId}`
@@ -157,13 +157,13 @@ debug(component: string, message: string, data?: Record<string, any>): void {
 **Files:** `src/services/AutoPullService.ts`
 **Dependencies:** LOG-003
 **Acceptance Criteria:**
-- [ ] Helper method for pull start logging
-- [ ] Helper method for pull success logging
-- [ ] Helper method for pull failure logging
-- [ ] Helper method for pull skip logging
-- [ ] All helpers check debug mode before logging
-- [ ] All helpers sanitize error messages
-- [ ] Helpers use consistent message format
+- [x] Helper method for pull start logging
+- [x] Helper method for pull success logging
+- [x] Helper method for pull failure logging
+- [x] Helper method for pull skip logging
+- [x] All helpers check debug mode before logging
+- [x] All helpers sanitize error messages
+- [x] Helpers use consistent message format
 
 **Helper Methods:**
 ```typescript
@@ -178,12 +178,12 @@ private logPullSkip(repoId: string, reason: string): void
 **Files:** `src/services/AutoPullService.ts`
 **Dependencies:** FEAT-002
 **Acceptance Criteria:**
-- [ ] Log pull attempt start with retry count
-- [ ] Log current commit hash before pull
-- [ ] Log git command being executed
-- [ ] Log repository path being operated on
-- [ ] Include attempt number (1/3, 2/3, 3/3)
-- [ ] All sensitive data sanitized
+- [x] Log pull attempt start with retry count
+- [x] Log current commit hash before pull
+- [x] Log git command being executed
+- [x] Log repository path being operated on
+- [x] Include attempt number (1/3, 2/3, 3/3)
+- [x] All sensitive data sanitized
 
 **Example Output:**
 ```
@@ -197,12 +197,12 @@ private logPullSkip(repoId: string, reason: string): void
 **Files:** `src/services/AutoPullService.ts`
 **Dependencies:** FEAT-003
 **Acceptance Criteria:**
-- [ ] Log pull success confirmation
-- [ ] Log commit hash before pull
-- [ ] Log commit hash after pull
-- [ ] Log number of commits pulled
-- [ ] Log operation duration (optional)
-- [ ] Include all data in structured format
+- [x] Log pull success confirmation
+- [x] Log commit hash before pull
+- [x] Log commit hash after pull
+- [x] Log number of commits pulled
+- [x] Log operation duration (optional)
+- [x] Include all data in structured format
 
 **Example Output:**
 ```
@@ -217,12 +217,12 @@ private logPullSkip(repoId: string, reason: string): void
 **Files:** `src/services/AutoPullService.ts`
 **Dependencies:** FEAT-003
 **Acceptance Criteria:**
-- [ ] Log pull failure with sanitized error message
-- [ ] Log retry count and max retries
-- [ ] Log whether retry will be attempted
-- [ ] Sanitize all error messages before logging
-- [ ] Handle different error types appropriately
-- [ ] Never expose sensitive data in error logs
+- [x] Log pull failure with sanitized error message
+- [x] Log retry count and max retries
+- [x] Log whether retry will be attempted
+- [x] Sanitize all error messages before logging
+- [x] Handle different error types appropriately
+- [x] Never expose sensitive data in error logs
 
 **Example Output:**
 ```
@@ -235,11 +235,11 @@ private logPullSkip(repoId: string, reason: string): void
 **Files:** `src/services/AutoPullService.ts`
 **Dependencies:** FEAT-002
 **Acceptance Criteria:**
-- [ ] Log when pull is skipped
-- [ ] Log skip reason (uncommitted-changes, divergent-branches, etc.)
-- [ ] Include repository identifier
-- [ ] Use consistent message format
-- [ ] Skip reasons match specification states
+- [x] Log when pull is skipped
+- [x] Log skip reason (uncommitted-changes, divergent-branches, etc.)
+- [x] Include repository identifier
+- [x] Use consistent message format
+- [x] Skip reasons match specification states
 
 **Example Output:**
 ```

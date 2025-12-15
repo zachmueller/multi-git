@@ -137,6 +137,11 @@ export class FastForwardDetectionService {
         const startTime = Date.now();
         const timestamp = new Date();
 
+        // Get repository identifier for logging (use last path component)
+        const repoId = repoPath.split('/').pop() || repoPath;
+
+        Logger.debug('FastForwardDetection', `Starting check for ${repoId}`);
+
         try {
             // Step 1: Get current branch
             const localBranch = await this.getCurrentBranch(repoPath);
@@ -155,10 +160,22 @@ export class FastForwardDetectionService {
 
             const detectionTime = Date.now() - startTime;
 
+            // Log branch comparison details
             Logger.debug(
                 'FastForwardDetection',
-                `Detection complete for ${repoPath}`,
-                { status, commitsAhead, commitsBehind, detectionTime }
+                `Local ahead: ${commitsAhead}, behind: ${commitsBehind} for ${repoId}`
+            );
+
+            // Log final detection decision with reason
+            const canFastForward = status === 'can-fast-forward';
+            const reason = status === 'can-fast-forward' ? 'behind remote with no local commits' :
+                status === 'up-to-date' ? 'already synchronized' :
+                    status === 'local-ahead' ? 'local has unpushed commits' :
+                        status === 'diverged' ? 'branches have diverged' : 'unknown';
+
+            Logger.debug(
+                'FastForwardDetection',
+                `Result: canFastForward=${canFastForward}, reason=${reason} for ${repoId}`
             );
 
             return {
