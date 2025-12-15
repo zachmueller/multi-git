@@ -72,6 +72,7 @@ As an Obsidian user managing multiple git repositories, I want remote changes to
   - [ ] User receives notification confirming successful pull with commit count
   - [ ] Failed pulls retry automatically with exponential backoff (3 attempts: immediate, 10s, 30s delays)
   - [ ] After 3 failed attempts, user notified with clear error message and guidance
+  - [ ] Git commands use enhanced PATH from FR-7 to find credential helpers (git-remote-codecommit, etc.)
 
 ### FR-3: Manual Intervention Notification
 - **Description:** When remote changes cannot be safely fast-forwarded, users must be clearly notified and provided with guidance for manual resolution
@@ -140,6 +141,7 @@ As an Obsidian user managing multiple git repositories, I want remote changes to
 - **Acceptance Criteria:**
   - [ ] Works with SSH authentication (when credentials already cached)
   - [ ] Works with HTTPS authentication (when credentials already cached)
+  - [ ] Works with credential helpers requiring custom PATH (e.g., git-remote-codecommit via FR-7)
   - [ ] If git prompts for credentials, abort pull and notify user to authenticate manually
   - [ ] Works with various git versions (2.20.0+)
   - [ ] Handles network interruptions gracefully
@@ -185,6 +187,8 @@ As an Obsidian user managing multiple git repositories, I want remote changes to
 ### Technical Approach
 After successful fetch operation detects remote changes, the plugin will perform a safety check to determine if a fast-forward is possible. If safe, it will execute `git pull --ff-only` which either succeeds with a fast-forward or fails safely without modifying the working directory. The operation runs asynchronously to avoid blocking the UI.
 
+**PATH Environment Handling:** All git commands must be executed through GitCommandService which implements FR-7 (Custom PATH Configuration) from 1-multi-git-core. This ensures git can locate credential helpers like `git-remote-codecommit` that may be installed in user directories (e.g., ~/.cargo/bin). The same enhanced PATH mechanism used for fetch operations in 1-multi-git-core will automatically apply to pull operations.
+
 ### Safety Strategy
 The plugin uses a conservative "fail-safe" approach:
 1. **Never assume safety** - Always verify fast-forward is possible before attempting pull
@@ -194,11 +198,15 @@ The plugin uses a conservative "fail-safe" approach:
 
 ### Dependencies
 - Existing GitCommandService for executing git commands
+  - **Critical:** GitCommandService must include FR-7 (Custom PATH Configuration) implementation from 1-multi-git-core spec
+  - Enhanced PATH is required to ensure git commands can find credential helpers (e.g., git-remote-codecommit for AWS CodeCommit)
+  - Without enhanced PATH, pull operations will fail with errors like: `git: 'remote-codecommit' is not a git command`
 - Existing FetchSchedulerService for detecting remote changes
 - Existing NotificationService for user feedback
 - Existing StatusPanelView for displaying pull status
 - Existing RepositoryPickerModal pattern (SuggestModal) for any repository selection UI
 - Git 2.20.0+ with support for `--ff-only` flag
+- Custom PATH entries configured in settings (defaults: ~/.cargo/bin, ~/.local/bin, /opt/homebrew/bin, /usr/local/bin)
 
 ### Risks & Mitigations
 
