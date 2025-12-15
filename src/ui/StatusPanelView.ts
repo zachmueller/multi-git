@@ -471,7 +471,7 @@ export class StatusPanelView extends ItemView {
             // Add help link for common error types
             const helpLink = this.getHelpLinkForError(status.lastFetchError);
             if (helpLink) {
-                const helpLinkEl = errorTextEl.createEl('a', {
+                errorTextEl.createEl('a', {
                     text: 'Get help',
                     href: helpLink,
                     cls: 'multi-git-help-link',

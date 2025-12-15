@@ -187,7 +187,7 @@ export class FetchSchedulerService {
 
             try {
                 // Execute git fetch
-                const fetchSuccess = await this.gitService.fetchRepository(repo.path);
+                const fetchSuccess = await this.gitService.fetchRepository(repo.path, repo.id, repo.name);
 
                 if (!fetchSuccess) {
                     result.error = 'Fetch operation failed';

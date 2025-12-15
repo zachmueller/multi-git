@@ -146,7 +146,7 @@ export class MergeConflictModal extends CriticalErrorModal {
         });
         explanationTitle.addClass('multi-git-conflict-explanation-title');
 
-        const explanationText = explanationContainer.createEl('p', {
+        explanationContainer.createEl('p', {
             text: 'Conflicted files contain special markers showing where changes conflict:',
         });
 

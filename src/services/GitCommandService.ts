@@ -370,7 +370,7 @@ export class GitCommandService {
 
         try {
             // Use --all to fetch all remotes, --tags to include tags, --prune to remove stale refs
-            const result = await this.executeGitCommand('fetch --all --tags --prune', {
+            await this.executeGitCommand('fetch --all --tags --prune', {
                 cwd: repoPath,
                 timeout,
             });

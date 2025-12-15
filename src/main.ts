@@ -339,12 +339,16 @@ export default class MultiGitPlugin extends Plugin {
 			Logger.debug('Command', `Executing commit and push for repository: ${repoName}`);
 			Logger.debug('Command', `Commit message: ${message}`);
 
-			// Find repository ID for status panel update
+			// Find repository configuration for status panel update
 			const repo = this.repositoryConfigService.getEnabledRepositories()
 				.find(r => r.path === repoPath);
 
+			if (!repo) {
+				throw new Error(`Repository configuration not found for path: ${repoPath}`);
+			}
+
 			// Execute the commit and push workflow
-			await this.gitCommandService.commitAndPush(repoPath, message);
+			await this.gitCommandService.commitAndPush(repoPath, repo.id, repo.name, message);
 
 			// Show success notification
 			new Notice(`Successfully committed and pushed changes to "${repoName}"`);

@@ -230,7 +230,7 @@ export class CriticalErrorModal extends Modal {
         const helpContainer = container.createEl('div');
         helpContainer.addClass('multi-git-error-help');
 
-        const helpText = helpContainer.createEl('span', {
+        helpContainer.createEl('span', {
             text: 'Need more help? ',
         });
 

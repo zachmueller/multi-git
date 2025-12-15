@@ -120,7 +120,7 @@ export class AuthFailureModal extends CriticalErrorModal {
         const step1 = sshSteps.createEl('li');
         step1.addClass('multi-git-auth-step');
 
-        const step1Text = step1.createEl('div', {
+        step1.createEl('div', {
             text: 'Generate an SSH key (if you don\'t have one):',
         });
 
@@ -137,7 +137,7 @@ export class AuthFailureModal extends CriticalErrorModal {
         const step2 = sshSteps.createEl('li');
         step2.addClass('multi-git-auth-step');
 
-        const step2Text = step2.createEl('div', {
+        step2.createEl('div', {
             text: 'Copy your public key:',
         });
 
@@ -149,7 +149,7 @@ export class AuthFailureModal extends CriticalErrorModal {
         const step3 = sshSteps.createEl('li');
         step3.addClass('multi-git-auth-step');
 
-        const step3Text = step3.createEl('div', {
+        step3.createEl('div', {
             text: 'Add the key to your git hosting service:',
         });
 
@@ -176,7 +176,7 @@ export class AuthFailureModal extends CriticalErrorModal {
         const step4 = sshSteps.createEl('li');
         step4.addClass('multi-git-auth-step');
 
-        const step4Text = step4.createEl('div', {
+        step4.createEl('div', {
             text: 'Test your SSH connection:',
         });
 
@@ -209,7 +209,7 @@ export class AuthFailureModal extends CriticalErrorModal {
         const step1 = httpsSteps.createEl('li');
         step1.addClass('multi-git-auth-step');
 
-        const step1Text = step1.createEl('div', {
+        step1.createEl('div', {
             text: 'Configure git to store credentials:',
         });
 
@@ -221,7 +221,7 @@ export class AuthFailureModal extends CriticalErrorModal {
         const step2 = httpsSteps.createEl('li');
         step2.addClass('multi-git-auth-step');
 
-        const step2Text = step2.createEl('div', {
+        step2.createEl('div', {
             text: 'Create a Personal Access Token (PAT):',
         });
 
@@ -253,7 +253,7 @@ export class AuthFailureModal extends CriticalErrorModal {
         const step3 = httpsSteps.createEl('li');
         step3.addClass('multi-git-auth-step');
 
-        const step3Text = step3.createEl('div', {
+        step3.createEl('div', {
             text: 'When prompted for credentials:',
         });
 
