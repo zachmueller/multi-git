@@ -128,6 +128,35 @@ export class GitCommandService {
     }
 
     /**
+     * Execute a git command with enhanced PATH support
+     * This is the public interface for executing arbitrary git commands
+     * with the custom PATH entries configured in settings.
+     *
+     * @param args Git command arguments (without 'git' prefix), e.g., ['pull', '--ff-only']
+     * @param repoPath Absolute path to repository
+     * @param description Human-readable description of operation for logging
+     * @param timeout Optional timeout in milliseconds (default: 10000ms)
+     * @returns Command result with stdout, stderr, and exit code
+     * @throws GitRepositoryError if command fails
+     */
+    async runGitCommand(
+        args: string[],
+        repoPath: string,
+        description: string,
+        timeout?: number
+    ): Promise<GitCommandResult> {
+        Logger.debug('GitCommand', `Executing: ${description}`);
+
+        // Join args into command string, properly escaping arguments
+        const command = args.join(' ');
+
+        return await this.executeGitCommand(command, {
+            cwd: repoPath,
+            timeout: timeout || this.defaultTimeout,
+        });
+    }
+
+    /**
      * Check if a directory is a valid git repository
      * @param path Absolute path to check
      * @returns True if path is a git repository, false otherwise

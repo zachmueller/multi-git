@@ -5,10 +5,6 @@ import type { FastForwardDetectionService } from './FastForwardDetectionService'
 import type { GitCommandService } from './GitCommandService';
 import type { NotificationService } from './NotificationService';
 import type { RepositoryConfigService } from './RepositoryConfigService';
-import { exec } from 'child_process';
-import { promisify } from 'util';
-
-const execPromise = promisify(exec);
 
 /** Component name for logging */
 const COMPONENT = 'AutoPullService';
@@ -343,10 +339,12 @@ export class AutoPullService {
             Logger.debug(COMPONENT, `Commit before pull: ${commitsBefore} for ${repositoryId}`);
 
             // Execute git pull --ff-only with 5-second timeout
-            await execPromise('git pull --ff-only', {
-                cwd: repoPath,
-                timeout: 5000, // 5-second timeout per specification
-            });
+            await this.gitCommandService.runGitCommand(
+                ['pull', '--ff-only'],
+                repoPath,
+                'Pull changes',
+                5000  // 5-second timeout per specification
+            );
 
             // Capture commit hash after pull
             const commitsAfter = await this.getCurrentCommitHash(repoPath);
@@ -397,11 +395,13 @@ export class AutoPullService {
      */
     private async getCurrentCommitHash(repoPath: string): Promise<string> {
         try {
-            const { stdout } = await execPromise('git rev-parse HEAD', {
-                cwd: repoPath,
-                timeout: 5000,
-            });
-            return stdout.trim();
+            const result = await this.gitCommandService.runGitCommand(
+                ['rev-parse', 'HEAD'],
+                repoPath,
+                'Get current commit hash',
+                5000
+            );
+            return result.stdout.trim();
         } catch (error) {
             throw new Error(`Failed to get commit hash: ${error instanceof Error ? error.message : String(error)}`);
         }
@@ -440,11 +440,13 @@ export class AutoPullService {
 
         try {
             // Count commits between before and after
-            const { stdout } = await execPromise(
-                `git rev-list --count ${beforeHash}..${afterHash}`,
-                { cwd: repoPath, timeout: 5000 }
+            const result = await this.gitCommandService.runGitCommand(
+                ['rev-list', '--count', `${beforeHash}..${afterHash}`],
+                repoPath,
+                'Calculate commits pulled',
+                5000
             );
-            const count = parseInt(stdout.trim(), 10);
+            const count = parseInt(result.stdout.trim(), 10);
             return isNaN(count) ? 0 : count;
         } catch (error) {
             Logger.debug(COMPONENT, `Could not calculate commits pulled for ${repoPath}`, error);

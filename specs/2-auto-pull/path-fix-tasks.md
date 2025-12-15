@@ -34,17 +34,17 @@ fatal: remote helper 'codecommit' aborted session
 **Files:** `src/services/AutoPullService.ts`
 **Dependencies:** None
 **Acceptance Criteria:**
-- [ ] List all methods calling execPromise
-- [ ] Identify which commands need PATH enhancement
-- [ ] Document current command signatures
-- [ ] Map to GitCommandService equivalents
+- [x] List all methods calling execPromise
+- [x] Identify which commands need PATH enhancement
+- [x] Document current command signatures
+- [x] Map to GitCommandService equivalents
 
 **Findings:**
 ```typescript
 // Current direct executions:
 1. executePull() - line ~220: 'git pull --ff-only'
 2. getCurrentCommitHash() - line ~300: 'git rev-parse HEAD'
-3. calculateCommitsPulled() - line ~330: 'git rev-list --count'
+3. calculateCommitsPulled() - line ~330: 'git rev-list --count ${beforeHash}..${afterHash}'
 ```
 
 ### ANALYZE-002: Review GitCommandService API
@@ -52,10 +52,16 @@ fatal: remote helper 'codecommit' aborted session
 **Files:** `src/services/GitCommandService.ts`
 **Dependencies:** None
 **Acceptance Criteria:**
-- [ ] Document executeGitCommand() signature
-- [ ] Verify it supports all needed git commands
-- [ ] Confirm timeout handling compatibility
-- [ ] Check error handling patterns
+- [x] Document executeGitCommand() signature
+- [x] Verify it supports all needed git commands
+- [x] Confirm timeout handling compatibility
+- [x] Check error handling patterns
+
+**Findings:**
+- GitCommandService has private executeGitCommand(command: string, options) method
+- Need to add public method to expose this functionality with PATH enhancement
+- Timeout handling compatible (options.timeout parameter)
+- Error handling returns GitRepositoryError which we can catch
 
 ---
 
@@ -66,11 +72,11 @@ fatal: remote helper 'codecommit' aborted session
 **Files:** `src/services/AutoPullService.ts` (lines ~215-235)
 **Dependencies:** ANALYZE-001, ANALYZE-002
 **Acceptance Criteria:**
-- [ ] Replace `execPromise('git pull --ff-only')` with GitCommandService call
-- [ ] Maintain 5-second timeout requirement
-- [ ] Preserve error handling behavior
-- [ ] Keep commit hash capture logic intact
-- [ ] Verify PATH enhancement applies automatically
+- [x] Replace `execPromise('git pull --ff-only')` with GitCommandService call
+- [x] Maintain 5-second timeout requirement
+- [x] Preserve error handling behavior
+- [x] Keep commit hash capture logic intact
+- [x] Verify PATH enhancement applies automatically
 
 **Current Code:**
 ```typescript
@@ -95,10 +101,10 @@ await this.gitCommandService.executeGitCommand(
 **Files:** `src/services/AutoPullService.ts` (lines ~295-310)
 **Dependencies:** ANALYZE-001, ANALYZE-002
 **Acceptance Criteria:**
-- [ ] Replace `execPromise('git rev-parse HEAD')` with GitCommandService call
-- [ ] Maintain 5-second timeout
-- [ ] Preserve return value (commit hash)
-- [ ] Keep error handling behavior
+- [x] Replace `execPromise('git rev-parse HEAD')` with GitCommandService call
+- [x] Maintain 5-second timeout
+- [x] Preserve return value (commit hash)
+- [x] Keep error handling behavior
 
 **Current Code:**
 ```typescript
@@ -125,10 +131,10 @@ return result.stdout.trim();
 **Files:** `src/services/AutoPullService.ts` (lines ~325-345)
 **Dependencies:** ANALYZE-001, ANALYZE-002
 **Acceptance Criteria:**
-- [ ] Replace `execPromise('git rev-list --count')` with GitCommandService call
-- [ ] Maintain 5-second timeout
-- [ ] Preserve commit count calculation
-- [ ] Keep error handling behavior
+- [x] Replace `execPromise('git rev-list --count')` with GitCommandService call
+- [x] Maintain 5-second timeout
+- [x] Preserve commit count calculation
+- [x] Keep error handling behavior
 
 **Current Code:**
 ```typescript
@@ -153,10 +159,10 @@ const result = await this.gitCommandService.executeGitCommand(
 **Files:** `src/services/AutoPullService.ts` (lines ~8-9)
 **Dependencies:** REFACTOR-001, REFACTOR-002, REFACTOR-003
 **Acceptance Criteria:**
-- [ ] Remove `exec` import from 'child_process'
-- [ ] Remove `promisify` import from 'util'
-- [ ] Remove `execPromise` constant declaration
-- [ ] Verify no other code depends on these imports
+- [x] Remove `exec` import from 'child_process'
+- [x] Remove `promisify` import from 'util'
+- [x] Remove `execPromise` constant declaration
+- [x] Verify no other code depends on these imports
 
 **Current Code:**
 ```typescript
