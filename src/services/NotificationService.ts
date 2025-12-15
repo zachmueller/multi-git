@@ -3,23 +3,28 @@
  * Manages user notifications for fetch operations and remote changes
  */
 
-import { Notice } from 'obsidian';
+import { App, Notice } from 'obsidian';
 import { MultiGitSettings } from '../settings/data';
 import { Logger } from '../utils/logger';
+import { ManualInterventionModal } from '../ui/ManualInterventionModal';
+import type { PullOperationState, PullSkipReason, PullErrorCode } from './AutoPullService';
 
 /**
  * Service for managing Obsidian Notice-based notifications
  */
 export class NotificationService {
+    private app: App;
     private settings: MultiGitSettings;
     private recentNotifications: Map<string, number>; // Track notifications to prevent duplicates
     private readonly NOTIFICATION_COOLDOWN = 60000; // 1 minute cooldown between duplicate notifications
 
     /**
      * Create a new NotificationService
+     * @param app Obsidian app instance for creating modals
      * @param settings Plugin settings for checking notification preferences
      */
-    constructor(settings: MultiGitSettings) {
+    constructor(app: App, settings: MultiGitSettings) {
+        this.app = app;
         this.settings = settings;
         this.recentNotifications = new Map();
     }
@@ -151,5 +156,180 @@ export class NotificationService {
         const count = this.recentNotifications.size;
         this.recentNotifications.clear();
         Logger.debug('Notification', `Cleared ${count} tracked notifications`);
+    }
+
+    /**
+     * Show manual intervention notification based on pull operation state
+     * 
+     * Determines whether to show a modal (for critical scenarios) or a notice
+     * (for less critical scenarios) based on the skip reason or error code.
+     * 
+     * **Critical Scenarios (Modal):**
+     * - DIVERGED_BRANCHES: Requires manual merge/rebase decision
+     * - AUTH_ERROR: Requires credential setup
+     * - CONCURRENT_OPERATION: May indicate stuck operation
+     * 
+     * **Less Critical Scenarios (Notice):**
+     * - UNCOMMITTED_CHANGES: User needs to commit or stash
+     * - LOCK_ERROR: Usually auto-resolves, retry will occur
+     * - DISABLED states: No notification needed (expected)
+     * 
+     * Critical scenarios always show modal regardless of verbosity settings.
+     * Less critical scenarios respect the notification verbosity preference.
+     * 
+     * @param state Complete pull operation state including skip reason and error
+     */
+    showManualInterventionNotification(state: PullOperationState): void {
+        const skipReason = state.skipReason;
+        const errorCode = state.errorCode;
+
+        Logger.debug('Notification', `Determining notification type for ${state.repositoryName}, skipReason: ${skipReason}, errorCode: ${errorCode}`);
+
+        // Determine if this is a critical scenario requiring modal
+        const isCritical = this.shouldShowModal(skipReason, errorCode);
+
+        if (isCritical) {
+            // Critical scenarios: Always show modal regardless of verbosity
+            Logger.debug('Notification', `Showing critical modal for ${state.repositoryName}`);
+            this.showManualInterventionModal(state);
+        } else {
+            // Less critical: Show notice if verbosity allows
+            Logger.debug('Notification', `Showing non-critical notice for ${state.repositoryName}`);
+            this.showManualInterventionNotice(state);
+        }
+    }
+
+    /**
+     * Determine if a scenario requires a modal (critical) or just a notice
+     * 
+     * @param skipReason Reason pull was skipped
+     * @param errorCode Error code if pull failed
+     * @returns true if modal should be shown (critical scenario)
+     */
+    private shouldShowModal(
+        skipReason: PullSkipReason | null,
+        errorCode: PullErrorCode | null
+    ): boolean {
+        // Critical skip reasons
+        if (skipReason === 'DIVERGED_BRANCHES') {
+            return true;
+        }
+
+        if (skipReason === 'CONCURRENT_OPERATION') {
+            return true;
+        }
+
+        // Critical error codes
+        if (errorCode === 'AUTH_ERROR') {
+            return true;
+        }
+
+        // All other scenarios are less critical
+        return false;
+    }
+
+    /**
+     * Show modal for critical manual intervention scenarios
+     * 
+     * Modal is non-dismissible and provides clear guidance on resolution.
+     * Always shown regardless of notification verbosity settings.
+     * 
+     * @param state Pull operation state
+     */
+    private showManualInterventionModal(state: PullOperationState): void {
+        Logger.debug('Notification', `Opening ManualInterventionModal for ${state.repositoryName}`);
+
+        const modal = new ManualInterventionModal(this.app, state);
+        modal.open();
+    }
+
+    /**
+     * Show notice for less critical manual intervention scenarios
+     * 
+     * Notice is dismissible and respects notification verbosity settings.
+     * 
+     * @param state Pull operation state
+     */
+    private showManualInterventionNotice(state: PullOperationState): void {
+        const verbosity = this.settings.autoPullNotificationVerbosity;
+
+        // Silent mode: no notices
+        if (verbosity === 'silent') {
+            Logger.debug('Notification', `Notice suppressed (silent mode): ${state.repositoryName}`);
+            return;
+        }
+
+        // Check for disabled states - these don't need notifications (expected behavior)
+        if (state.skipReason === 'DISABLED_GLOBAL' || state.skipReason === 'DISABLED_REPO') {
+            Logger.debug('Notification', `No notice for disabled state: ${state.repositoryName}`);
+            return;
+        }
+
+        // Build appropriate message based on skip reason
+        const message = this.getNotificationMessage(state);
+
+        // Check cooldown to prevent duplicate notices
+        const notificationKey = `manual-intervention:${state.repositoryId}:${state.skipReason || state.errorCode}`;
+        if (this.isRecentNotification(notificationKey)) {
+            Logger.debug('Notification', `Notice suppressed (cooldown): ${state.repositoryName}`);
+            return;
+        }
+
+        Logger.debug('Notification', `Showing manual intervention notice for ${state.repositoryName}: ${message}`);
+
+        // Show notice with appropriate duration
+        new Notice(message, 8000); // 8 second duration
+
+        // Track this notification
+        this.trackNotification(notificationKey);
+    }
+
+    /**
+     * Get user-friendly notification message based on pull operation state
+     * 
+     * @param state Pull operation state
+     * @returns Human-readable message explaining the situation
+     */
+    private getNotificationMessage(state: PullOperationState): string {
+        const repoName = state.repositoryName;
+        const skipReason = state.skipReason;
+        const errorCode = state.errorCode;
+
+        // Handle skip reasons
+        if (skipReason === 'UNCOMMITTED_CHANGES') {
+            return `⚠️ ${repoName}: Cannot auto-pull - you have uncommitted changes. Commit or stash them first.`;
+        }
+
+        if (skipReason === 'DETACHED_HEAD') {
+            return `⚠️ ${repoName}: Cannot auto-pull - repository is in detached HEAD state.`;
+        }
+
+        if (skipReason === 'NO_TRACKING_BRANCH') {
+            return `⚠️ ${repoName}: Cannot auto-pull - no tracking branch configured.`;
+        }
+
+        if (skipReason === 'NOT_FAST_FORWARD') {
+            return `⚠️ ${repoName}: Cannot auto-pull - local branch has unpushed commits.`;
+        }
+
+        // Handle error codes
+        if (errorCode === 'LOCK_ERROR') {
+            return `⚠️ ${repoName}: Pull temporarily blocked - repository locked. Will retry automatically.`;
+        }
+
+        if (errorCode === 'NETWORK_ERROR') {
+            return `⚠️ ${repoName}: Pull failed - network error. Will retry automatically.`;
+        }
+
+        if (errorCode === 'TIMEOUT_ERROR') {
+            return `⚠️ ${repoName}: Pull timed out. Will retry automatically.`;
+        }
+
+        if (errorCode === 'UNKNOWN_ERROR') {
+            return `⚠️ ${repoName}: Pull failed - ${state.errorMessage || 'unknown error'}`;
+        }
+
+        // Fallback message
+        return `⚠️ ${repoName}: Manual intervention may be required.`;
     }
 }

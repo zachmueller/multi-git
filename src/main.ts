@@ -46,7 +46,7 @@ export default class MultiGitPlugin extends Plugin {
 		// Initialize services
 		this.gitCommandService = new GitCommandService(this.settings);
 		this.repositoryConfigService = new RepositoryConfigService(this, this.gitCommandService);
-		this.notificationService = new NotificationService(this.settings);
+		this.notificationService = new NotificationService(this.app, this.settings);
 		this.commitMessageService = new CommitMessageService();
 		this.fastForwardDetectionService = new FastForwardDetectionService(this.gitCommandService);
 		this.autoPullService = new AutoPullService(

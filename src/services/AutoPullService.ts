@@ -614,16 +614,15 @@ export class AutoPullService {
     /**
      * Send notification for manual intervention required
      * 
-     * Always sent regardless of verbosity (manual intervention is critical).
-     * Explains why auto-pull couldn't proceed and what user should do.
+     * Delegates to NotificationService which will determine whether to show
+     * a modal (critical scenarios) or notice (less critical) based on the
+     * pull operation state.
      * 
-     * @param repositoryName Repository name for display
-     * @param reason Reason manual intervention is needed
+     * @param state Complete pull operation state including skip reason and error
      */
-    private notifyManualInterventionRequired(repositoryName: string, reason: string): void {
-        const message = `⚠️ ${repositoryName}: ${reason}. Please resolve manually.`;
-        new Notice(message, 8000); // 8 second duration for warnings
-        Logger.debug(COMPONENT, `Manual intervention notification sent for ${repositoryName}`);
+    private notifyManualInterventionRequired(state: PullOperationState): void {
+        Logger.debug(COMPONENT, `Notifying manual intervention required for ${state.repositoryName}`);
+        this._notificationService.showManualInterventionNotification(state);
     }
 
     /**
@@ -783,10 +782,7 @@ export class AutoPullService {
             });
 
             // Notify user manual intervention needed
-            this.notifyManualInterventionRequired(
-                repositoryName,
-                'Uncommitted changes detected'
-            );
+            this.notifyManualInterventionRequired(operation);
 
             return operation;
         }
@@ -834,7 +830,7 @@ export class AutoPullService {
             });
 
             // Notify user manual intervention needed
-            this.notifyManualInterventionRequired(repositoryName, notificationReason);
+            this.notifyManualInterventionRequired(operation);
 
             return operation;
         }

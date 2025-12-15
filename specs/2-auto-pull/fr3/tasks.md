@@ -145,17 +145,17 @@ grep -n "openRepositoryInExplorer" src/ui/MergeConflictModal.ts
 
 ## Phase 3: Service Layer Integration
 
-### SVC-001: Enhance NotificationService for Modals
+### SVC-001: Enhance NotificationService for Modals ✅
 **Description:** Add modal launching capability to NotificationService
 **Files:** `src/services/NotificationService.ts`
 **Dependencies:** MODAL-003
 **Acceptance Criteria:**
-- [ ] showManualInterventionNotification(state: PullOperationState) method added
-- [ ] Determines modal vs notice based on skipReason
-- [ ] Launches ManualInterventionModal for critical scenarios
-- [ ] Shows Notice for less critical scenarios
-- [ ] Respects verbosity settings (except critical errors)
-- [ ] Logs notification decisions
+- [x] showManualInterventionNotification(state: PullOperationState) method added
+- [x] Determines modal vs notice based on skipReason
+- [x] Launches ManualInterventionModal for critical scenarios
+- [x] Shows Notice for less critical scenarios
+- [x] Respects verbosity settings (except critical errors)
+- [x] Logs notification decisions
 
 **Modal Triggers (Critical):**
 - DIVERGED_BRANCHES (always show modal)
@@ -167,17 +167,17 @@ grep -n "openRepositoryInExplorer" src/ui/MergeConflictModal.ts
 - DISABLED_GLOBAL / DISABLED_REPO (no notification - expected)
 - LOCK_ERROR (notice with retry guidance)
 
-### SVC-002: Update AutoPullService Notification Logic
+### SVC-002: Update AutoPullService Notification Logic ✅
 **Description:** Enhance notifyManualInterventionRequired() to use NotificationService
 **Files:** `src/services/AutoPullService.ts`
 **Dependencies:** SVC-001
 **Acceptance Criteria:**
-- [ ] notifyManualInterventionRequired() calls NotificationService
-- [ ] Passes full PullOperationState (not just strings)
-- [ ] Removed direct Notice creation (delegated to NotificationService)
-- [ ] shouldShowModal() helper method added
-- [ ] getNotificationMessage() helper method added
-- [ ] Silent mode respected except for critical errors
+- [x] notifyManualInterventionRequired() calls NotificationService
+- [x] Passes full PullOperationState (not just strings)
+- [x] Removed direct Notice creation (delegated to NotificationService)
+- [x] shouldShowModal() helper method added (in NotificationService)
+- [x] getNotificationMessage() helper method added (in NotificationService)
+- [x] Silent mode respected except for critical errors
 
 ### SVC-003 [P]: Add NotificationService Tests
 **Description:** Unit tests for enhanced notification logic
@@ -546,13 +546,13 @@ Each phase has validation checkpoints:
 
 ## Progress Tracking
 
-**Current Status:** In Progress (8/28 tasks complete)
+**Current Status:** In Progress (10/28 tasks complete)
 
 **Phase Completion:**
 - [x] Phase 0: Setup (2/2) ✅
 - [x] Phase 1: Foundation (2/2) ✅
 - [x] Phase 2: Core Modal (4/4) ✅
-- [ ] Phase 3: Service Integration (0/4)
+- [x] Phase 3: Service Integration (2/4) 🔄
 - [ ] Phase 4: UI Enhancement (0/5)
 - [ ] Phase 5: Integration (0/3)
 - [ ] Phase 6: Quality (0/4)
