@@ -698,3 +698,449 @@ button:focus-visible {
 .theme-light .multi-git-status-indicator.multi-git-error {
     background: rgba(220, 38, 38, 0.1);
 }
+
+/* FR-5: Critical Error Modal Styles */
+
+/* Modal container */
+.multi-git-error-modal {
+    min-width: 500px;
+    max-width: 700px;
+}
+
+/* Modal header */
+.multi-git-error-header {
+    display: flex;
+    align-items: flex-start;
+    gap: 1em;
+    margin-bottom: 1.5em;
+    padding-bottom: 1em;
+    border-bottom: 2px solid var(--background-modifier-border);
+}
+
+.multi-git-error-icon {
+    font-size: 2em;
+    line-height: 1;
+    flex-shrink: 0;
+}
+
+.multi-git-error-title-container {
+    flex: 1;
+}
+
+.multi-git-error-title {
+    margin: 0 0 0.3em 0;
+    font-size: 1.3em;
+    font-weight: 700;
+    color: var(--text-error);
+}
+
+.multi-git-error-subtitle {
+    font-family: var(--font-monospace);
+    font-size: 0.95em;
+    color: var(--text-muted);
+}
+
+/* Error message */
+.multi-git-error-message {
+    margin-bottom: 1.5em;
+}
+
+.multi-git-error-message-text {
+    margin: 0;
+    font-size: 1em;
+    line-height: 1.5;
+    color: var(--text-normal);
+}
+
+/* Suggested actions */
+.multi-git-error-actions {
+    margin-bottom: 1.5em;
+    padding: 1em;
+    background: var(--background-secondary);
+    border-radius: 6px;
+    border-left: 3px solid var(--interactive-accent);
+}
+
+.multi-git-error-actions-title {
+    margin: 0 0 0.75em 0;
+    font-size: 1em;
+    font-weight: 600;
+    color: var(--text-normal);
+}
+
+.multi-git-error-actions-list {
+    margin: 0;
+    padding-left: 1.5em;
+}
+
+.multi-git-error-action-item {
+    margin-bottom: 0.75em;
+    line-height: 1.5;
+    color: var(--text-normal);
+}
+
+.multi-git-error-action-item:last-child {
+    margin-bottom: 0;
+}
+
+/* Technical details (collapsible) */
+.multi-git-error-details-container {
+    margin-bottom: 1.5em;
+}
+
+.multi-git-error-details-toggle {
+    background: none;
+    border: none;
+    padding: 0.5em 0;
+    color: var(--text-muted);
+    cursor: pointer;
+    font-size: 0.9em;
+    text-align: left;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    transition: color 0.15s ease;
+}
+
+.multi-git-error-details-toggle:hover {
+    color: var(--text-normal);
+}
+
+.multi-git-error-details-content {
+    margin-top: 0.75em;
+    background: var(--background-primary-alt);
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 4px;
+    padding: 1em;
+    overflow-x: auto;
+}
+
+.multi-git-error-details-text {
+    margin: 0;
+    font-family: var(--font-monospace);
+    font-size: 0.85em;
+    line-height: 1.4;
+    color: var(--text-muted);
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+
+/* Help link */
+.multi-git-error-help {
+    margin-bottom: 1.5em;
+    font-size: 0.9em;
+    color: var(--text-muted);
+}
+
+.multi-git-error-help-link {
+    color: var(--text-accent);
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.multi-git-error-help-link:hover {
+    text-decoration: underline;
+}
+
+/* Buttons */
+.multi-git-error-buttons {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.75em;
+    margin-top: 1.5em;
+    padding-top: 1.5em;
+    border-top: 1px solid var(--background-modifier-border);
+}
+
+.multi-git-error-buttons button {
+    padding: 0.5em 1.5em;
+    font-size: 0.95em;
+}
+
+/* Auth Failure Modal Specific Styles */
+.multi-git-auth-modal {
+    max-width: 750px;
+}
+
+.multi-git-auth-setup {
+    margin-bottom: 1.5em;
+}
+
+.multi-git-auth-section {
+    margin-bottom: 2em;
+    padding: 1em;
+    background: var(--background-secondary);
+    border-radius: 6px;
+}
+
+.multi-git-auth-section-title {
+    margin: 0 0 1em 0;
+    font-size: 1.05em;
+    font-weight: 600;
+    color: var(--text-normal);
+}
+
+.multi-git-auth-steps {
+    margin: 0;
+    padding-left: 1.5em;
+}
+
+.multi-git-auth-step {
+    margin-bottom: 1.5em;
+    line-height: 1.6;
+}
+
+.multi-git-auth-step:last-child {
+    margin-bottom: 0;
+}
+
+.multi-git-auth-code {
+    display: block;
+    margin: 0.5em 0;
+    padding: 0.5em 0.75em;
+    background: var(--background-primary-alt);
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 4px;
+    font-family: var(--font-monospace);
+    font-size: 0.9em;
+    color: var(--text-accent);
+    overflow-x: auto;
+}
+
+.multi-git-auth-note {
+    margin-top: 0.5em;
+    font-size: 0.9em;
+    color: var(--text-muted);
+    font-style: italic;
+}
+
+.multi-git-auth-links {
+    margin: 0.5em 0 0 0;
+    padding-left: 1.5em;
+    list-style: disc;
+}
+
+.multi-git-auth-link {
+    color: var(--text-accent);
+    text-decoration: none;
+}
+
+.multi-git-auth-link:hover {
+    text-decoration: underline;
+}
+
+.multi-git-auth-divider {
+    text-align: center;
+    margin: 2em 0;
+    color: var(--text-faint);
+    font-weight: 600;
+    position: relative;
+}
+
+.multi-git-auth-divider::before,
+.multi-git-auth-divider::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    width: 40%;
+    height: 1px;
+    background: var(--background-modifier-border);
+}
+
+.multi-git-auth-divider::before {
+    left: 0;
+}
+
+.multi-git-auth-divider::after {
+    right: 0;
+}
+
+/* Merge Conflict Modal Specific Styles */
+.multi-git-conflict-modal {
+    max-width: 700px;
+}
+
+.multi-git-conflict-files {
+    margin-bottom: 1.5em;
+}
+
+.multi-git-conflict-files-title {
+    margin: 0 0 0.75em 0;
+    font-size: 1em;
+    font-weight: 600;
+    color: var(--text-normal);
+}
+
+.multi-git-conflict-files-list {
+    margin: 0;
+    padding: 1em;
+    background: var(--background-secondary);
+    border-radius: 4px;
+    list-style: none;
+}
+
+.multi-git-conflict-file-item {
+    padding: 0.5em;
+    font-family: var(--font-monospace);
+    font-size: 0.9em;
+    color: var(--text-normal);
+    border-left: 3px solid var(--text-error);
+    padding-left: 0.75em;
+    margin-bottom: 0.5em;
+}
+
+.multi-git-conflict-file-item:last-child {
+    margin-bottom: 0;
+}
+
+.multi-git-conflict-explanation {
+    margin-bottom: 1.5em;
+    padding: 1em;
+    background: var(--background-secondary);
+    border-radius: 6px;
+}
+
+.multi-git-conflict-explanation-title {
+    margin: 0 0 0.75em 0;
+    font-size: 1em;
+    font-weight: 600;
+    color: var(--text-normal);
+}
+
+.multi-git-conflict-markers {
+    margin-top: 0.75em;
+}
+
+.multi-git-conflict-marker {
+    display: flex;
+    align-items: center;
+    gap: 0.5em;
+    margin-bottom: 0.5em;
+}
+
+.multi-git-conflict-marker:last-child {
+    margin-bottom: 0;
+}
+
+.multi-git-conflict-marker-code {
+    font-family: var(--font-monospace);
+    font-size: 0.85em;
+    padding: 0.25em 0.5em;
+    background: var(--background-primary-alt);
+    border-radius: 3px;
+    color: var(--text-accent);
+    white-space: nowrap;
+}
+
+.multi-git-conflict-marker-text {
+    font-size: 0.9em;
+    color: var(--text-muted);
+}
+
+.multi-git-conflict-steps {
+    margin-bottom: 1.5em;
+}
+
+.multi-git-conflict-steps-title {
+    margin: 0 0 0.75em 0;
+    font-size: 1em;
+    font-weight: 600;
+    color: var(--text-normal);
+}
+
+.multi-git-conflict-steps-list {
+    margin: 0;
+    padding-left: 1.5em;
+}
+
+.multi-git-conflict-step {
+    margin-bottom: 1em;
+    line-height: 1.6;
+}
+
+.multi-git-conflict-step:last-child {
+    margin-bottom: 0;
+}
+
+.multi-git-conflict-step ul {
+    margin: 0.5em 0;
+    padding-left: 1.5em;
+}
+
+.multi-git-conflict-step li {
+    margin-bottom: 0.25em;
+}
+
+.multi-git-conflict-step code {
+    font-family: var(--font-monospace);
+    font-size: 0.9em;
+    padding: 0.125em 0.25em;
+    background: var(--background-primary-alt);
+    border-radius: 2px;
+    color: var(--text-accent);
+}
+
+/* Responsive adjustments for error modals */
+@media (max-width: 600px) {
+
+    .multi-git-error-modal,
+    .multi-git-auth-modal,
+    .multi-git-conflict-modal {
+        min-width: auto;
+        width: 100%;
+        max-width: 100%;
+    }
+
+    .multi-git-error-header {
+        flex-direction: column;
+        gap: 0.5em;
+    }
+
+    .multi-git-error-icon {
+        font-size: 1.5em;
+    }
+
+    .multi-git-error-buttons {
+        flex-direction: column-reverse;
+    }
+
+    .multi-git-error-buttons button {
+        width: 100%;
+    }
+
+    .multi-git-auth-divider::before,
+    .multi-git-auth-divider::after {
+        width: 35%;
+    }
+}
+
+/* Accessibility improvements for error modals */
+.multi-git-error-modal button:focus-visible {
+    outline: 2px solid var(--interactive-accent);
+    outline-offset: 2px;
+}
+
+.multi-git-error-details-toggle:focus-visible {
+    outline: 2px solid var(--interactive-accent);
+    outline-offset: 2px;
+    border-radius: 3px;
+}
+
+/* Theme-specific adjustments */
+.theme-light .multi-git-error-title {
+    color: #dc2626;
+}
+
+.theme-dark .multi-git-error-title {
+    color: #ef4444;
+}
+
+.theme-light .multi-git-auth-code {
+    background: #f8f9fa;
+    border-color: #e5e7eb;
+}
+
+.theme-dark .multi-git-auth-code {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: rgba(255, 255, 255, 0.1);
+}
