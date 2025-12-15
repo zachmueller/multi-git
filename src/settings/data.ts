@@ -132,6 +132,29 @@ export interface MultiGitSettings {
      * @default ['~/.cargo/bin', '~/.local/bin', '/opt/homebrew/bin', '/usr/local/bin']
      */
     customPathEntries: string[];
+
+    /**
+     * Enable automatic pull operations when fast-forward is possible
+     * @default true
+     */
+    autoPullEnabled: boolean;
+
+    /**
+     * Per-repository override for auto-pull setting
+     * Maps repository ID to boolean (true = enabled, false = disabled)
+     * If not set for a repository, uses global autoPullEnabled setting
+     * @default {}
+     */
+    autoPullPerRepository: Record<string, boolean>;
+
+    /**
+     * Notification verbosity for pull operations
+     * - 'all': Show notifications for all pull operations (success, failure, skip)
+     * - 'failures-only': Only show notifications for failures and manual intervention
+     * - 'silent': Suppress all pull notifications
+     * @default 'all'
+     */
+    autoPullNotificationVerbosity: 'all' | 'failures-only' | 'silent';
 }
 
 /**
@@ -151,4 +174,7 @@ export const DEFAULT_SETTINGS: MultiGitSettings = {
         '/opt/homebrew/bin', // Homebrew on Apple Silicon Macs
         '/usr/local/bin',    // Homebrew on Intel Macs, common Linux installs
     ],
+    autoPullEnabled: true, // Auto-pull enabled by default (safe fast-forward-only)
+    autoPullPerRepository: {}, // No per-repository overrides by default
+    autoPullNotificationVerbosity: 'all', // Show all notifications by default
 };

@@ -27,11 +27,11 @@
 **Files:** `src/services/FastForwardDetectionService.ts`, `test/services/FastForwardDetectionService.test.ts`
 **Dependencies:** None
 **Acceptance Criteria:**
-- [ ] FastForwardDetectionService exists and compiles
-- [ ] FastForwardDetectionService unit tests pass
-- [ ] FastForwardDetectionService integration tests pass
-- [ ] Service correctly identifies fast-forward vs diverged scenarios
-- [ ] Service performance meets requirements (< 500ms)
+- [x] FastForwardDetectionService exists and compiles
+- [x] FastForwardDetectionService unit tests pass
+- [x] FastForwardDetectionService integration tests pass
+- [x] Service correctly identifies fast-forward vs diverged scenarios
+- [x] Service performance meets requirements (< 500ms)
 
 **Validation Commands:**
 ```bash
@@ -52,18 +52,17 @@ npm test -- integration
 **Files:** `src/services/AutoPullService.ts` (create new)
 **Dependencies:** PRE-001
 **Acceptance Criteria:**
-- [ ] Service class created with proper TypeScript structure
-- [ ] Constructor accepts all required service dependencies:
+- [x] Service class created with proper TypeScript structure
+- [x] Constructor accepts all required service dependencies:
   - FastForwardDetectionService
   - GitCommandService
   - NotificationService
   - RepositoryConfigService
   - MultiGitSettings
-  - Logger
-- [ ] `isAutoPullEnabled()` method implemented
-- [ ] Method checks global autoPullEnabled setting
-- [ ] Method checks per-repository autoPullPerRepository override
-- [ ] Service compiles without TypeScript errors
+- [x] `isAutoPullEnabled()` method implemented
+- [x] Method checks global autoPullEnabled setting
+- [x] Method checks per-repository autoPullPerRepository override
+- [x] Service compiles without TypeScript errors
 
 **Implementation Notes:**
 ```typescript
@@ -89,13 +88,13 @@ class AutoPullService {
 **Files:** `src/services/AutoPullService.ts`
 **Dependencies:** FOUND-001
 **Acceptance Criteria:**
-- [ ] PullOperationState interface defined with all required fields
-- [ ] PullErrorCode enum defined with all error types
-- [ ] PullSkipReason enum defined with all skip scenarios
-- [ ] PullHistoryEntry interface defined for status panel display
-- [ ] All types properly exported
-- [ ] JSDoc comments added for each type
-- [ ] Types align with specification requirements
+- [x] PullOperationState interface defined with all required fields
+- [x] PullErrorCode enum defined with all error types
+- [x] PullSkipReason enum defined with all skip scenarios
+- [x] PullHistoryEntry interface defined for status panel display
+- [x] All types properly exported
+- [x] JSDoc comments added for each type
+- [x] Types align with specification requirements
 
 **Type Definitions:**
 ```typescript
@@ -143,14 +142,14 @@ enum PullSkipReason {
 **Files:** `src/services/AutoPullService.ts`
 **Dependencies:** FOUND-002
 **Acceptance Criteria:**
-- [ ] `performSafetyChecks()` method implemented
-- [ ] Returns object with safe boolean and optional skipReason
-- [ ] Checks working directory clean (no uncommitted changes)
-- [ ] Checks for concurrent git operations
-- [ ] Checks repository not locked
-- [ ] All check failures return appropriate PullSkipReason
-- [ ] All decisions logged with debug information
-- [ ] Method executes in < 500ms
+- [x] `performSafetyChecks()` method implemented
+- [x] Returns object with safe boolean and optional skipReason
+- [x] Checks working directory clean (no uncommitted changes)
+- [x] Checks for concurrent git operations
+- [x] Checks repository not locked
+- [x] All check failures return appropriate PullSkipReason
+- [x] All decisions logged with debug information
+- [x] Method executes in < 500ms
 
 **Safety Check Layers:**
 ```typescript
@@ -170,13 +169,13 @@ private async performSafetyChecks(
 **Files:** `src/services/AutoPullService.ts`
 **Dependencies:** FOUND-003
 **Acceptance Criteria:**
-- [ ] `isWorkingDirectoryClean()` method implemented
-- [ ] Uses GitCommandService.getStatus() or equivalent
-- [ ] Returns true only if no uncommitted changes
-- [ ] Handles all git status scenarios (modified, added, deleted, untracked)
-- [ ] Method executes in < 100ms for typical repositories
-- [ ] Error handling for git status command failures
-- [ ] Comprehensive logging of working directory state
+- [x] `isWorkingDirectoryClean()` method implemented
+- [x] Uses GitCommandService.getRepositoryStatus() or equivalent
+- [x] Returns true only if no uncommitted changes
+- [x] Handles all git status scenarios (modified, added, deleted, untracked)
+- [x] Method executes in < 100ms for typical repositories
+- [x] Error handling for git status command failures
+- [x] Comprehensive logging of working directory state
 
 ## Phase 2: Core Pull Implementation
 
@@ -416,15 +415,15 @@ if (remoteStatus.hasChanges) {
 **Files:** `src/settings/data.ts`
 **Dependencies:** None (parallel with service development)
 **Acceptance Criteria:**
-- [ ] `autoPullEnabled` boolean field added to MultiGitSettings
-- [ ] Default value is `true` (auto-pull enabled by default)
-- [ ] `autoPullPerRepository` Record<string, boolean> added
-- [ ] Default per-repository setting matches global default
-- [ ] `autoPullNotificationVerbosity` field added
-- [ ] Type is 'all' | 'failures-only' | 'silent'
-- [ ] Default value is 'all'
-- [ ] Settings interface updated in TypeScript
-- [ ] Migration logic for existing settings (if needed)
+- [x] `autoPullEnabled` boolean field added to MultiGitSettings
+- [x] Default value is `true` (auto-pull enabled by default)
+- [x] `autoPullPerRepository` Record<string, boolean> added
+- [x] Default per-repository setting matches global default
+- [x] `autoPullNotificationVerbosity` field added
+- [x] Type is 'all' | 'failures-only' | 'silent'
+- [x] Default value is 'all'
+- [x] Settings interface updated in TypeScript
+- [x] Migration logic for existing settings (defaults provided)
 
 **Settings Schema:**
 ```typescript
