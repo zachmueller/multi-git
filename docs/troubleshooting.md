@@ -733,6 +733,169 @@ error: object file is empty
 
 ## Auto-Pull Issues
 
+### Pull Operations Fail with "not a git command" Error
+
+**Symptom:**
+```
+Pull failed: Command failed: git pull --ff-only
+git: 'remote-codecommit' is not a git command. See 'git --help'.
+fatal: remote helper 'codecommit' aborted session
+```
+
+**Cause:**
+Credential helper not found in PATH. Git uses credential helpers (like `git-remote-codecommit` for AWS CodeCommit) to authenticate with remote repositories. Obsidian's environment doesn't include user-specific PATH entries by default, so these helpers may not be found during git operations.
+
+**Solution:**
+
+1. **Locate Your Credential Helper:**
+   ```bash
+   # Find where git-remote-codecommit is installed:
+   which git-remote-codecommit
+   # Should output something like:
+   # /Users/you/.local/bin/git-remote-codecommit
+   # or
+   # /Users/you/.cargo/bin/git-remote-codecommit
+   ```
+
+2. **Open Plugin Settings:**
+   - Settings → Multi-Git
+   - Scroll to "Custom PATH entries" section
+
+3. **Add the Directory Containing Your Credential Helper:**
+   
+   The plugin includes these default PATH entries:
+   - `~/.cargo/bin` (Rust tools like git-remote-codecommit)
+   - `~/.local/bin` (Python pip --user installs)
+   - `/opt/homebrew/bin` (Homebrew on Apple Silicon Mac)
+   - `/usr/local/bin` (Homebrew on Intel Mac, common Linux)
+   
+   **If your credential helper is in a different location**, add that directory to the custom PATH entries.
+
+4. **Verify the Fix:**
+   ```bash
+   # Test manually in terminal first:
+   cd /path/to/repository
+   git pull
+   # Should succeed without "not a git command" error
+   ```
+
+5. **Restart Obsidian:**
+   - Close and reopen Obsidian
+   - Plugin will use enhanced PATH on next fetch/pull operation
+
+**Common Credential Helper Locations:**
+
+| Tool | macOS/Linux | Windows | Install Method |
+|------|-------------|---------|----------------|
+| git-remote-codecommit | `~/.local/bin` | `%APPDATA%\Python\Scripts` | `pip install git-remote-codecommit` |
+| git-credential-manager | `/usr/local/bin` | `C:\Program Files\Git\mingw64\bin` | Included with Git for Windows |
+| git-credential-libsecret | `/usr/bin` | N/A | `apt install git-credential-libsecret` |
+
+**AWS CodeCommit Specific Setup:**
+
+If you're using AWS CodeCommit, ensure:
+
+1. **git-remote-codecommit is installed:**
+   ```bash
+   pip install git-remote-codecommit
+   ```
+
+2. **AWS credentials are configured:**
+   ```bash
+   aws configure
+   # Or ensure ~/.aws/credentials exists
+   ```
+
+3. **Repository URL uses codecommit:// protocol:**
+   ```bash
+   # Check remote URL:
+   git remote get-url origin
+   
+   # Should be:
+   codecommit::us-east-1://my-repo
+   
+   # Not:
+   https://git-codecommit.us-east-1.amazonaws.com/v1/repos/my-repo
+   ```
+
+4. **Test AWS connection:**
+   ```bash
+   aws codecommit list-repositories
+   ```
+
+**Other Credential Helpers:**
+
+**GitHub CLI (gh):**
+```bash
+# Install:
+brew install gh  # macOS
+# Windows: Download from https://cli.github.com/
+
+# Authenticate:
+gh auth login
+
+# Ensure gh in PATH:
+which gh  # Should show /usr/local/bin/gh or similar
+```
+
+**Git Credential Manager:**
+```bash
+# Usually included with Git installation
+# Verify:
+git credential-manager --version
+
+# If missing, install from:
+# https://github.com/git-ecosystem/git-credential-manager
+```
+
+**Debugging PATH Issues:**
+
+Enable debug logging to see the enhanced PATH:
+
+1. Close Obsidian
+2. Edit `<vault>/.obsidian/plugins/multi-git/data.json`:
+   ```json
+   {
+     "debugLogging": true
+   }
+   ```
+3. Restart Obsidian
+4. Open Developer Console (Ctrl+Shift+I / Cmd+Option+I)
+5. Trigger a pull operation
+6. Look for log entries showing "Enhanced PATH:" with full PATH value
+7. Verify your credential helper's directory is included
+
+**Still Not Working?**
+
+If pull operations still fail after adding PATH entries:
+
+1. **Test credential helper directly:**
+   ```bash
+   # Should execute without "command not found":
+   git-remote-codecommit --version
+   ```
+
+2. **Check executable permissions:**
+   ```bash
+   ls -l $(which git-remote-codecommit)
+   # Should show execute permissions (x)
+   
+   # Fix if needed:
+   chmod +x /path/to/git-remote-codecommit
+   ```
+
+3. **Verify git can find the helper:**
+   ```bash
+   cd /path/to/repository
+   GIT_TRACE=1 git pull
+   # Look for lines showing git searching for helper
+   ```
+
+4. **Check for shell-specific issues:**
+   - If installed via `pip install --user`, ensure `~/.local/bin` in PATH
+   - If using virtualenv, credential helper must be globally installed
+   - On Windows, check both User and System PATH variables
+
 ### Auto-Pull Not Working
 
 **Problem:** Remote changes detected but not pulling automatically
