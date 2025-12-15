@@ -173,3 +173,135 @@ export class GitPushError extends RepositoryConfigError {
         }
     }
 }
+
+/**
+ * Classification of error severity for presentation strategy.
+ * Determines how the error should be presented to the user.
+ */
+export enum ErrorSeverity {
+    /**
+     * Critical errors require immediate user acknowledgment via modal dialog.
+     * Examples: authentication failures, merge conflicts, repository corruption.
+     * These errors prevent the user from proceeding and must be addressed.
+     */
+    CRITICAL = 'CRITICAL',
+
+    /**
+     * Minor errors can be shown as notifications or inline messages.
+     * Examples: network timeouts, status check failures.
+     * Users can dismiss these and continue working.
+     */
+    MINOR = 'MINOR',
+
+    /**
+     * Warning messages that don't prevent operation but inform the user.
+     * Examples: uncommitted changes, behind remote branch.
+     */
+    WARNING = 'WARNING'
+}
+
+/**
+ * Specific error scenarios that require special handling.
+ * Each scenario has tailored user guidance and presentation.
+ */
+export enum ErrorScenario {
+    /**
+     * Git authentication failure (SSH key issues, HTTPS credentials).
+     * Requires credential setup or SSH key configuration.
+     */
+    AUTHENTICATION_FAILURE = 'AUTHENTICATION_FAILURE',
+
+    /**
+     * Merge conflict detected during pull or push operation.
+     * Requires manual conflict resolution before proceeding.
+     */
+    MERGE_CONFLICT = 'MERGE_CONFLICT',
+
+    /**
+     * Network connectivity issue (host unreachable, connection timeout).
+     * May be temporary, user can retry when network is restored.
+     */
+    NETWORK_ERROR = 'NETWORK_ERROR',
+
+    /**
+     * Permission denied (file system or git repository access).
+     * Requires fixing file/directory permissions.
+     */
+    PERMISSION_DENIED = 'PERMISSION_DENIED',
+
+    /**
+     * Repository not found or invalid (missing .git directory).
+     * Repository path may be incorrect or repository deleted.
+     */
+    REPOSITORY_ERROR = 'REPOSITORY_ERROR',
+
+    /**
+     * Generic error that doesn't match known patterns.
+     * Presents raw error message with option to get help.
+     */
+    UNKNOWN = 'UNKNOWN'
+}
+
+/**
+ * Error with classification information for appropriate presentation.
+ * Contains all information needed to present the error to the user
+ * with actionable guidance and technical details.
+ */
+export interface ClassifiedError {
+    /**
+     * Original error object that was classified.
+     */
+    error: Error;
+
+    /**
+     * Severity level that determines presentation strategy.
+     * CRITICAL errors show modals, MINOR errors show notifications.
+     */
+    severity: ErrorSeverity;
+
+    /**
+     * Specific scenario if detected, or UNKNOWN if pattern didn't match.
+     */
+    scenario: ErrorScenario;
+
+    /**
+     * Repository identifier where the error occurred.
+     */
+    repositoryId: string;
+
+    /**
+     * Repository display name for user-facing messages.
+     */
+    repositoryName: string;
+
+    /**
+     * User-friendly error message explaining what went wrong.
+     * Should be clear and non-technical when possible.
+     */
+    userMessage: string;
+
+    /**
+     * Technical details for debugging (git stderr, stack traces).
+     * Optional, displayed in collapsible section for advanced users.
+     */
+    technicalDetails?: string;
+
+    /**
+     * Suggested actions for resolving the error.
+     * Each action should be specific and actionable.
+     * Example: "Generate an SSH key using: ssh-keygen -t ed25519"
+     */
+    suggestedActions: string[];
+
+    /**
+     * Link to help documentation if available.
+     * Should be a stable URL that provides detailed resolution steps.
+     */
+    helpLink?: string;
+
+    /**
+     * Git operation that failed (fetch, push, commit, status).
+     * Used to provide context-specific guidance.
+     */
+    operation: string;
+}
