@@ -7,6 +7,7 @@ import { GitCommandService } from './GitCommandService';
 import { RepositoryConfigService } from './RepositoryConfigService';
 import { FetchError } from '../utils/errors';
 import { NotificationService } from './NotificationService';
+import { AutoPullService } from './AutoPullService';
 import { Logger } from '../utils/logger';
 
 /**
@@ -41,6 +42,7 @@ export class FetchSchedulerService {
     private configService: RepositoryConfigService;
     private gitService: GitCommandService;
     private notificationService?: NotificationService;
+    private autoPullService?: AutoPullService;
     private onFetchComplete?: (repoId: string) => void;
 
     // Default fetch interval: 5 minutes (300000ms) per spec requirement
@@ -52,12 +54,14 @@ export class FetchSchedulerService {
      * @param configService Repository configuration service
      * @param gitService Git command service
      * @param notificationService Optional notification service for user alerts
+     * @param autoPullService Optional auto-pull service for automatic pull after fetch
      * @param onFetchComplete Optional callback when fetch operation completes
      */
     constructor(
         configService: RepositoryConfigService,
         gitService: GitCommandService,
         notificationService?: NotificationService,
+        autoPullService?: AutoPullService,
         onFetchComplete?: (repoId: string) => void
     ) {
         this.intervals = new Map();
@@ -65,6 +69,7 @@ export class FetchSchedulerService {
         this.configService = configService;
         this.gitService = gitService;
         this.notificationService = notificationService;
+        this.autoPullService = autoPullService;
         this.onFetchComplete = onFetchComplete;
     }
 
@@ -230,6 +235,30 @@ export class FetchSchedulerService {
                         repo.name,
                         changeStatus.commitsBehind
                     );
+                }
+
+                // Trigger automatic pull if remote has changes and auto-pull is enabled
+                if (changeStatus.hasChanges && this.autoPullService) {
+                    Logger.debug('FetchScheduler', `Attempting automatic pull for ${repo.name} after detecting remote changes`);
+                    try {
+                        const pullResult = await this.autoPullService.attemptAutoPull(repoId);
+                        Logger.debug('FetchScheduler', `Auto-pull completed for ${repo.name}: ${pullResult.status}`, {
+                            status: pullResult.status,
+                            commitsPulled: pullResult.commitsPulled,
+                            skipReason: pullResult.skipReason,
+                            errorMessage: pullResult.errorMessage,
+                        });
+
+                        // If pull was successful, update result to reflect new state
+                        if (pullResult.status === 'success') {
+                            result.commitsBehind = 0; // We're now up to date
+                            // Note: remoteChanges stays true to indicate fetch detected changes
+                        }
+                    } catch (error) {
+                        // Log error but don't fail the fetch operation
+                        Logger.error('FetchScheduler', `Auto-pull failed for ${repo.name} (fetch succeeded)`, error);
+                        // Fetch still succeeded, so we don't modify the result
+                    }
                 }
 
                 return result;

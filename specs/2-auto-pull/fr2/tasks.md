@@ -386,14 +386,14 @@ async manualPull(repositoryId: string): Promise<PullOperationState> {
 **Files:** `src/services/FetchSchedulerService.ts`
 **Dependencies:** CORE-004
 **Acceptance Criteria:**
-- [ ] AutoPullService added as constructor dependency
-- [ ] After successful fetch with remote changes detected:
+- [x] AutoPullService added as constructor dependency
+- [x] After successful fetch with remote changes detected:
   - Call `autoPullService.attemptAutoPull(repositoryId)`
-- [ ] Sequential processing enforced (await pull completion before next repo)
-- [ ] Pull result handled and repository state updated
-- [ ] Pull failures don't break fetch scheduler loop
-- [ ] Error handling for pull operation failures
-- [ ] Workflow logged end-to-end (fetch → detection → pull)
+- [x] Sequential processing enforced (await pull completion before next repo)
+- [x] Pull result handled and repository state updated
+- [x] Pull failures don't break fetch scheduler loop
+- [x] Error handling for pull operation failures
+- [x] Workflow logged end-to-end (fetch → detection → pull)
 - [ ] Integration tested with multiple repositories
 
 **Integration Point:**
@@ -425,6 +425,8 @@ if (remoteStatus.hasChanges) {
 - [x] Settings interface updated in TypeScript
 - [x] Migration logic for existing settings (defaults provided)
 
+**Status:** ✓ COMPLETE (Completed in Phase 1)
+
 **Settings Schema:**
 ```typescript
 interface MultiGitSettings {
@@ -441,18 +443,18 @@ interface MultiGitSettings {
 **Files:** `src/settings/SettingTab.ts`
 **Dependencies:** INT-002
 **Acceptance Criteria:**
-- [ ] Global auto-pull enable/disable toggle added
-- [ ] Clear label: "Enable automatic pull"
-- [ ] Help text explains safe fast-forward-only behavior
-- [ ] Per-repository auto-pull controls added
-- [ ] Each configured repository has individual toggle
-- [ ] Notification verbosity dropdown added
-- [ ] Options: "All operations", "Failures only", "Silent"
-- [ ] Settings validate on change
-- [ ] Settings persist correctly
-- [ ] Changes take effect immediately (no reload required)
-- [ ] Safety warnings included where appropriate
-- [ ] UI follows Obsidian settings patterns
+- [x] Global auto-pull enable/disable toggle added
+- [x] Clear label: "Enable automatic pull"
+- [x] Help text explains safe fast-forward-only behavior
+- [x] Per-repository auto-pull controls added
+- [x] Each configured repository has individual toggle
+- [x] Notification verbosity dropdown added
+- [x] Options: "All operations", "Failures only", "Silent"
+- [x] Settings validate on change
+- [x] Settings persist correctly
+- [x] Changes take effect immediately (no reload required)
+- [x] Safety warnings included where appropriate
+- [x] UI follows Obsidian settings patterns
 
 ### INT-004: Update StatusPanelView - Pull History Display
 **Description:** Display pull operation history in expandable status panel section

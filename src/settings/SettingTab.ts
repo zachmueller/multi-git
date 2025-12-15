@@ -33,8 +33,62 @@ export class MultiGitSettingTab extends PluginSettingTab {
         // Add global fetch settings section
         this.displayGlobalFetchSettings(containerEl);
 
+        // Add auto-pull settings section
+        this.displayAutoPullSettings(containerEl);
+
         // Add repository list section
         this.displayRepositoryList(containerEl);
+    }
+
+    /**
+     * Display auto-pull settings
+     */
+    private displayAutoPullSettings(containerEl: HTMLElement): void {
+        containerEl.createEl('h3', { text: 'Automatic Pull Settings' });
+
+        // Global auto-pull enable/disable
+        new Setting(containerEl)
+            .setName('Enable Automatic Pull')
+            .setDesc(this.createAutoPullDescription())
+            .addToggle(toggle => toggle
+                .setValue(this.plugin.settings.autoPullEnabled)
+                .onChange(async (value) => {
+                    this.plugin.settings.autoPullEnabled = value;
+                    await this.plugin.saveSettings();
+                    // Refresh display to show/hide per-repository controls
+                    this.display();
+                })
+            );
+
+        // Notification verbosity setting
+        new Setting(containerEl)
+            .setName('Auto-Pull Notifications')
+            .setDesc('Choose which auto-pull operations trigger notifications')
+            .addDropdown(dropdown => {
+                dropdown
+                    .addOption('all', 'All operations')
+                    .addOption('failures-only', 'Failures only')
+                    .addOption('silent', 'Silent')
+                    .setValue(this.plugin.settings.autoPullNotificationVerbosity)
+                    .onChange(async (value: string) => {
+                        this.plugin.settings.autoPullNotificationVerbosity = value as 'all' | 'failures-only' | 'silent';
+                        await this.plugin.saveSettings();
+                    });
+            });
+    }
+
+    /**
+     * Create description for auto-pull setting
+     */
+    private createAutoPullDescription(): DocumentFragment {
+        const frag = document.createDocumentFragment();
+
+        frag.appendText('Automatically pull changes after fetch detects remote updates. ');
+        frag.createEl('br');
+        frag.createEl('br');
+        frag.appendText('⚠️ Safety: Only fast-forward pulls are performed. If branches have diverged or you have uncommitted changes, auto-pull will be skipped and you\'ll be notified to merge manually.');
+
+        return frag;
     }
 
     /**
@@ -296,7 +350,7 @@ export class MultiGitSettingTab extends PluginSettingTab {
 
         // Fetch interval setting
         if (repo.enabled) {
-            const intervalSetting = new Setting(infoDiv)
+            const intervalSetting = new Setting(setting.infoEl)
                 .setName('Fetch Interval')
                 .setDesc('Automatic fetch interval for this repository (in minutes)')
                 .setClass('multi-git-nested-setting');
@@ -321,6 +375,32 @@ export class MultiGitSettingTab extends PluginSettingTab {
                 text.inputEl.max = '60';
                 text.inputEl.style.width = '80px';
             });
+
+            // Per-repository auto-pull override
+            const autoPullSetting = new Setting(setting.infoEl)
+                .setName('Auto-Pull for this Repository')
+                .setDesc('Override global auto-pull setting for this repository')
+                .setClass('multi-git-nested-setting');
+
+            // Get current setting (undefined means use global default)
+            const currentValue = this.plugin.settings.autoPullPerRepository?.[repo.id];
+            const effectiveValue = currentValue !== undefined ? currentValue : this.plugin.settings.autoPullEnabled;
+
+            autoPullSetting.addToggle(toggle => toggle
+                .setValue(effectiveValue)
+                .onChange(async (value) => {
+                    // Initialize object if it doesn't exist
+                    if (!this.plugin.settings.autoPullPerRepository) {
+                        this.plugin.settings.autoPullPerRepository = {};
+                    }
+
+                    // Store per-repository override
+                    this.plugin.settings.autoPullPerRepository[repo.id] = value;
+                    await this.plugin.saveSettings();
+
+                    new Notice(`Auto-pull ${value ? 'enabled' : 'disabled'} for ${repo.name}`);
+                })
+            );
         }
 
         // Fetch Now button (only for enabled repos)

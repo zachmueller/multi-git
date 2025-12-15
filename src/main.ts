@@ -6,6 +6,7 @@ import { FetchSchedulerService } from './services/FetchSchedulerService';
 import { NotificationService } from './services/NotificationService';
 import { CommitMessageService } from './services/CommitMessageService';
 import { FastForwardDetectionService } from './services/FastForwardDetectionService';
+import { AutoPullService } from './services/AutoPullService';
 import { MultiGitSettingTab } from './settings/SettingTab';
 import { RepositoryPickerModal } from './ui/RepositoryPickerModal';
 import { CommitMessageModal } from './ui/CommitMessageModal';
@@ -25,6 +26,7 @@ export default class MultiGitPlugin extends Plugin {
 	notificationService!: NotificationService;
 	commitMessageService!: CommitMessageService;
 	fastForwardDetectionService!: FastForwardDetectionService;
+	autoPullService!: AutoPullService;
 	statusPanelView: StatusPanelView | null = null;
 
 	/**
@@ -47,10 +49,18 @@ export default class MultiGitPlugin extends Plugin {
 		this.notificationService = new NotificationService(this.settings);
 		this.commitMessageService = new CommitMessageService();
 		this.fastForwardDetectionService = new FastForwardDetectionService(this.gitCommandService);
+		this.autoPullService = new AutoPullService(
+			this.fastForwardDetectionService,
+			this.gitCommandService,
+			this.notificationService,
+			this.repositoryConfigService,
+			this.settings
+		);
 		this.fetchSchedulerService = new FetchSchedulerService(
 			this.repositoryConfigService,
 			this.gitCommandService,
 			this.notificationService,
+			this.autoPullService,
 			// Callback for fetch completion - update status panel
 			(repoId: string) => {
 				this.notifyRepositoryChanged(repoId);
