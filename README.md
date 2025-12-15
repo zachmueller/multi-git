@@ -14,11 +14,14 @@ A powerful Obsidian plugin for managing multiple git repositories from within yo
 - 🔔 **Smart Notifications** - Get notified only when remote changes require your attention
 - ⚡ **Manual Fetch** - Trigger immediate fetch for any repository with one click
 - 📊 **Fetch Status** - See last fetch time and remote change indicators for each repository
-- � **Status Panel** - Dedicated sidebar panel showing all repository statuses at a glance
+- 📋 **Status Panel** - Dedicated sidebar panel showing all repository statuses at a glance
 - 🔄 **Real-Time Updates** - Status automatically refreshes every 30 seconds and after git operations
-- �🚀 **Hotkey-Driven Push** - Quickly commit and push changes with a single hotkey
+- 🚀 **Hotkey-Driven Push** - Quickly commit and push changes with a single hotkey
 - 💬 **Smart Commit Messages** - Auto-generated commit message suggestions based on changed files
 - 📝 **Repository Picker** - Select from multiple repositories with uncommitted changes
+- 🛟 **Error Recovery** - Critical errors show guided modals with specific resolution steps
+- 🔐 **Authentication Help** - Step-by-step SSH and HTTPS credential setup assistance
+- 🔀 **Merge Conflict Guidance** - Clear instructions for resolving merge conflicts
 
 ## Quick Start
 
@@ -600,14 +603,14 @@ multi-git/
 - ✅ Real-time status updates
 - ✅ Visual status indicators
 - ✅ Automatic 30-second polling
+- ✅ Enhanced error handling (FR-5)
+- ✅ Modal dialogs for critical errors
+- ✅ Context-appropriate error presentation
+- ✅ Improved error recovery
+- ✅ Authentication failure guidance
+- ✅ Merge conflict resolution assistance
 
 ### Future Versions
-
-**v0.4.0 - Enhanced Error Handling (FR-5)**
-- Modal dialogs for critical errors
-- Context-appropriate error presentation
-- Improved error recovery
-- Detailed error guidance
 
 **v0.5.0 - Advanced Features**
 - Branch information display

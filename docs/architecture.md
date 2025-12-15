@@ -491,7 +491,118 @@ GitRepositoryError (base)
 - `NETWORK_ERROR` - Network connectivity issue
 - `TIMEOUT` - Operation timeout
 
-### 13. Logger Utility (src/utils/logger.ts)
+### 13. Error Classification Service (src/services/ErrorClassificationService.ts)
+
+**Responsibilities:**
+- Classify git errors by scenario and severity
+- Pattern matching for common error types
+- Generate suggested actions for errors
+- Support error recovery workflows
+
+**Key Methods:**
+```typescript
+class ErrorClassificationService {
+    classifyError(error: string, command: string, repoName: string): ClassifiedError
+    private isAuthenticationFailure(error: string): boolean
+    private isMergeConflict(error: string): boolean
+    private isNetworkError(error: string): boolean
+    private isPermissionDenied(error: string): boolean
+    private getSuggestedActions(scenario: ErrorScenario): string[]
+}
+```
+
+**Error Scenarios:**
+- `AUTHENTICATION_FAILURE` - SSH/HTTPS credential issues
+- `MERGE_CONFLICT` - Conflicted files requiring resolution
+- `NETWORK_ERROR` - Connectivity and timeout issues
+- `PERMISSION_DENIED` - File system permission problems
+- `REPOSITORY_NOT_FOUND` - Invalid or missing repository
+- `UNKNOWN` - Unclassified errors
+
+**Pattern Matching:**
+- Uses regex patterns to detect error types
+- Multiple patterns per scenario for reliability
+- Case-insensitive matching where appropriate
+- Logs unmatched patterns for future refinement
+
+### 14. Error Presentation Service (src/services/ErrorPresentationService.ts)
+
+**Responsibilities:**
+- Route errors to appropriate presentation method
+- Show modal dialogs for critical errors
+- Display notifications for minor errors
+- Update status panel for inline errors
+- Prevent duplicate modal displays
+
+**Key Methods:**
+```typescript
+class ErrorPresentationService {
+    presentError(classifiedError: ClassifiedError): void
+    private showCriticalErrorModal(error: ClassifiedError): void
+    private showMinorErrorNotification(error: ClassifiedError): void
+    private updateStatusPanelError(error: ClassifiedError): void
+}
+```
+
+**Presentation Strategy:**
+- **CRITICAL severity** → Modal dialog (blocks user interaction)
+- **MINOR severity** → Notification (non-blocking)
+- **WARNING severity** → Inline in status panel
+
+**Modal Selection:**
+- `AUTHENTICATION_FAILURE` → `AuthFailureModal` (setup instructions)
+- `MERGE_CONFLICT` → `MergeConflictModal` (resolution guidance)
+- Other critical errors → `CriticalErrorModal` (generic error display)
+
+### 15. Critical Error Modal (src/ui/CriticalErrorModal.ts)
+
+**Responsibilities:**
+- Base class for error modal dialogs
+- Standard modal layout and styling
+- Collapsible technical details
+- Suggested actions display
+- Acknowledgment handling
+
+**Key Features:**
+- Repository name always displayed
+- Clear error message
+- Collapsible technical details section
+- Bulleted list of suggested actions
+- Consistent styling across modals
+
+### 16. Authentication Failure Modal (src/ui/AuthFailureModal.ts)
+
+**Responsibilities:**
+- Display authentication error details
+- Provide SSH key setup instructions
+- Provide HTTPS credential instructions
+- Platform-specific guidance
+- Links to git documentation
+
+**Key Features:**
+- Step-by-step SSH key generation guide
+- Credential helper configuration
+- GitHub/GitLab personal access token guidance
+- Cross-platform instructions (macOS, Windows, Linux)
+- External documentation links
+
+### 17. Merge Conflict Modal (src/ui/MergeConflictModal.ts)
+
+**Responsibilities:**
+- Display conflicted files list
+- Explain conflict markers
+- Provide resolution instructions
+- Open repository in file explorer
+- Track resolution status
+
+**Key Features:**
+- Lists all conflicted files
+- Visual explanation of `<<<<<<<`, `=======`, `>>>>>>>` markers
+- Step-by-step resolution guide
+- "Open in File Explorer" button (cross-platform)
+- "I've Resolved the Conflicts" confirmation
+
+### 18. Logger Utility (src/utils/logger.ts)
 
 **Responsibilities:**
 - Centralized logging
