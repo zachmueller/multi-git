@@ -75,16 +75,16 @@ grep -n "openRepositoryInExplorer" src/ui/MergeConflictModal.ts
 - Platform detection: process.platform
 - Test on macOS (primary development platform)
 
-### UTIL-002 [P]: Add Terminal Utility Tests
+### UTIL-002 [P]: Add Terminal Utility Tests ✅
 **Description:** Comprehensive unit tests for terminal launching utility
 **Files:** `test/utils/terminal.test.ts` (new file)
 **Dependencies:** UTIL-001
 **Acceptance Criteria:**
-- [ ] Test successful terminal launch
-- [ ] Test error handling for missing terminal
-- [ ] Mock Electron shell API
-- [ ] Test platform detection logic
-- [ ] Coverage above 90%
+- [x] Test successful terminal launch
+- [x] Test error handling for missing terminal
+- [x] Mock Electron shell API
+- [x] Test platform detection logic
+- [x] Coverage above 90%
 
 ## Phase 2: Core Modal Implementation
 
@@ -546,11 +546,11 @@ Each phase has validation checkpoints:
 
 ## Progress Tracking
 
-**Current Status:** In Progress (3/28 tasks complete)
+**Current Status:** In Progress (4/28 tasks complete)
 
 **Phase Completion:**
 - [x] Phase 0: Setup (2/2) ✅
-- [ ] Phase 1: Foundation (1/2)
+- [x] Phase 1: Foundation (2/2) ✅
 - [ ] Phase 2: Core Modal (0/4)
 - [ ] Phase 3: Service Integration (0/4)
 - [ ] Phase 4: UI Enhancement (0/5)
