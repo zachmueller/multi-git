@@ -7,20 +7,14 @@ A powerful Obsidian plugin for managing multiple git repositories from within yo
 - 🗂️ **Multiple Repository Management** - Configure and manage multiple git repositories
 - ✅ **Path Validation** - Automatic validation ensures only valid git repositories are added
 - 🔄 **Enable/Disable** - Toggle repositories on/off without removing them
-- 💾 **Persistent Configuration** - Repository settings persist across Obsidian sessions
-- 🛡️ **Security** - Path validation prevents traversal attacks and invalid paths
-- 🌍 **Cross-Platform** - Works on macOS, Windows, and Linux
 - 📥 **Automated Remote Fetch** - Automatically fetch remote changes at configurable intervals
 - 🔔 **Smart Notifications** - Get notified only when remote changes require your attention
 - ⚡ **Manual Fetch** - Trigger immediate fetch for any repository with one click
 - 📊 **Fetch Status** - See last fetch time and remote change indicators for each repository
 - 📋 **Status Panel** - Dedicated sidebar panel showing all repository statuses at a glance
-- 🔄 **Real-Time Updates** - Status automatically refreshes every 30 seconds and after git operations
 - 🚀 **Hotkey-Driven Push** - Quickly commit and push changes with a single hotkey
-- 💬 **Smart Commit Messages** - Auto-generated commit message suggestions based on changed files
 - 📝 **Repository Picker** - Select from multiple repositories with uncommitted changes
 - 🛟 **Error Recovery** - Critical errors show guided modals with specific resolution steps
-- 🔐 **Authentication Help** - Step-by-step SSH and HTTPS credential setup assistance
 - 🔀 **Merge Conflict Guidance** - Clear instructions for resolving merge conflicts
 
 ## Quick Start
@@ -48,17 +42,9 @@ git --version
 
 ## Installation
 
-### From Obsidian Community Plugins (Recommended)
-
-1. Open Obsidian Settings
-2. Navigate to **Community plugins**
-3. Click **Browse** and search for "Multi-Git"
-4. Click **Install**
-5. Enable the plugin
-
 ### Manual Installation
 
-1. Download the latest release from [GitHub Releases](https://github.com/YOUR_USERNAME/multi-git/releases)
+1. Download the latest release from [GitHub Releases](https://github.com/zachmueller/multi-git/releases)
 2. Extract the files to your vault's plugins folder:
    - `<vault>/.obsidian/plugins/multi-git/`
 3. Reload Obsidian
@@ -68,7 +54,7 @@ git --version
 
 1. Clone this repository:
    ```bash
-   git clone https://github.com/YOUR_USERNAME/multi-git.git
+   git clone https://github.com/zachmueller/multi-git.git
    cd multi-git
    ```
 
@@ -542,7 +528,7 @@ Contributions are welcome! See [Contributing Guide](docs/contributing.md) for de
 
 ```bash
 # Clone repository
-git clone https://github.com/YOUR_USERNAME/multi-git.git
+git clone https://github.com/zachmueller/multi-git.git
 cd multi-git
 
 # Install dependencies
@@ -623,8 +609,8 @@ See [CHANGELOG.md](CHANGELOG.md) for detailed version history.
 
 ## Support
 
-- 🐛 **Bug Reports:** [GitHub Issues](https://github.com/YOUR_USERNAME/multi-git/issues)
-- 💡 **Feature Requests:** [GitHub Discussions](https://github.com/YOUR_USERNAME/multi-git/discussions)
+- 🐛 **Bug Reports:** [GitHub Issues](https://github.com/zachmueller/multi-git/issues)
+- 💡 **Feature Requests:** [GitHub Discussions](https://github.com/zachmueller/multi-git/discussions)
 - 📖 **Documentation:** [docs/](docs/)
 - 💬 **Community:** [Obsidian Forum](https://forum.obsidian.md/)
 
