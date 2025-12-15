@@ -468,6 +468,21 @@ export class StatusPanelView extends ItemView {
                 }
             });
 
+            // Add help link for common error types
+            const helpLink = this.getHelpLinkForError(status.lastFetchError);
+            if (helpLink) {
+                const helpLinkEl = errorTextEl.createEl('a', {
+                    text: 'Get help',
+                    href: helpLink,
+                    cls: 'multi-git-help-link',
+                    attr: {
+                        'target': '_blank',
+                        'rel': 'noopener noreferrer',
+                        'aria-label': 'Get help with this error'
+                    }
+                });
+            }
+
             // Add retry button for errors
             const retryButton = errorTextEl.createEl('button', {
                 cls: 'multi-git-retry-button',
@@ -592,6 +607,54 @@ export class StatusPanelView extends ItemView {
 
         // Otherwise, show truncated version
         return error.substring(0, 47) + '...';
+    }
+
+    /**
+     * Get help documentation link for common error types
+     * Returns relevant documentation URLs based on error message patterns
+     * @param error - The error message to analyze
+     * @returns Help documentation URL or undefined
+     */
+    private getHelpLinkForError(error: string): string | undefined {
+        const errorLower = error.toLowerCase();
+
+        // Authentication errors
+        if (errorLower.includes('authentication') ||
+            errorLower.includes('auth') ||
+            errorLower.includes('publickey') ||
+            errorLower.includes('permission denied (publickey)')) {
+            return 'https://docs.github.com/en/authentication/connecting-to-github-with-ssh';
+        }
+
+        // Network errors
+        if (errorLower.includes('could not resolve host') ||
+            errorLower.includes('network') ||
+            errorLower.includes('connection refused') ||
+            errorLower.includes('timeout') ||
+            errorLower.includes('failed to connect')) {
+            return 'https://git-scm.com/docs/git#_git_urls';
+        }
+
+        // Permission errors
+        if (errorLower.includes('permission denied') &&
+            !errorLower.includes('publickey')) {
+            return 'https://git-scm.com/book/en/v2/Git-Internals-Environment-Variables#_permissions_and_ownership';
+        }
+
+        // Repository errors
+        if (errorLower.includes('not a git repository') ||
+            errorLower.includes('does not appear to be a git repository') ||
+            errorLower.includes('repository not found')) {
+            return 'https://git-scm.com/book/en/v2/Getting-Started-Getting-Help';
+        }
+
+        // Merge conflicts
+        if (errorLower.includes('conflict') ||
+            errorLower.includes('merge')) {
+            return 'https://git-scm.com/book/en/v2/Git-Branching-Basic-Branching-and-Merging#_basic_merge_conflicts';
+        }
+
+        return undefined;
     }
 
     /**

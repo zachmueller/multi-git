@@ -141,9 +141,14 @@ export class CriticalErrorModal extends Modal {
         detailsContent.addClass('multi-git-error-details-content');
         detailsContent.style.display = 'none';
 
+        // Format and display technical details
+        const formattedDetails = this.formatTechnicalDetails(
+            this.classifiedError.technicalDetails || ''
+        );
+
         const detailsText = detailsContent.createEl('pre');
         detailsText.addClass('multi-git-error-details-text');
-        detailsText.textContent = this.classifiedError.technicalDetails || '';
+        detailsText.textContent = formattedDetails;
 
         // Toggle functionality
         toggleButton.addEventListener('click', () => {
@@ -156,6 +161,66 @@ export class CriticalErrorModal extends Modal {
                 toggleButton.textContent = '▸ Show Technical Details';
             }
         });
+    }
+
+    /**
+     * Format technical details for better readability
+     * - Removes excessive whitespace
+     * - Highlights important error lines
+     * - Preserves command output structure
+     */
+    protected formatTechnicalDetails(details: string): string {
+        if (!details) return '';
+
+        // Split into lines for processing
+        const lines = details.split('\n');
+        const formattedLines: string[] = [];
+        let inErrorBlock = false;
+
+        for (let i = 0; i < lines.length; i++) {
+            const line = lines[i];
+            const trimmed = line.trim();
+
+            // Skip empty lines at the beginning
+            if (formattedLines.length === 0 && !trimmed) {
+                continue;
+            }
+
+            // Detect error markers
+            if (trimmed.startsWith('error:') ||
+                trimmed.startsWith('fatal:') ||
+                trimmed.startsWith('ERROR') ||
+                trimmed.toLowerCase().includes('failed')) {
+                inErrorBlock = true;
+                formattedLines.push('━'.repeat(60));
+                formattedLines.push(line);
+                formattedLines.push('━'.repeat(60));
+                continue;
+            }
+
+            // Add indentation for context lines after errors
+            if (inErrorBlock && trimmed && !trimmed.startsWith('error:') && !trimmed.startsWith('fatal:')) {
+                formattedLines.push('  ' + trimmed);
+                continue;
+            }
+
+            // Reset error block after blank line
+            if (!trimmed && inErrorBlock) {
+                inErrorBlock = false;
+            }
+
+            // Add regular lines
+            if (trimmed) {
+                formattedLines.push(line);
+            }
+        }
+
+        // Remove trailing empty lines
+        while (formattedLines.length > 0 && !formattedLines[formattedLines.length - 1].trim()) {
+            formattedLines.pop();
+        }
+
+        return formattedLines.join('\n');
     }
 
     /**

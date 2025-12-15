@@ -365,8 +365,14 @@ export class ErrorClassificationService {
                 return 'https://git-scm.com/book/en/v2/Git-Branching-Basic-Branching-and-Merging#_basic_merge_conflicts';
 
             case ErrorScenario.NETWORK_ERROR:
+                return 'https://git-scm.com/docs/git#_git_urls';
+
             case ErrorScenario.PERMISSION_DENIED:
+                return 'https://git-scm.com/book/en/v2/Git-Internals-Environment-Variables#_permissions_and_ownership';
+
             case ErrorScenario.REPOSITORY_ERROR:
+                return 'https://git-scm.com/book/en/v2/Getting-Started-Getting-Help';
+
             case ErrorScenario.UNKNOWN:
             default:
                 return undefined;
