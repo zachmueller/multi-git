@@ -11,6 +11,8 @@ A powerful Obsidian plugin for managing multiple git repositories from within yo
 - 🔔 **Smart Notifications** - Get notified only when remote changes require your attention
 - ⚡ **Manual Fetch** - Trigger immediate fetch for any repository with one click
 - 📊 **Fetch Status** - See last fetch time and remote change indicators for each repository
+- 🔽 **Automatic Pull** - Safely pull remote changes automatically with fast-forward-only guarantee
+- 🛡️ **Safety-First Design** - Multiple safety checks prevent data loss and conflicts
 - 📋 **Status Panel** - Dedicated sidebar panel showing all repository statuses at a glance
 - 🚀 **Hotkey-Driven Push** - Quickly commit and push changes with a single hotkey
 - 📝 **Repository Picker** - Select from multiple repositories with uncommitted changes
@@ -136,6 +138,81 @@ The plugin automatically fetches remote changes for all enabled repositories:
 **Example notification:**
 ```
 📥 Repository 'my-vault' has 3 new commits available
+```
+
+### Automatic Pull (Safe Fast-Forward Only)
+
+After detecting remote changes via fetch, the plugin can automatically pull updates with comprehensive safety guarantees:
+
+**🛡️ Safety Guarantees:**
+- **Fast-Forward Only** - Uses `git pull --ff-only` to prevent automatic merges
+- **Clean Working Directory** - Only pulls when you have no uncommitted changes
+- **Divergence Detection** - Skips pull when branches have diverged (requires manual merge)
+- **No Data Loss** - Never overwrites your local work or creates merge conflicts
+- **Automatic Retry** - Handles transient network/lock errors with smart backoff
+
+**📋 How It Works:**
+
+1. **Fetch detects remote changes** (runs automatically in background)
+2. **Four-layer safety check:**
+   - ✓ Auto-pull enabled for repository
+   - ✓ Working directory is clean (no uncommitted changes)
+   - ✓ Can fast-forward (local behind remote, not diverged)
+   - ✓ No concurrent git operations
+3. **Automatic pull** if all checks pass
+4. **Notification** of result (success, skipped, or failed)
+
+**⚙️ Configuration:**
+
+- **Global Enable/Disable** - Turn auto-pull on/off for all repositories
+- **Per-Repository Override** - Enable/disable for specific repositories
+- **Notification Verbosity:**
+  - `All` - Notify for successful pulls and failures
+  - `Failures Only` - Only notify when pull fails or requires manual action
+  - `Silent` - No pull notifications (still logs to console)
+
+**🎯 When Auto-Pull Skips (Requires Manual Action):**
+
+| Scenario | Reason | What To Do |
+|----------|--------|------------|
+| Uncommitted changes | Working directory not clean | Commit or stash your changes |
+| Diverged branches | Local and remote have different commits | Manually merge or rebase |
+| Detached HEAD | Not on a branch | Check out a branch |
+| No tracking branch | Branch not configured to track remote | Set upstream branch |
+| Local ahead | Your commits not pushed yet | Push your commits first |
+
+**📊 Pull History:**
+
+View the last 10 pull operations for each repository in the status panel:
+- Timestamp and result (✓ success, ✗ failed, ⊘ skipped)
+- Number of commits pulled (on success)
+- Error details (on failure)
+- Skip reason (when manual action needed)
+
+**🔧 Manual Pull:**
+
+Click the "Pull" button in the status panel to manually trigger a pull:
+- Works even when auto-pull is disabled
+- Same safety checks apply
+- Immediate feedback (no retry delays)
+- Useful when you've resolved the issue causing a skip
+
+**Example Workflow:**
+```
+1. Plugin detects 3 new commits via background fetch
+2. Checks your working directory is clean ✓
+3. Verifies can fast-forward ✓
+4. Automatically pulls 3 commits
+5. Notification: "📥 Pulled 3 commits for my-vault"
+```
+
+**Example Skip Scenario:**
+```
+1. Plugin detects remote changes
+2. Finds you have uncommitted changes ✗
+3. Skips pull to protect your work
+4. Notification: "⚠️ my-vault: Uncommitted changes detected. Please resolve manually."
+5. Status panel shows skip reason and manual pull button
 ```
 
 ### Fetch Status Indicators
@@ -329,6 +406,78 @@ For detailed configuration options, see [Configuration Guide](docs/configuration
 - Repository is up-to-date with remote
 - Status shows "success" (operation worked correctly)
 - No notification (nothing requires your attention)
+
+### Auto-pull not working
+
+**Problem:** Remote changes detected but not pulling automatically
+
+**Check:**
+1. Verify auto-pull is enabled in plugin settings
+2. Check per-repository auto-pull isn't disabled
+3. Look for skip reason in status panel pull history
+4. Check console for detailed logs (enable debug logging)
+
+**Common Causes:**
+- Uncommitted changes in working directory (safety protection)
+- Branches have diverged (requires manual merge)
+- Repository in detached HEAD state
+- No tracking branch configured
+
+**Solution:** Review skip reason in pull history and resolve the underlying issue
+
+### Auto-pull fails repeatedly
+
+**Problem:** Pull operations consistently failing
+
+**Check Pull History:** View last 10 attempts in status panel
+
+**Common Errors:**
+
+1. **Network Error:**
+   - Check internet connection
+   - Verify remote repository is accessible
+   - Plugin will automatically retry with exponential backoff (10s, 30s delays)
+
+2. **Authentication Error:**
+   - SSH: Verify SSH keys are configured and loaded
+   - HTTPS: Check git credentials are cached
+   - Plugin fails fast on auth errors (no retry)
+   - Test manually: `git pull` in repository directory
+
+3. **Timeout Error:**
+   - Repository may be very large
+   - Network may be slow
+   - Pull has 5-second timeout for safety
+   - Try manual pull: `cd /path/to/repo && git pull`
+
+4. **Lock Error:**
+   - Another git process is running
+   - Plugin will retry automatically (lock may release)
+   - Check for stuck git processes: `ps aux | grep git`
+
+**Solution:**
+- Network/lock errors: Plugin retries automatically
+- Auth errors: Fix credentials, then manual pull or wait for next fetch
+- Timeout errors: Pull manually or increase git timeout
+
+### Auto-pull skipped with "manual merge required"
+
+**Problem:** Status shows branches diverged
+
+**Explanation:** This is expected behavior for safety:
+- Your branch and remote have different commits
+- Fast-forward-only pull cannot proceed safely
+- Automatic merge could create conflicts
+
+**Solution:**
+1. Commit your local changes if needed
+2. Manually merge or rebase:
+   ```bash
+   cd /path/to/repository
+   git pull  # or git pull --rebase
+   ```
+3. Resolve any merge conflicts
+4. Auto-pull will resume on next fetch cycle
 
 ### Commit and Push Workflow
 

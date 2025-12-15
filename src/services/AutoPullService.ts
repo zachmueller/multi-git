@@ -105,7 +105,43 @@ export interface PullHistoryEntry {
  * 3. Fast-forward detection (using FR-1 service)
  * 4. Retry logic with exponential backoff for transient failures
  * 
- * All pull operations use `git pull --ff-only` to guarantee safety.
+ * All pull operations use `git pull --ff-only` to guarantee safety. This ensures:
+ * - No automatic merges that could introduce conflicts
+ * - No data loss from diverged branches
+ * - No unwanted merge commits in history
+ * 
+ * **Safety Guarantees:**
+ * - Working directory must be clean (no uncommitted changes)
+ * - Only fast-forward merges allowed (local behind remote)
+ * - Diverged branches require manual intervention
+ * - Transient errors (network, locks) trigger automatic retry
+ * - Authentication failures fail fast with clear guidance
+ * 
+ * **Performance Characteristics:**
+ * - Safety checks: < 500ms typical
+ * - Pull execution: < 5 seconds (enforced timeout)
+ * - Retry delays: 0ms, 10s, 30s (exponential backoff)
+ * - History storage: Limited to 10 entries per repository
+ * 
+ * **Usage Example:**
+ * ```typescript
+ * // Automatic pull after fetch detects changes
+ * const result = await autoPullService.attemptAutoPull(repositoryId);
+ * if (result.status === 'success') {
+ *   console.log(`Pulled ${result.commitsPulled} commits`);
+ * } else if (result.status === 'skipped') {
+ *   console.log(`Skipped: ${result.skipReason}`);
+ * } else {
+ *   console.error(`Failed: ${result.errorMessage}`);
+ * }
+ * 
+ * // Manual pull from UI button
+ * const manualResult = await autoPullService.manualPull(repositoryId);
+ * // No retries, immediate feedback for user action
+ * ```
+ * 
+ * @see FastForwardDetectionService for branch relationship detection
+ * @see FetchSchedulerService for automatic fetch triggering
  */
 export class AutoPullService {
     private pullHistory = new Map<string, PullHistoryEntry[]>();
@@ -484,16 +520,25 @@ export class AutoPullService {
     }
 
     /**
-     * Calculate retry delay based on retry count (exponential backoff)
+     * Calculate retry delay based on retry count (exponential backoff).
      * 
-     * Retry schedule:
-     * - Retry 0: 0ms (immediate)
-     * - Retry 1: 10000ms (10 seconds)
-     * - Retry 2: 30000ms (30 seconds)
-     * - Retry 3+: Not called (max retries exhausted)
+     * Implements a conservative exponential backoff strategy to handle
+     * transient failures without overwhelming the system or network:
+     * 
+     * **Retry Schedule:**
+     * - Retry 0: 0ms (immediate first attempt)
+     * - Retry 1: 10000ms (10 seconds - quick recovery for brief issues)
+     * - Retry 2: 30000ms (30 seconds - longer wait for persistent issues)
+     * - Retry 3+: Not called (max retries exhausted, requires manual intervention)
+     * 
+     * **Rationale:**
+     * - Immediate first retry catches brief network hiccups
+     * - 10-second delay allows temporary locks to clear
+     * - 30-second delay gives time for network recovery
+     * - Maximum 3 attempts prevents infinite loops
      * 
      * @param retryCount Current retry count (0-2)
-     * @returns Delay in milliseconds
+     * @returns Delay in milliseconds before next retry
      */
     private calculateRetryDelay(retryCount: number): number {
         const delays = [0, 10000, 30000];
@@ -584,14 +629,78 @@ export class AutoPullService {
     /**
      * Attempt automatic pull for a repository after fetch detects changes.
      * 
-     * Implements four layers of safety checks:
-     * 1. Configuration: Check auto-pull is enabled globally and for this repo
-     * 2. Safety: Verify working directory is clean and no concurrent operations
-     * 3. Fast-forward: Confirm pull will be a clean fast-forward (using FR-1)
-     * 4. Execution: Perform git pull --ff-only with error handling and retry
+     * **Four-Layer Safety Architecture:**
+     * 
+     * **Layer 1 - Configuration Check:**
+     * - Validates auto-pull enabled globally (settings.autoPullEnabled)
+     * - Checks per-repository override (settings.autoPullPerRepository)
+     * - Per-repository setting takes precedence over global
+     * - Skips with DISABLED_GLOBAL or DISABLED_REPO reason
+     * 
+     * **Layer 2 - Safety Validation:**
+     * - Working directory must be clean (no uncommitted changes)
+     * - No concurrent git operations allowed
+     * - Repository must not be locked
+     * - Skips with UNCOMMITTED_CHANGES or CONCURRENT_OPERATION reason
+     * 
+     * **Layer 3 - Fast-Forward Detection:**
+     * - Uses FastForwardDetectionService (FR-1) to analyze branch relationship
+     * - Only proceeds if canSafelyFastForward() returns true
+     * - Detects diverged branches, detached HEAD, missing upstream
+     * - Skips with NOT_FAST_FORWARD, DIVERGED_BRANCHES, DETACHED_HEAD, or NO_TRACKING_BRANCH reason
+     * 
+     * **Layer 4 - Pull Execution with Retry:**
+     * - Executes git pull --ff-only with 5-second timeout
+     * - Captures before/after commit hashes to verify operation
+     * - Calculates actual commits pulled
+     * - Categorizes errors (network, auth, lock, timeout, unknown)
+     * - Retries transient errors (network, lock) with exponential backoff
+     * - Fails fast on authentication errors (no retry)
+     * - Maximum 3 retry attempts
+     * 
+     * **State Transitions:**
+     * ```
+     * pending → (check enabled) → skipped (DISABLED_*)
+     *        → (safety check) → skipped (UNCOMMITTED_CHANGES)
+     *        → (ff detection) → skipped (NOT_FAST_FORWARD/DIVERGED_BRANCHES)
+     *        → (pull execute) → success (commits pulled)
+     *                        → failed (error, possibly after retries)
+     * ```
+     * 
+     * **Error Recovery Strategy:**
+     * - Network errors: Retry with backoff (may recover)
+     * - Lock errors: Retry with backoff (lock may release)
+     * - Auth errors: Fail immediately (needs user intervention)
+     * - Timeout errors: Fail after max retries (slow connection)
+     * - Unknown errors: Fail after max retries (unexpected issue)
      * 
      * @param repositoryId Repository ID from configuration
-     * @returns Complete pull operation state including status and details
+     * @returns Complete pull operation state including status, commits pulled, and any errors
+     * 
+     * @example
+     * ```typescript
+     * // Called by FetchSchedulerService after detecting remote changes
+     * const result = await attemptAutoPull('repo-uuid');
+     * 
+     * // Success case
+     * if (result.status === 'success') {
+     *   // result.commitsPulled: number of commits pulled
+     *   // result.commitsAfter: new HEAD commit hash
+     * }
+     * 
+     * // Skip case
+     * if (result.status === 'skipped') {
+     *   // result.skipReason: why pull was skipped
+     *   // User may need to take manual action
+     * }
+     * 
+     * // Failure case
+     * if (result.status === 'failed') {
+     *   // result.errorCode: categorized error type
+     *   // result.errorMessage: user-friendly explanation
+     *   // result.retryCount: number of retries attempted
+     * }
+     * ```
      */
     async attemptAutoPull(repositoryId: string): Promise<PullOperationState> {
         const startTime = new Date();
@@ -731,6 +840,8 @@ export class AutoPullService {
         }
 
         // Layer 4: Execute pull with retry logic
+        // Maximum 4 attempts total (initial + 3 retries)
+        // Exponential backoff: 0ms, 10s, 30s between attempts
         let lastError: { errorCode: PullErrorCode; errorMessage: string } | null = null;
 
         for (let retry = 0; retry <= 3; retry++) {
@@ -772,25 +883,26 @@ export class AutoPullService {
                 return operation;
             }
 
-            // Pull failed - check if retryable
+            // Pull failed - store error for final result
             lastError = {
                 errorCode: pullResult.errorCode!,
                 errorMessage: pullResult.errorMessage!,
             };
 
-            // If error is not retryable, fail immediately
+            // Check if error is retryable (AUTH_ERROR fails fast)
             if (!this.isRetryableError(pullResult.errorCode!)) {
                 Logger.debug(COMPONENT, `Non-retryable error for ${repositoryId}: ${pullResult.errorCode}`);
-                break;
+                break; // Exit retry loop, will mark as failed below
             }
 
-            // If we've exhausted retries, fail
+            // Check if we've exhausted retry attempts
             if (retry >= 3) {
                 Logger.debug(COMPONENT, `Max retries exhausted for ${repositoryId}`);
-                break;
+                break; // Exit retry loop, will mark as failed below
             }
 
-            // Otherwise, continue to next retry
+            // Error is retryable and we have retries left
+            // Loop continues to next iteration with delay calculated at top
             Logger.debug(COMPONENT, `Retryable error for ${repositoryId}, will retry: ${pullResult.errorCode}`);
         }
 

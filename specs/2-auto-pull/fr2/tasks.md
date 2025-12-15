@@ -698,43 +698,49 @@ interface MultiGitSettings {
 **Files:** `src/services/AutoPullService.ts`
 **Dependencies:** CORE-006
 **Acceptance Criteria:**
-- [ ] JSDoc comments for all public methods
-- [ ] JSDoc includes @param descriptions for all parameters
-- [ ] JSDoc includes @returns descriptions
-- [ ] JSDoc includes usage examples where helpful
-- [ ] Complex logic has inline explanatory comments
-- [ ] Retry logic documented with backoff schedule
-- [ ] Safety check layers documented
-- [ ] State transition flows documented
-- [ ] Error handling strategies explained
-- [ ] Performance considerations noted
+- [x] JSDoc comments for all public methods
+- [x] JSDoc includes @param descriptions for all parameters
+- [x] JSDoc includes @returns descriptions
+- [x] JSDoc includes usage examples where helpful
+- [x] Complex logic has inline explanatory comments
+- [x] Retry logic documented with backoff schedule
+- [x] Safety check layers documented
+- [x] State transition flows documented
+- [x] Error handling strategies explained
+- [x] Performance considerations noted
+
+**Status:** ✓ COMPLETE
 
 ### DOC-002 [P]: Update README
 **Description:** Document auto-pull feature in user-facing documentation
 **Files:** `README.md`
 **Dependencies:** None (can be done in parallel)
 **Acceptance Criteria:**
-- [ ] Auto-pull feature described in features section
-- [ ] Clear explanation of fast-forward-only behavior
-- [ ] Safety guarantees documented
-- [ ] Configuration options explained
-- [ ] Usage examples provided
-- [ ] Screenshots/GIFs of status panel (if applicable)
-- [ ] Troubleshooting section updated
-- [ ] Common issues and solutions documented
-- [ ] Links to detailed specification
+- [x] Auto-pull feature described in features section
+- [x] Clear explanation of fast-forward-only behavior
+- [x] Safety guarantees documented
+- [x] Configuration options explained
+- [x] Usage examples provided
+- [x] Screenshots/GIFs of status panel (if applicable)
+- [x] Troubleshooting section updated
+- [x] Common issues and solutions documented
+- [x] Links to detailed specification
+
+**Status:** ✓ COMPLETE
 
 ### DOC-003 [P]: Update Troubleshooting Guide
 **Description:** Add auto-pull specific troubleshooting information
-**Files:** `docs/troubleshooting.md` (create if doesn't exist)
+**Files:** `docs/troubleshooting.md`
 **Dependencies:** TEST-009
 **Acceptance Criteria:**
-- [ ] "Auto-pull not working" section added
-- [ ] "Pull fails repeatedly" section added
-- [ ] "Manual merge required" explanation
-- [ ] How to disable auto-pull per repository
-- [ ] How to view pull history for debugging
-- [ ] Common error messages explained
-- [ ] Resolution steps for each error type
-- [ ] Links to relevant logs and debug mode
-- [ ]
+- [x] "Auto-pull not working" section added
+- [x] "Pull fails repeatedly" section added
+- [x] "Manual merge required" explanation
+- [x] How to disable auto-pull per repository
+- [x] How to view pull history for debugging
+- [x] Common error messages explained
+- [x] Resolution steps for each error type
+- [x] Links to relevant logs and debug mode
+- [x] Comprehensive auto-pull troubleshooting coverage
+
+**Status:** ✓ COMPLETE

@@ -11,6 +11,7 @@ Comprehensive troubleshooting guide for Multi-Git Obsidian plugin error handling
 - [Network Errors](#network-errors)
 - [Permission Errors](#permission-errors)
 - [Common Git Issues](#common-git-issues)
+- [Auto-Pull Issues](#auto-pull-issues)
 - [Plugin Configuration Issues](#plugin-configuration-issues)
 - [Debug Mode](#debug-mode)
 
@@ -729,6 +730,518 @@ error: object file is empty
    ```bash
    git config --global http.postBuffer 524288000
    ```
+
+## Auto-Pull Issues
+
+### Auto-Pull Not Working
+
+**Problem:** Remote changes detected but not pulling automatically
+
+**Diagnosis Checklist:**
+
+1. **Check Global Setting:**
+   - Settings → Multi-Git → "Enable automatic pull"
+   - Should be enabled (toggled on)
+
+2. **Check Per-Repository Setting:**
+   - Settings → Multi-Git → Repository list
+   - Look for repository-specific auto-pull toggle
+   - Per-repository setting overrides global setting
+
+3. **Check Pull History in Status Panel:**
+   - Open status panel (ribbon icon or hotkey)
+   - Expand "Pull History" for the repository
+   - Review last 10 pull attempts
+   - Look for skip reason or error message
+
+4. **Enable Debug Logging:**
+   - See [Debug Mode](#debug-mode) section
+   - Logs will show why pull was skipped
+
+**Common Causes & Solutions:**
+
+| Cause | Indication | Solution |
+|-------|-----------|----------|
+| Auto-pull disabled globally | Global toggle off | Enable in plugin settings |
+| Auto-pull disabled for repo | Per-repo toggle off | Enable for specific repository |
+| Uncommitted changes | Skip reason: UNCOMMITTED_CHANGES | Commit or stash your changes |
+| Branches diverged | Skip reason: DIVERGED_BRANCHES | Manually merge or rebase |
+| Detached HEAD | Skip reason: DETACHED_HEAD | Checkout a branch |
+| No tracking branch | Skip reason: NO_TRACKING_BRANCH | Set upstream: `git branch --set-upstream-to=origin/main` |
+| Local ahead of remote | Skip reason: NOT_FAST_FORWARD | Push your commits first |
+
+### Auto-Pull Fails Repeatedly
+
+**Problem:** Pull operations consistently failing with errors
+
+**Check Pull History:** 
+
+Open status panel → Expand repository → View "Pull History" section. This shows:
+- Last 10 pull attempts
+- Timestamp for each attempt
+- Result (success/failed/skipped)
+- Error details or skip reasons
+- Retry count for failed operations
+
+**Common Error Types:**
+
+#### 1. Network Errors
+
+**Symptoms:**
+```
+Error: Network error: Unable to reach remote repository
+Error Code: NETWORK_ERROR
+Retry Count: 3
+```
+
+**What Happens:**
+- Plugin automatically retries with exponential backoff
+- Retry delays: immediate → 10 seconds → 30 seconds
+- Maximum 3 retry attempts
+- If all retries fail, marked as failed
+
+**Solutions:**
+
+1. **Check Internet Connection:**
+   ```bash
+   ping github.com
+   # or ping your git server
+   ```
+
+2. **Verify Remote URL Accessible:**
+   ```bash
+   cd /path/to/repository
+   git ls-remote
+   ```
+
+3. **Wait for Automatic Retry:**
+   - Plugin will retry automatically
+   - Network issues often resolve themselves
+
+4. **Check Firewall/VPN:**
+   - Ensure git traffic is allowed
+   - Try disabling VPN temporarily
+
+#### 2. Authentication Errors
+
+**Symptoms:**
+```
+Error: Authentication failed. Please check your git credentials.
+Error Code: AUTH_ERROR
+Retry Count: 0
+```
+
+**What Happens:**
+- Plugin fails fast (no retries)
+- Auth errors require user intervention
+- Cannot be automatically recovered
+
+**Solutions:**
+
+1. **For SSH:**
+   ```bash
+   # Check SSH agent has your key:
+   ssh-add -l
+   
+   # If empty, add your key:
+   ssh-add ~/.ssh/id_ed25519
+   
+   # Test connection:
+   ssh -T git@github.com
+   ```
+
+2. **For HTTPS:**
+   ```bash
+   # Reconfigure credential helper:
+   git config --global credential.helper osxkeychain  # macOS
+   git config --global credential.helper manager-core  # Windows
+   
+   # Clear and re-enter credentials:
+   cd /path/to/repository
+   git fetch  # Enter credentials when prompted
+   ```
+
+3. **For Personal Access Tokens:**
+   - Generate new token with proper scopes
+   - Update credentials using token as password
+
+4. **Manual Pull After Fix:**
+   - After fixing auth, use status panel "Pull" button
+   - Or wait for next fetch cycle to trigger auto-pull
+
+#### 3. Timeout Errors
+
+**Symptoms:**
+```
+Error: Pull operation timed out after 5 seconds
+Error Code: TIMEOUT_ERROR
+Retry Count: 3
+```
+
+**What Happens:**
+- 5-second timeout enforced for safety
+- Plugin retries up to 3 times
+- May succeed on retry if network improves
+
+**Solutions:**
+
+1. **Check Repository Size:**
+   ```bash
+   cd /path/to/repository
+   du -sh .git
+   ```
+
+2. **Check Network Speed:**
+   - Large repositories need faster connection
+   - Consider manual pull during slow network times
+
+3. **Manual Pull for Large Changes:**
+   ```bash
+   cd /path/to/repository
+   git pull  # No timeout in manual operation
+   ```
+
+4. **Increase Git Buffer:**
+   ```bash
+   git config --global http.postBuffer 524288000
+   ```
+
+#### 4. Lock Errors
+
+**Symptoms:**
+```
+Error: Repository is locked by another git operation
+Error Code: LOCK_ERROR
+Retry Count: 2
+```
+
+**What Happens:**
+- Another git process is running
+- Plugin retries automatically (locks usually clear quickly)
+- 10-second and 30-second delays between retries
+
+**Solutions:**
+
+1. **Wait for Retry:**
+   - Plugin handles this automatically
+   - Lock often releases within seconds
+
+2. **Check for Stuck Processes:**
+   ```bash
+   # macOS/Linux:
+   ps aux | grep git
+   
+   # Windows:
+   tasklist | findstr git
+   ```
+
+3. **Remove Stale Lock (if safe):**
+   ```bash
+   cd /path/to/repository
+   # ONLY if you're certain no git operations are running:
+   rm .git/index.lock
+   ```
+
+4. **Close Other Git Tools:**
+   - Close VS Code, GitKraken, SourceTree, etc.
+   - These may hold locks on the repository
+
+### Auto-Pull Skips with "Manual Intervention Required"
+
+**Problem:** Notification says "manual intervention required"
+
+**Common Scenarios:**
+
+#### Scenario 1: Uncommitted Changes
+
+**Notification:**
+```
+⚠️ my-vault: Uncommitted changes detected. Please resolve manually.
+```
+
+**Why It Skips:**
+- Working directory has unsaved changes
+- Auto-pull would risk losing your work
+- Safety-first design prevents data loss
+
+**Resolution:**
+
+Option A - Commit Changes:
+```bash
+cd /path/to/repository
+git add -A
+git commit -m "Your commit message"
+# Auto-pull will work on next fetch
+```
+
+Option B - Stash Changes:
+```bash
+cd /path/to/repository
+git stash
+# Auto-pull will work on next fetch
+# Later: git stash pop
+```
+
+Option C - Discard Changes (⚠️ WARNING: Loses work):
+```bash
+cd /path/to/repository
+git reset --hard HEAD
+```
+
+#### Scenario 2: Branches Diverged
+
+**Notification:**
+```
+⚠️ my-vault: Branches have diverged, manual merge required. Please resolve manually.
+```
+
+**Why It Skips:**
+- Your branch and remote have different commits
+- Fast-forward-only pull cannot proceed
+- Automatic merge might create conflicts
+
+**Resolution:**
+
+1. **Review Divergence:**
+   ```bash
+   cd /path/to/repository
+   git status
+   git log --oneline --graph --all -10
+   ```
+
+2. **Option A - Merge (Preserves Both Histories):**
+   ```bash
+   git pull  # Creates merge commit
+   # Resolve any conflicts if they appear
+   git push
+   ```
+
+3. **Option B - Rebase (Linear History):**
+   ```bash
+   git pull --rebase
+   # Resolve any conflicts if they appear
+   git push
+   ```
+
+4. **Option C - Reset to Remote (⚠️ WARNING: Loses Local Commits):**
+   ```bash
+   git fetch origin
+   git reset --hard origin/main
+   # Your local commits are lost
+   ```
+
+#### Scenario 3: Detached HEAD
+
+**Notification:**
+```
+⚠️ my-vault: Detached HEAD state. Please resolve manually.
+```
+
+**Why It Skips:**
+- Not on any branch
+- Cannot safely pull changes
+- Need to establish branch context
+
+**Resolution:**
+
+1. **Check Current State:**
+   ```bash
+   cd /path/to/repository
+   git status
+   ```
+
+2. **Option A - Return to Branch:**
+   ```bash
+   git checkout main
+   # Or whichever branch you want
+   ```
+
+3. **Option B - Create Branch from Current State:**
+   ```bash
+   git checkout -b new-branch-name
+   ```
+
+#### Scenario 4: No Tracking Branch
+
+**Notification:**
+```
+⚠️ my-vault: No tracking branch configured. Please resolve manually.
+```
+
+**Why It Skips:**
+- Current branch doesn't track a remote branch
+- Git doesn't know where to pull from
+- Need to configure upstream
+
+**Resolution:**
+
+1. **Check Branch Configuration:**
+   ```bash
+   cd /path/to/repository
+   git branch -vv
+   ```
+
+2. **Set Upstream Branch:**
+   ```bash
+   # For main branch:
+   git branch --set-upstream-to=origin/main main
+   
+   # Or for current branch:
+   git branch --set-upstream-to=origin/$(git branch --show-current)
+   ```
+
+3. **Or Push with Upstream:**
+   ```bash
+   git push -u origin main
+   ```
+
+### Viewing Pull History
+
+**Purpose:** Understand what happened with automatic pulls
+
+**How to Access:**
+
+1. Open status panel (ribbon icon or hotkey)
+2. Find your repository in the list
+3. Look for "Pull History" section
+4. Click to expand if collapsed
+
+**Information Shown:**
+
+```
+Pull History (Last 10 operations)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+✓ 2 minutes ago - Success (3 commits pulled)
+✗ 15 minutes ago - Failed: Network error
+⊘ 30 minutes ago - Skipped: Uncommitted changes
+✓ 1 hour ago - Success (1 commit pulled)
+⊘ 2 hours ago - Skipped: Diverged branches
+...
+```
+
+**Understanding Results:**
+
+- **✓ Success** - Pull completed, commits brought down
+- **✗ Failed** - Error occurred (check error message)
+- **⊘ Skipped** - Safety check prevented pull (check reason)
+
+**Using History for Debugging:**
+
+1. **Pattern Analysis:**
+   - All fails? Check auth/network
+   - All skips? Check working directory state
+   - Mixed results? Check per-failure details
+
+2. **Retry Evidence:**
+   - Failed entries show retry count
+   - Can see if retries attempted
+   - Helps understand transient vs persistent issues
+
+3. **Timing Analysis:**
+   - Timestamps show when attempts occurred
+   - Can correlate with network issues
+   - Helps identify patterns
+
+### Manual Pull from Status Panel
+
+**When to Use:**
+- Auto-pull skipped and you've resolved the issue
+- Want to pull immediately without waiting for next fetch
+- Testing after fixing authentication or network issues
+
+**How to Use:**
+
+1. Open status panel
+2. Find repository with changes available
+3. Click "Pull" button
+4. Immediate feedback (no retry delays)
+5. Check pull history for result
+
+**Differences from Auto-Pull:**
+
+- **No Retry Logic** - Immediate result, faster feedback
+- **Works When Disabled** - Functions even if auto-pull globally disabled
+- **Same Safety Checks** - Still protects against data loss
+- **User-Initiated** - You control timing
+
+**Example Workflow:**
+
+```
+1. Auto-pull skipped: "Uncommitted changes"
+   ↓
+2. You commit your changes
+   ↓
+3. Click "Pull" button in status panel
+   ↓
+4. Immediate pull without waiting for next fetch
+   ↓
+5. Success notification: "Pulled 3 commits"
+```
+
+### Notification Verbosity Settings
+
+**Purpose:** Control how much notification you see
+
+**Options:**
+
+1. **All (Default):**
+   - Notify on successful pulls
+   - Notify on failed pulls
+   - Notify when manual intervention needed
+   - Best for staying informed
+
+2. **Failures Only:**
+   - Silent on successful pulls
+   - Notify on failed pulls
+   - Notify when manual intervention needed
+   - Best for reducing noise
+
+3. **Silent:**
+   - No pull notifications at all
+   - Still logs to console (if debug enabled)
+   - Still updates status panel
+   - Best for minimal interruption
+
+**How to Change:**
+
+1. Settings → Multi-Git
+2. Find "Auto-pull notification verbosity"
+3. Select desired level
+4. Changes take effect immediately
+
+**Recommendation:**
+- Start with "All" to understand behavior
+- Switch to "Failures Only" once comfortable
+- Use "Silent" only if monitoring status panel actively
+
+### Performance Considerations
+
+**Auto-Pull Timing:**
+- Safety checks: < 500ms typical
+- Pull execution: < 5 seconds (enforced timeout)
+- Retry delays: 0ms, 10s, 30s (exponential backoff)
+
+**Impact on Fetch Cycle:**
+- Auto-pull runs after fetch detects changes
+- Extends fetch cycle by ~1-5 seconds when pulling
+- No impact when no changes or pull skipped
+
+**Reducing Load:**
+
+1. **Increase Fetch Interval:**
+   - Settings → Multi-Git → Global fetch interval
+   - Default 5 minutes → increase to 10-15 minutes
+   - Fewer fetch cycles = fewer pull attempts
+
+2. **Disable for Inactive Repos:**
+   - Per-repository auto-pull toggle
+   - Keep active for frequently updated repos
+   - Disable for rarely changing repos
+
+3. **Monitor with Debug Logging:**
+   - Enable debug mode temporarily
+   - Check timing logs
+   - Identify slow operations
 
 ## Plugin Configuration Issues
 
