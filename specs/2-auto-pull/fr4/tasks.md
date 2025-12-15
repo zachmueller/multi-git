@@ -355,12 +355,12 @@ private logPullSkip(repoId: string, reason: string): void
 **Files:** `docs/troubleshooting.md`
 **Dependencies:** MAN-002
 **Acceptance Criteria:**
-- [ ] Document how to enable debug mode
-- [ ] Provide log format examples for each operation type
-- [ ] Explain what each log field means
-- [ ] Show example troubleshooting scenarios using logs
-- [ ] Include section on log security (no sensitive data)
-- [ ] Link to manual testing checklist
+- [x] Document how to enable debug mode
+- [x] Provide log format examples for each operation type
+- [x] Explain what each log field means
+- [x] Show example troubleshooting scenarios using logs
+- [x] Include section on log security (no sensitive data)
+- [x] Link to manual testing checklist
 
 **Content Sections:**
 1. Enabling Debug Logging
@@ -374,25 +374,27 @@ private logPullSkip(repoId: string, reason: string): void
 **Files:** `README.md`
 **Dependencies:** DOC-001
 **Acceptance Criteria:**
-- [ ] Brief mention of debug mode in features or troubleshooting section
-- [ ] Link to detailed troubleshooting guide
-- [ ] Update keeps README concise and focused
+- [x] Brief mention of debug mode in features or troubleshooting section
+- [x] Link to detailed troubleshooting guide
+- [x] Update keeps README concise and focused
+
+**Note:** README already has comprehensive debug logging documentation in "Enabling Debug Logging" section - no updates needed.
 
 ### VAL-001: Final Validation Against FR-4 Requirements
 **Description:** Validate implementation against all FR-4 acceptance criteria
 **Files:** Review all implementation files
 **Dependencies:** DOC-002
 **Acceptance Criteria:**
-- [ ] ✅ Debug logs record fast-forward detection results
-- [ ] ✅ Debug logs record pull attempts with timestamps
-- [ ] ✅ Debug logs record pull success/failure with details
-- [ ] ✅ Debug logs include commit hashes before and after pull
-- [ ] ✅ Debug logs include number of commits pulled
-- [ ] ✅ Logs accessible when debug mode enabled in settings
-- [ ] ✅ Logs do not contain sensitive information (passwords, tokens)
-- [ ] All FR-4 acceptance criteria confirmed met
-- [ ] No regressions in existing functionality
-- [ ] Ready for commit
+- [x] ✅ Debug logs record fast-forward detection results
+- [x] ✅ Debug logs record pull attempts with timestamps
+- [x] ✅ Debug logs record pull success/failure with details
+- [x] ✅ Debug logs include commit hashes before and after pull
+- [x] ✅ Debug logs include number of commits pulled
+- [x] ✅ Logs accessible when debug mode enabled in settings
+- [x] ✅ Logs do not contain sensitive information (passwords, tokens)
+- [x] All FR-4 acceptance criteria confirmed met
+- [x] No regressions in existing functionality
+- [x] Ready for commit
 
 ## Log Format Reference
 

@@ -2003,9 +2003,18 @@ This shows when and why manual intervention was needed.
 - Troubleshooting complex issues
 - Understanding operation flow
 - Diagnosing performance problems
+- Investigating auto-pull behavior
 
 **How to enable:**
 
+**Method 1: Via Settings (Recommended):**
+1. Settings → Community plugins → Multi-Git → Settings
+2. Scroll to "Debug Settings" section
+3. Enable "Debug logging"
+4. Open Developer Console (Ctrl+Shift+I / Cmd+Option+I)
+5. Trigger operation to see logs
+
+**Method 2: Via Configuration File:**
 1. Close Obsidian
 2. Edit `<vault>/.obsidian/plugins/multi-git/data.json`
 3. Add or modify:
@@ -2024,6 +2033,8 @@ This shows when and why manual intervention was needed.
 - Service method calls and parameters
 - Error classification decisions
 - Notification suppression logic
+- **Auto-pull operations** (detection, attempts, results)
+- **Fast-forward detection** (working directory checks, branch comparisons)
 
 **Example debug output:**
 ```
@@ -2032,6 +2043,259 @@ This shows when and why manual intervention was needed.
 [Multi-Git Debug] [2025-12-15T13:45:24.890Z] [ErrorClassification] Classifying error: auth
 [Multi-Git Debug] [2025-12-15T13:45:24.891Z] [ErrorPresentation] Showing AuthFailureModal
 ```
+
+### Pull Operation Logging
+
+**Purpose:** Debug logs provide detailed information about automatic pull operations, helping diagnose why pulls succeed, fail, or are skipped.
+
+#### What Gets Logged
+
+**Fast-Forward Detection:**
+- Detection initiation with repository context
+- Working directory status (clean/dirty)
+- Branch comparison results (commits ahead/behind)
+- Final detection decision and reason
+
+**Pull Operations:**
+- Pull attempt start with retry count
+- Current commit hash before pull
+- Git command execution details
+- Pull success with before/after commit hashes
+- Number of commits pulled
+- Pull failure with sanitized error messages
+- Pull skip with specific reason
+- Retry attempts with timing
+
+#### Log Format Reference
+
+**Successful Pull Operation:**
+```
+[2025-12-16 07:30:15] [DEBUG] [FastForwardDetection] Starting check for vault-notes
+[2025-12-16 07:30:15] [DEBUG] [FastForwardDetection] Working directory clean: true
+[2025-12-16 07:30:15] [DEBUG] [FastForwardDetection] Local ahead: 0, behind: 3
+[2025-12-16 07:30:15] [DEBUG] [FastForwardDetection] Result: canFastForward=true
+[2025-12-16 07:30:15] [DEBUG] [AutoPull] Starting pull for vault-notes (attempt 1/3)
+[2025-12-16 07:30:15] [DEBUG] [AutoPull] Current commit: a1b2c3d4e5f6
+[2025-12-16 07:30:17] [DEBUG] [AutoPull] Pull successful for vault-notes
+[2025-12-16 07:30:17] [DEBUG] [AutoPull] Previous commit: a1b2c3d4e5f6
+[2025-12-16 07:30:17] [DEBUG] [AutoPull] New commit: f6e5d4c3b2a1
+[2025-12-16 07:30:17] [DEBUG] [AutoPull] Commits pulled: 3
+```
+
+**Failed Pull with Retry:**
+```
+[2025-12-16 07:35:20] [DEBUG] [AutoPull] Starting pull for vault-notes (attempt 1/3)
+[2025-12-16 07:35:20] [DEBUG] [AutoPull] Current commit: a1b2c3d4e5f6
+[2025-12-16 07:35:22] [DEBUG] [AutoPull] Pull failed for vault-notes: Network timeout
+[2025-12-16 07:35:32] [DEBUG] [AutoPull] Starting pull for vault-notes (attempt 2/3)
+[2025-12-16 07:35:34] [DEBUG] [AutoPull] Pull successful for vault-notes
+[2025-12-16 07:35:34] [DEBUG] [AutoPull] Previous commit: a1b2c3d4e5f6
+[2025-12-16 07:35:34] [DEBUG] [AutoPull] New commit: f6e5d4c3b2a1
+[2025-12-16 07:35:34] [DEBUG] [AutoPull] Commits pulled: 3
+```
+
+**Skipped Pull (Uncommitted Changes):**
+```
+[2025-12-16 07:40:10] [DEBUG] [FastForwardDetection] Starting check for vault-notes
+[2025-12-16 07:40:10] [DEBUG] [FastForwardDetection] Working directory clean: false
+[2025-12-16 07:40:10] [DEBUG] [FastForwardDetection] Result: canFastForward=false, reason=uncommitted-changes
+[2025-12-16 07:40:10] [DEBUG] [AutoPull] Pull skipped for vault-notes: uncommitted-changes
+```
+
+**Skipped Pull (Diverged Branches):**
+```
+[2025-12-16 07:45:00] [DEBUG] [FastForwardDetection] Starting check for project-repo
+[2025-12-16 07:45:00] [DEBUG] [FastForwardDetection] Working directory clean: true
+[2025-12-16 07:45:00] [DEBUG] [FastForwardDetection] Local ahead: 2, behind: 3
+[2025-12-16 07:45:00] [DEBUG] [FastForwardDetection] Result: canFastForward=false, reason=divergent-branches
+[2025-12-16 07:45:00] [DEBUG] [AutoPull] Pull skipped for project-repo: divergent-branches
+```
+
+#### Log Field Descriptions
+
+**Component Prefixes:**
+- `[FastForwardDetection]` - Fast-forward safety checks
+- `[AutoPull]` - Automatic pull operations
+- `[GitCommand]` - Low-level git command execution
+
+**Common Fields:**
+- **Timestamp:** ISO 8601 format, local timezone
+- **Repository ID:** Local repository identifier (not remote URL)
+- **Commit Hash:** Git commit SHA (first 7 characters or full)
+- **Attempt Count:** Current retry attempt number (e.g., "1/3")
+- **Skip Reason:** Why pull was not attempted
+  - `uncommitted-changes` - Working directory has uncommitted changes
+  - `divergent-branches` - Local and remote have diverged
+  - `detached-head` - Repository in detached HEAD state
+  - `no-tracking-branch` - No upstream branch configured
+  - `not-fast-forward` - Local is ahead of remote
+  - `concurrent-operation` - Another git operation in progress
+
+#### Troubleshooting with Logs
+
+**Scenario 1: Pull Never Happens**
+
+**Symptoms:** Remote changes detected but no pull occurs
+
+**Steps:**
+1. Enable debug logging
+2. Wait for or trigger fetch cycle
+3. Review logs in Developer Console
+4. Look for `[FastForwardDetection]` entries
+
+**What to Look For:**
+```
+[FastForwardDetection] Result: canFastForward=false, reason=uncommitted-changes
+```
+
+**Resolution:** Check skip reason and resolve:
+- `uncommitted-changes` → Commit or stash changes
+- `divergent-branches` → Manual merge required
+- `detached-head` → Checkout a branch
+- `no-tracking-branch` → Set upstream branch
+
+**Scenario 2: Pull Fails Repeatedly**
+
+**Symptoms:** Pull attempts fail with errors
+
+**Steps:**
+1. Enable debug logging
+2. Trigger pull operation
+3. Look for `[AutoPull] Pull failed` entries
+4. Check error message and retry count
+
+**What to Look For:**
+```
+[AutoPull] Pull failed for vault-notes: Network timeout
+[AutoPull] Starting pull for vault-notes (attempt 2/3)
+```
+
+**Resolution Based on Error:**
+- `Network timeout` → Check internet connection, increase git timeout
+- `Authentication failed` → Verify SSH keys or HTTPS credentials
+- `Repository locked` → Wait for retry or check for stuck processes
+- `Permission denied` → Check file system permissions
+
+**Scenario 3: Credential Issues**
+
+**Symptoms:** Authentication errors in logs
+
+**Steps:**
+1. Enable debug logging
+2. Look for sanitized error messages
+3. Check for authentication patterns
+
+**What to Look For:**
+```
+[AutoPull] Pull failed for my-repo: fatal: could not read Username for 'https://[CREDENTIALS]@github.com'
+```
+
+**Note:** Credentials are sanitized in logs (shown as `[CREDENTIALS]`)
+
+**Resolution:**
+- For SSH: Check `ssh-add -l` shows your key
+- For HTTPS: Reconfigure credential helper
+- For Tokens: Generate new personal access token
+
+**Scenario 4: Performance Issues**
+
+**Symptoms:** Pull operations take too long
+
+**Steps:**
+1. Enable debug logging
+2. Note timestamps for operation start and completion
+3. Calculate duration
+
+**What to Look For:**
+```
+[AutoPull] Starting pull for large-repo (attempt 1/3)
+[2025-12-16 07:30:15] Current commit: a1b2c3d
+[2025-12-16 07:30:45] Pull successful for large-repo  // 30 seconds!
+```
+
+**Resolution:**
+- Large repositories: Normal for first pull
+- Slow network: Check connection speed
+- Timeout: Operation has 5-second safety timeout
+- Consider manual pull for large changes
+
+**Scenario 5: Silent Failures**
+
+**Symptoms:** No logs appear, no errors shown
+
+**Steps:**
+1. Verify debug logging is enabled in settings
+2. Check Developer Console is open
+3. Ensure operations are actually triggering
+
+**What to Look For:**
+- No `[DEBUG]` prefix logs → Debug mode not enabled
+- No logs at all → Check console filter settings
+- Logs present but no pull logs → Auto-pull may be disabled
+
+**Resolution:**
+1. Verify `debugLogging: true` in settings
+2. Check console filter is set to "All levels"
+3. Check auto-pull global setting enabled
+4. Check per-repository auto-pull toggle
+
+#### Security and Privacy
+
+**What IS Logged (Safe):**
+- Repository names (local identifiers)
+- Commit hashes (public identifiers)
+- Operation timestamps
+- Success/failure outcomes
+- Error types (sanitized)
+- Branch names
+- File counts and statistics
+
+**What is NOT Logged (Sensitive):**
+- Git remote URLs with embedded credentials
+- Authentication tokens or API keys
+- SSH private keys
+- Passwords or passphrases
+- File contents from commits
+- Personal access tokens
+
+**Credential Sanitization Example:**
+```
+// ACTUAL ERROR (never logged):
+fatal: could not read Username for 'https://user:ghp_abc123xyz@github.com'
+
+// LOGGED ERROR (sanitized):
+[AutoPull] Pull failed: fatal: could not read Username for 'https://[CREDENTIALS]@github.com'
+```
+
+**Sanitization Patterns:**
+- `https://user:pass@host` → `https://[CREDENTIALS]@host`
+- `token=abc123` → `token=[REDACTED]`
+- SSH private keys → `[SSH_KEY_REDACTED]`
+
+**Note:** Commit hashes are NOT sanitized because they are public identifiers and safe to log.
+
+#### Best Practices
+
+**Development/Troubleshooting:**
+1. Enable debug logging temporarily
+2. Reproduce issue
+3. Copy relevant logs
+4. Disable debug logging when done
+5. Never share logs publicly without reviewing for sensitive data
+
+**Performance Considerations:**
+- Debug logging has minimal performance impact
+- Logs are only generated when debug mode enabled
+- Log level checks occur before expensive string formatting
+- No impact on git operation timing
+
+**Log Review Checklist:**
+Before sharing logs:
+- [ ] Check for repository URLs with credentials
+- [ ] Check for tokens or API keys in error messages
+- [ ] Check for personal information in paths
+- [ ] Verify commit hashes only (safe to share)
+- [ ] Remove any internal network details if present
 
 ### Reporting Issues
 
