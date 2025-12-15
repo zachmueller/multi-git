@@ -719,4 +719,638 @@ describe('StatusPanelView', () => {
             });
         });
     });
+
+    describe('TEST-004: FR-3 Manual Intervention Features', () => {
+        let mockAutoPullService: any;
+
+        beforeEach(() => {
+            // Mock auto-pull service
+            mockAutoPullService = {
+                getPullHistory: jest.fn().mockReturnValue([]),
+                manualPull: jest.fn()
+            };
+
+            mockPlugin.autoPullService = mockAutoPullService;
+        });
+
+        describe('Manual intervention indicator rendering', () => {
+            test('should show warning icon for diverged branches', async () => {
+                const mockStatus: RepositoryStatus = {
+                    repositoryId: 'repo1',
+                    repositoryName: 'Diverged Repo',
+                    repositoryPath: '/path/to/diverged',
+                    currentBranch: 'main',
+                    hasUncommittedChanges: false,
+                    stagedFiles: [],
+                    unstagedFiles: [],
+                    untrackedFiles: [],
+                    remoteChanges: 5,
+                    unpushedCommits: 3
+                };
+
+                // Mock pull history with DIVERGED_BRANCHES skip reason
+                mockAutoPullService.getPullHistory.mockReturnValue([{
+                    timestamp: new Date(),
+                    result: 'skipped',
+                    skipReason: 'DIVERGED_BRANCHES',
+                    repositoryId: 'repo1'
+                }]);
+
+                mockRepositoryConfigService.getEnabledRepositories.mockReturnValue([
+                    { id: 'repo1', name: 'Diverged Repo', path: '/path/to/diverged' }
+                ]);
+                mockGitCommandService.getExtendedRepositoryStatus.mockResolvedValue(mockStatus);
+
+                const view = new StatusPanelView(mockLeaf, mockPlugin);
+                await view.onOpen();
+                await view.refreshAll();
+
+                const container = mockLeaf.containerEl.children[1];
+                const indicator = container.querySelector('.multi-git-intervention-indicator');
+
+                expect(indicator).not.toBeNull();
+                expect(indicator?.classList.contains('multi-git-diverged')).toBe(true);
+
+                const icon = indicator?.querySelector('.lucide-alert-triangle');
+                expect(icon).not.toBeNull();
+
+                const statusText = indicator?.querySelector('.multi-git-status-text');
+                expect(statusText?.textContent).toBe('Manual merge required');
+            });
+
+            test('should show key icon for authentication errors', async () => {
+                const mockStatus: RepositoryStatus = {
+                    repositoryId: 'repo1',
+                    repositoryName: 'Auth Error Repo',
+                    repositoryPath: '/path/to/auth',
+                    currentBranch: 'main',
+                    hasUncommittedChanges: false,
+                    stagedFiles: [],
+                    unstagedFiles: [],
+                    untrackedFiles: [],
+                    fetchStatus: 'error',
+                    lastFetchError: 'Authentication failed'
+                };
+
+                mockRepositoryConfigService.getEnabledRepositories.mockReturnValue([
+                    { id: 'repo1', name: 'Auth Error Repo', path: '/path/to/auth' }
+                ]);
+                mockGitCommandService.getExtendedRepositoryStatus.mockResolvedValue(mockStatus);
+
+                const view = new StatusPanelView(mockLeaf, mockPlugin);
+                await view.onOpen();
+                await view.refreshAll();
+
+                const container = mockLeaf.containerEl.children[1];
+                const indicator = container.querySelector('.multi-git-intervention-indicator');
+
+                expect(indicator).not.toBeNull();
+                expect(indicator?.classList.contains('multi-git-auth-error')).toBe(true);
+
+                const icon = indicator?.querySelector('.lucide-key');
+                expect(icon).not.toBeNull();
+
+                const statusText = indicator?.querySelector('.multi-git-status-text');
+                expect(statusText?.textContent).toBe('Authentication needed');
+            });
+
+            test('should show lock icon for concurrent operations', async () => {
+                const mockStatus: RepositoryStatus = {
+                    repositoryId: 'repo1',
+                    repositoryName: 'Locked Repo',
+                    repositoryPath: '/path/to/locked',
+                    currentBranch: 'main',
+                    hasUncommittedChanges: false,
+                    stagedFiles: [],
+                    unstagedFiles: [],
+                    untrackedFiles: [],
+                    fetchStatus: 'error',
+                    lastFetchError: 'Another git process seems to be running'
+                };
+
+                mockRepositoryConfigService.getEnabledRepositories.mockReturnValue([
+                    { id: 'repo1', name: 'Locked Repo', path: '/path/to/locked' }
+                ]);
+                mockGitCommandService.getExtendedRepositoryStatus.mockResolvedValue(mockStatus);
+
+                const view = new StatusPanelView(mockLeaf, mockPlugin);
+                await view.onOpen();
+                await view.refreshAll();
+
+                const container = mockLeaf.containerEl.children[1];
+                const indicator = container.querySelector('.multi-git-intervention-indicator');
+
+                expect(indicator).not.toBeNull();
+                expect(indicator?.classList.contains('multi-git-lock-error')).toBe(true);
+
+                const icon = indicator?.querySelector('.lucide-lock');
+                expect(icon).not.toBeNull();
+
+                const statusText = indicator?.querySelector('.multi-git-status-text');
+                expect(statusText?.textContent).toBe('Repository busy');
+            });
+
+            test('should show info icon for updates available when auto-pull disabled', async () => {
+                const mockStatus: RepositoryStatus = {
+                    repositoryId: 'repo1',
+                    repositoryName: 'Disabled Repo',
+                    repositoryPath: '/path/to/disabled',
+                    currentBranch: 'main',
+                    hasUncommittedChanges: false,
+                    stagedFiles: [],
+                    unstagedFiles: [],
+                    untrackedFiles: [],
+                    remoteChanges: 2
+                };
+
+                // Mock pull history with DISABLED_REPO skip reason
+                mockAutoPullService.getPullHistory.mockReturnValue([{
+                    timestamp: new Date(),
+                    result: 'skipped',
+                    skipReason: 'DISABLED_REPO',
+                    repositoryId: 'repo1'
+                }]);
+
+                mockRepositoryConfigService.getEnabledRepositories.mockReturnValue([
+                    { id: 'repo1', name: 'Disabled Repo', path: '/path/to/disabled' }
+                ]);
+                mockGitCommandService.getExtendedRepositoryStatus.mockResolvedValue(mockStatus);
+
+                const view = new StatusPanelView(mockLeaf, mockPlugin);
+                await view.onOpen();
+                await view.refreshAll();
+
+                const container = mockLeaf.containerEl.children[1];
+                const indicator = container.querySelector('.multi-git-intervention-indicator');
+
+                expect(indicator).not.toBeNull();
+                expect(indicator?.classList.contains('multi-git-updates-available')).toBe(true);
+
+                const icon = indicator?.querySelector('.lucide-info');
+                expect(icon).not.toBeNull();
+
+                const statusText = indicator?.querySelector('.multi-git-status-text');
+                expect(statusText?.textContent).toBe('Updates Available');
+            });
+
+            test('should not show intervention indicator for clean repository', async () => {
+                const mockStatus: RepositoryStatus = {
+                    repositoryId: 'repo1',
+                    repositoryName: 'Clean Repo',
+                    repositoryPath: '/path/to/clean',
+                    currentBranch: 'main',
+                    hasUncommittedChanges: false,
+                    stagedFiles: [],
+                    unstagedFiles: [],
+                    untrackedFiles: [],
+                    remoteChanges: 0,
+                    unpushedCommits: 0,
+                    fetchStatus: 'success'
+                };
+
+                mockRepositoryConfigService.getEnabledRepositories.mockReturnValue([
+                    { id: 'repo1', name: 'Clean Repo', path: '/path/to/clean' }
+                ]);
+                mockGitCommandService.getExtendedRepositoryStatus.mockResolvedValue(mockStatus);
+
+                const view = new StatusPanelView(mockLeaf, mockPlugin);
+                await view.onOpen();
+                await view.refreshAll();
+
+                const container = mockLeaf.containerEl.children[1];
+                const indicator = container.querySelector('.multi-git-intervention-indicator');
+
+                expect(indicator).toBeNull();
+            });
+        });
+
+        describe('Action button rendering and behavior', () => {
+            test('should show Pull button when remote changes available', async () => {
+                const mockStatus: RepositoryStatus = {
+                    repositoryId: 'repo1',
+                    repositoryName: 'Behind Repo',
+                    repositoryPath: '/path/to/behind',
+                    currentBranch: 'main',
+                    hasUncommittedChanges: false,
+                    stagedFiles: [],
+                    unstagedFiles: [],
+                    untrackedFiles: [],
+                    remoteChanges: 3,
+                    autoPullEnabled: false
+                };
+
+                mockRepositoryConfigService.getEnabledRepositories.mockReturnValue([
+                    { id: 'repo1', name: 'Behind Repo', path: '/path/to/behind' }
+                ]);
+                mockGitCommandService.getExtendedRepositoryStatus.mockResolvedValue(mockStatus);
+
+                const view = new StatusPanelView(mockLeaf, mockPlugin);
+                await view.onOpen();
+                await view.refreshAll();
+
+                const container = mockLeaf.containerEl.children[1];
+                const pullButton = container.querySelector('.multi-git-action-pull');
+
+                expect(pullButton).not.toBeNull();
+                expect(pullButton?.textContent).toContain('Pull');
+            });
+
+            test('should show Open Terminal button for diverged branches', async () => {
+                const mockStatus: RepositoryStatus = {
+                    repositoryId: 'repo1',
+                    repositoryName: 'Diverged Repo',
+                    repositoryPath: '/path/to/diverged',
+                    currentBranch: 'main',
+                    hasUncommittedChanges: false,
+                    stagedFiles: [],
+                    unstagedFiles: [],
+                    untrackedFiles: [],
+                    remoteChanges: 5,
+                    unpushedCommits: 3,
+                    divergedBranches: true
+                };
+
+                mockRepositoryConfigService.getEnabledRepositories.mockReturnValue([
+                    { id: 'repo1', name: 'Diverged Repo', path: '/path/to/diverged' }
+                ]);
+                mockGitCommandService.getExtendedRepositoryStatus.mockResolvedValue(mockStatus);
+
+                const view = new StatusPanelView(mockLeaf, mockPlugin);
+                await view.onOpen();
+                await view.refreshAll();
+
+                const container = mockLeaf.containerEl.children[1];
+                const terminalButton = container.querySelector('.multi-git-action-terminal');
+
+                expect(terminalButton).not.toBeNull();
+                expect(terminalButton?.textContent).toContain('Open Terminal');
+            });
+
+            test('should show Open Terminal button for authentication errors', async () => {
+                const mockStatus: RepositoryStatus = {
+                    repositoryId: 'repo1',
+                    repositoryName: 'Auth Error Repo',
+                    repositoryPath: '/path/to/auth',
+                    currentBranch: 'main',
+                    hasUncommittedChanges: false,
+                    stagedFiles: [],
+                    unstagedFiles: [],
+                    untrackedFiles: [],
+                    fetchStatus: 'error',
+                    lastFetchError: 'Authentication failed'
+                };
+
+                mockRepositoryConfigService.getEnabledRepositories.mockReturnValue([
+                    { id: 'repo1', name: 'Auth Error Repo', path: '/path/to/auth' }
+                ]);
+                mockGitCommandService.getExtendedRepositoryStatus.mockResolvedValue(mockStatus);
+
+                const view = new StatusPanelView(mockLeaf, mockPlugin);
+                await view.onOpen();
+                await view.refreshAll();
+
+                const container = mockLeaf.containerEl.children[1];
+                const terminalButton = container.querySelector('.multi-git-action-terminal');
+
+                expect(terminalButton).not.toBeNull();
+                expect(terminalButton?.textContent).toContain('Open Terminal');
+            });
+
+            test('should show Open Terminal button for lock errors', async () => {
+                const mockStatus: RepositoryStatus = {
+                    repositoryId: 'repo1',
+                    repositoryName: 'Locked Repo',
+                    repositoryPath: '/path/to/locked',
+                    currentBranch: 'main',
+                    hasUncommittedChanges: false,
+                    stagedFiles: [],
+                    unstagedFiles: [],
+                    untrackedFiles: [],
+                    fetchStatus: 'error',
+                    lastFetchError: 'Another git process'
+                };
+
+                mockRepositoryConfigService.getEnabledRepositories.mockReturnValue([
+                    { id: 'repo1', name: 'Locked Repo', path: '/path/to/locked' }
+                ]);
+                mockGitCommandService.getExtendedRepositoryStatus.mockResolvedValue(mockStatus);
+
+                const view = new StatusPanelView(mockLeaf, mockPlugin);
+                await view.onOpen();
+                await view.refreshAll();
+
+                const container = mockLeaf.containerEl.children[1];
+                const terminalButton = container.querySelector('.multi-git-action-terminal');
+
+                expect(terminalButton).not.toBeNull();
+                expect(terminalButton?.textContent).toContain('Open Terminal');
+            });
+
+            test('should not show action buttons for clean repository', async () => {
+                const mockStatus: RepositoryStatus = {
+                    repositoryId: 'repo1',
+                    repositoryName: 'Clean Repo',
+                    repositoryPath: '/path/to/clean',
+                    currentBranch: 'main',
+                    hasUncommittedChanges: false,
+                    stagedFiles: [],
+                    unstagedFiles: [],
+                    untrackedFiles: [],
+                    remoteChanges: 0,
+                    fetchStatus: 'success'
+                };
+
+                mockRepositoryConfigService.getEnabledRepositories.mockReturnValue([
+                    { id: 'repo1', name: 'Clean Repo', path: '/path/to/clean' }
+                ]);
+                mockGitCommandService.getExtendedRepositoryStatus.mockResolvedValue(mockStatus);
+
+                const view = new StatusPanelView(mockLeaf, mockPlugin);
+                await view.onOpen();
+                await view.refreshAll();
+
+                const container = mockLeaf.containerEl.children[1];
+                const pullButton = container.querySelector('.multi-git-action-pull');
+                const terminalButton = container.querySelector('.multi-git-action-terminal');
+
+                expect(pullButton).toBeNull();
+                expect(terminalButton).toBeNull();
+            });
+
+            test('should handle terminal button click', async () => {
+                const mockStatus: RepositoryStatus = {
+                    repositoryId: 'repo1',
+                    repositoryName: 'Diverged Repo',
+                    repositoryPath: '/path/to/diverged',
+                    currentBranch: 'main',
+                    hasUncommittedChanges: false,
+                    stagedFiles: [],
+                    unstagedFiles: [],
+                    untrackedFiles: [],
+                    divergedBranches: true
+                };
+
+                mockRepositoryConfigService.getEnabledRepositories.mockReturnValue([
+                    { id: 'repo1', name: 'Diverged Repo', path: '/path/to/diverged' }
+                ]);
+                mockGitCommandService.getExtendedRepositoryStatus.mockResolvedValue(mockStatus);
+
+                const view = new StatusPanelView(mockLeaf, mockPlugin);
+                await view.onOpen();
+                await view.refreshAll();
+
+                const container = mockLeaf.containerEl.children[1];
+                const terminalButton = container.querySelector('.multi-git-action-terminal') as HTMLElement;
+
+                expect(terminalButton).not.toBeNull();
+
+                // Mock terminal utility
+                const mockOpenTerminal = jest.fn().mockResolvedValue(true);
+                (global as any).openRepositoryInTerminal = mockOpenTerminal;
+
+                // Click button
+                terminalButton.click();
+
+                // Wait for async operation
+                await new Promise(resolve => setTimeout(resolve, 0));
+
+                // Terminal utility should have been called with repository path
+                expect(mockOpenTerminal).toHaveBeenCalledWith('/path/to/diverged');
+            });
+
+            test('should disable buttons during loading state', async () => {
+                const mockStatus: RepositoryStatus = {
+                    repositoryId: 'repo1',
+                    repositoryName: 'Behind Repo',
+                    repositoryPath: '/path/to/behind',
+                    currentBranch: 'main',
+                    hasUncommittedChanges: false,
+                    stagedFiles: [],
+                    unstagedFiles: [],
+                    untrackedFiles: [],
+                    remoteChanges: 2,
+                    autoPullEnabled: false
+                };
+
+                mockRepositoryConfigService.getEnabledRepositories.mockReturnValue([
+                    { id: 'repo1', name: 'Behind Repo', path: '/path/to/behind' }
+                ]);
+
+                // Make git service hang to keep in loading state
+                let resolveStatus: any;
+                mockGitCommandService.getExtendedRepositoryStatus.mockReturnValue(
+                    new Promise(resolve => { resolveStatus = resolve; })
+                );
+
+                const view = new StatusPanelView(mockLeaf, mockPlugin);
+                await view.onOpen();
+
+                // Trigger refresh
+                const refreshPromise = view.refreshAll();
+
+                // Check button is disabled during loading
+                const container = mockLeaf.containerEl.children[1];
+                const pullButton = container.querySelector('.multi-git-action-pull') as HTMLButtonElement;
+
+                if (pullButton) {
+                    expect(pullButton.disabled).toBe(true);
+                }
+
+                // Resolve to cleanup
+                resolveStatus(mockStatus);
+                await refreshPromise;
+            });
+        });
+
+        describe('Status text rendering for FR-3 scenarios', () => {
+            test('should show "Manual merge required" for diverged branches', async () => {
+                const mockStatus: RepositoryStatus = {
+                    repositoryId: 'repo1',
+                    repositoryName: 'Diverged Repo',
+                    repositoryPath: '/path',
+                    currentBranch: 'main',
+                    hasUncommittedChanges: false,
+                    stagedFiles: [],
+                    unstagedFiles: [],
+                    untrackedFiles: [],
+                    divergedBranches: true
+                };
+
+                mockRepositoryConfigService.getEnabledRepositories.mockReturnValue([
+                    { id: 'repo1', name: 'Diverged Repo', path: '/path' }
+                ]);
+                mockGitCommandService.getExtendedRepositoryStatus.mockResolvedValue(mockStatus);
+
+                const view = new StatusPanelView(mockLeaf, mockPlugin);
+                await view.onOpen();
+                await view.refreshAll();
+
+                const container = mockLeaf.containerEl.children[1];
+                const statusText = container.querySelector('.multi-git-status-text');
+
+                expect(statusText?.textContent).toBe('Manual merge required');
+            });
+
+            test('should show "Updates Available" for disabled auto-pull with remote changes', async () => {
+                const mockStatus: RepositoryStatus = {
+                    repositoryId: 'repo1',
+                    repositoryName: 'Disabled Repo',
+                    repositoryPath: '/path',
+                    currentBranch: 'main',
+                    hasUncommittedChanges: false,
+                    stagedFiles: [],
+                    unstagedFiles: [],
+                    untrackedFiles: [],
+                    remoteChanges: 3,
+                    autoPullEnabled: false
+                };
+
+                mockRepositoryConfigService.getEnabledRepositories.mockReturnValue([
+                    { id: 'repo1', name: 'Disabled Repo', path: '/path' }
+                ]);
+                mockGitCommandService.getExtendedRepositoryStatus.mockResolvedValue(mockStatus);
+
+                const view = new StatusPanelView(mockLeaf, mockPlugin);
+                await view.onOpen();
+                await view.refreshAll();
+
+                const container = mockLeaf.containerEl.children[1];
+                const statusText = container.querySelector('.multi-git-status-text');
+
+                expect(statusText?.textContent).toBe('Updates Available');
+            });
+
+            test('should show "Authentication needed" for auth errors', async () => {
+                const mockStatus: RepositoryStatus = {
+                    repositoryId: 'repo1',
+                    repositoryName: 'Auth Error Repo',
+                    repositoryPath: '/path',
+                    currentBranch: 'main',
+                    hasUncommittedChanges: false,
+                    stagedFiles: [],
+                    unstagedFiles: [],
+                    untrackedFiles: [],
+                    fetchStatus: 'error',
+                    lastFetchError: 'Authentication failed'
+                };
+
+                mockRepositoryConfigService.getEnabledRepositories.mockReturnValue([
+                    { id: 'repo1', name: 'Auth Error Repo', path: '/path' }
+                ]);
+                mockGitCommandService.getExtendedRepositoryStatus.mockResolvedValue(mockStatus);
+
+                const view = new StatusPanelView(mockLeaf, mockPlugin);
+                await view.onOpen();
+                await view.refreshAll();
+
+                const container = mockLeaf.containerEl.children[1];
+                const statusText = container.querySelector('.multi-git-status-text');
+
+                expect(statusText?.textContent).toBe('Authentication needed');
+            });
+
+            test('should show "Repository busy" for lock errors', async () => {
+                const mockStatus: RepositoryStatus = {
+                    repositoryId: 'repo1',
+                    repositoryName: 'Locked Repo',
+                    repositoryPath: '/path',
+                    currentBranch: 'main',
+                    hasUncommittedChanges: false,
+                    stagedFiles: [],
+                    unstagedFiles: [],
+                    untrackedFiles: [],
+                    fetchStatus: 'error',
+                    lastFetchError: 'Another git process'
+                };
+
+                mockRepositoryConfigService.getEnabledRepositories.mockReturnValue([
+                    { id: 'repo1', name: 'Locked Repo', path: '/path' }
+                ]);
+                mockGitCommandService.getExtendedRepositoryStatus.mockResolvedValue(mockStatus);
+
+                const view = new StatusPanelView(mockLeaf, mockPlugin);
+                await view.onOpen();
+                await view.refreshAll();
+
+                const container = mockLeaf.containerEl.children[1];
+                const statusText = container.querySelector('.multi-git-status-text');
+
+                expect(statusText?.textContent).toBe('Repository busy');
+            });
+        });
+
+        describe('Multiple repositories with mixed FR-3 states', () => {
+            test('should correctly render multiple repositories with different intervention states', async () => {
+                const mockStatuses: RepositoryStatus[] = [
+                    {
+                        repositoryId: 'repo1',
+                        repositoryName: 'Diverged Repo',
+                        repositoryPath: '/path/1',
+                        currentBranch: 'main',
+                        hasUncommittedChanges: false,
+                        stagedFiles: [],
+                        unstagedFiles: [],
+                        untrackedFiles: [],
+                        divergedBranches: true
+                    },
+                    {
+                        repositoryId: 'repo2',
+                        repositoryName: 'Clean Repo',
+                        repositoryPath: '/path/2',
+                        currentBranch: 'main',
+                        hasUncommittedChanges: false,
+                        stagedFiles: [],
+                        unstagedFiles: [],
+                        untrackedFiles: [],
+                        remoteChanges: 0,
+                        fetchStatus: 'success'
+                    },
+                    {
+                        repositoryId: 'repo3',
+                        repositoryName: 'Updates Available',
+                        repositoryPath: '/path/3',
+                        currentBranch: 'main',
+                        hasUncommittedChanges: false,
+                        stagedFiles: [],
+                        unstagedFiles: [],
+                        untrackedFiles: [],
+                        remoteChanges: 2,
+                        autoPullEnabled: false
+                    }
+                ];
+
+                mockRepositoryConfigService.getEnabledRepositories.mockReturnValue([
+                    { id: 'repo1', name: 'Diverged Repo', path: '/path/1' },
+                    { id: 'repo2', name: 'Clean Repo', path: '/path/2' },
+                    { id: 'repo3', name: 'Updates Available', path: '/path/3' }
+                ]);
+
+                mockGitCommandService.getExtendedRepositoryStatus
+                    .mockResolvedValueOnce(mockStatuses[0])
+                    .mockResolvedValueOnce(mockStatuses[1])
+                    .mockResolvedValueOnce(mockStatuses[2]);
+
+                const view = new StatusPanelView(mockLeaf, mockPlugin);
+                await view.onOpen();
+                await view.refreshAll();
+
+                const container = mockLeaf.containerEl.children[1];
+                const repoItems = container.querySelectorAll('.multi-git-repository-item');
+
+                expect(repoItems.length).toBe(3);
+
+                // Check first repo has diverged indicator
+                const divergedIndicator = repoItems[0].querySelector('.multi-git-diverged');
+                expect(divergedIndicator).not.toBeNull();
+
+                // Check second repo has no intervention indicator
+                const cleanIndicator = repoItems[1].querySelector('.multi-git-intervention-indicator');
+                expect(cleanIndicator).toBeNull();
+
+                // Check third repo has info indicator
+                const infoIndicator = repoItems[2].querySelector('.multi-git-info');
+                expect(infoIndicator).not.toBeNull();
+            });
+        });
+    });
 });
