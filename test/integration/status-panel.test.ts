@@ -114,7 +114,10 @@ describe('StatusPanelView Integration Tests', () => {
         mockPlugin = {
             repositoryConfigService,
             gitCommandService,
-            settings: mockSettings
+            settings: mockSettings,
+            autoPullService: {
+                getPullHistory: jest.fn().mockReturnValue([])
+            }
         } as any;
 
         // Mock workspace leaf with containerEl

@@ -134,17 +134,26 @@ describe('Integration: Auto-Pull with Real Repository Operations', () => {
             autoPullNotificationVerbosity: 'all'
         };
 
+        const mockApp = {
+            vault: {
+                adapter: {
+                    write: jest.fn()
+                }
+            }
+        } as any;
+
         mockPlugin = {
             settings: mockSettings,
-            saveSettings: jest.fn().mockResolvedValue(undefined)
+            saveSettings: jest.fn().mockResolvedValue(undefined),
+            app: mockApp
         } as any;
 
         // Initialize services
         Logger.initialize(mockSettings);
         gitService = new GitCommandService(mockSettings);
         ffDetectionService = new FastForwardDetectionService(gitService);
-        configService = new RepositoryConfigService(mockPlugin);
-        notificationService = new NotificationService(mockSettings);
+        configService = new RepositoryConfigService(mockPlugin, gitService);
+        notificationService = new NotificationService(mockApp, mockSettings);
         autoPullService = new AutoPullService(
             ffDetectionService,
             gitService,
