@@ -135,22 +135,17 @@ export class AutoPullService {
      * @returns true if auto-pull is enabled for this repository
      */
     isAutoPullEnabled(repositoryId: string): boolean {
-        // Check global setting first
-        if (!this.settings.autoPullEnabled) {
-            Logger.debug(COMPONENT, `Auto-pull disabled globally for repository ${repositoryId}`);
-            return false;
-        }
-
-        // Check per-repository override
+        // Check per-repository override first (takes precedence)
         const perRepoSetting = this.settings.autoPullPerRepository?.[repositoryId];
         if (perRepoSetting !== undefined) {
             Logger.debug(COMPONENT, `Auto-pull ${perRepoSetting ? 'enabled' : 'disabled'} for repository ${repositoryId} (per-repository override)`);
             return perRepoSetting;
         }
 
-        // Default to global setting
-        Logger.debug(COMPONENT, `Auto-pull enabled for repository ${repositoryId} (global setting)`);
-        return true;
+        // Fall back to global setting
+        const globalEnabled = this.settings.autoPullEnabled;
+        Logger.debug(COMPONENT, `Auto-pull ${globalEnabled ? 'enabled' : 'disabled'} for repository ${repositoryId} (global setting)`);
+        return globalEnabled;
     }
 
     /**
