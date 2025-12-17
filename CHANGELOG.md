@@ -13,6 +13,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Performance benchmarks
 - Complete API documentation with TypeDoc
 
+## [0.1.2] - 2025-12-17
+
+### Added
+- Configurable pull timeout setting allowing users to customize the maximum wait time for git pull operations
+- Pull timeout configuration in plugin settings with validation (minimum 5 seconds, maximum 600 seconds)
+- Default pull timeout of 30 seconds for reliable operation across different repository sizes
+
+### Changed
+- Auto-pull operations now respect user-configured timeout values instead of using a hardcoded timeout
+- Improved timeout handling to provide better feedback when pull operations exceed the configured limit
+
 ## [0.1.1] - 2025-12-17
 
 ### Added
