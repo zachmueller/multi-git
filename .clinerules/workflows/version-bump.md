@@ -52,7 +52,8 @@ python3 scripts/bump_version.py <bump_type>
 ```
 
 **Expected Output:**
-- Script prints new version number to stdout (e.g., `0.2.0`)
+- Script prints new version number on first line (e.g., `0.2.0`)
+- Script prints current date on second line (e.g., `2025-12-17`)
 - Both `manifest.json` and `package.json` are updated with new version
 - Script exits with code 0 on success
 
@@ -62,8 +63,10 @@ python3 scripts/bump_version.py <bump_type>
 - Ensure current version in manifest.json follows semantic versioning
 
 **Capture the Output:**
-- Store the new version number from stdout for use in subsequent steps
-- Example: If script outputs `0.2.0`, use this in commit messages and tags
+- Store the new version number from the first line of stdout
+- Store the current date from the second line of stdout
+- Example: If script outputs `0.2.0` and `2025-12-17`, use these values in subsequent steps
+- These values will be used for the changelog header and git operations
 
 ### Step 3: Review Commit History and Update CHANGELOG.md
 
@@ -89,6 +92,7 @@ python3 scripts/bump_version.py <bump_type>
 4. **Update CHANGELOG.md:**
    - Use `read_file` to read current `CHANGELOG.md`
    - Add new version section at the top (after the header, before previous versions)
+   - **Use the version number and date from the script output** for the changelog header
    - Follow this format:
      ```markdown
      ## [X.Y.Z] - YYYY-MM-DD
@@ -111,6 +115,7 @@ python3 scripts/bump_version.py <bump_type>
      ### Security
      - Security improvements (if applicable)
      ```
+   - **IMPORTANT:** The `[X.Y.Z]` should be the version from script output line 1, and `YYYY-MM-DD` should be the date from script output line 2
    - Organize commits into appropriate categories
    - Write clear, user-focused descriptions
    - Include links to issues/PRs if referenced in commits

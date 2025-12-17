@@ -11,6 +11,7 @@ import sys
 import argparse
 from pathlib import Path
 from typing import Tuple
+from datetime import date
 
 
 def parse_version(version: str) -> Tuple[int, int, int]:
@@ -109,8 +110,10 @@ def main():
         print(f"Error updating files: {e}", file=sys.stderr)
         sys.exit(1)
     
-    # Output new version to stdout (for Cline to capture)
+    # Output new version and current date to stdout (for Cline to capture)
+    current_date = date.today().strftime('%Y-%m-%d')
     print(new_version)
+    print(current_date)
 
 
 if __name__ == '__main__':
