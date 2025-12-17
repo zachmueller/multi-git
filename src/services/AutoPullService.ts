@@ -115,7 +115,7 @@ export interface PullHistoryEntry {
  * 
  * **Performance Characteristics:**
  * - Safety checks: < 500ms typical
- * - Pull execution: < 5 seconds (enforced timeout)
+ * - Pull execution: configurable timeout (default 5 seconds, range 1-60 seconds)
  * - Retry delays: 0ms, 10s, 30s (exponential backoff)
  * - History storage: Limited to 10 entries per repository
  * 
@@ -377,8 +377,8 @@ export class AutoPullService {
      * Execute git pull operation with fast-forward-only flag.
      * 
      * Captures commit hash before and after pull to verify operation success
-     * and calculate number of commits pulled. Uses 5-second timeout per
-     * specification requirements.
+     * and calculate number of commits pulled. Uses configurable timeout
+     * (default 5 seconds, range 1-60 seconds).
      * 
      * @param repoPath Filesystem path to repository
      * @param repositoryId Repository ID for logging
@@ -409,12 +409,12 @@ export class AutoPullService {
             // Log git command being executed
             Logger.debug(COMPONENT, `Executing: git pull --ff-only in ${repoPath}`);
 
-            // Execute git pull --ff-only with 5-second timeout
+            // Execute git pull --ff-only with configurable timeout
             await this.gitCommandService.runGitCommand(
                 ['pull', '--ff-only'],
                 repoPath,
                 'Pull changes',
-                5000  // 5-second timeout per specification
+                this.settings.autoPullTimeoutMs
             );
 
             // Capture commit hash after pull
@@ -475,7 +475,7 @@ export class AutoPullService {
                 ['rev-parse', 'HEAD'],
                 repoPath,
                 'Get current commit hash',
-                5000
+                this.settings.autoPullTimeoutMs
             );
             return result.stdout.trim();
         } catch (error) {
@@ -520,7 +520,7 @@ export class AutoPullService {
                 ['rev-list', '--count', `${beforeHash}..${afterHash}`],
                 repoPath,
                 'Calculate commits pulled',
-                5000
+                this.settings.autoPullTimeoutMs
             );
             const count = parseInt(result.stdout.trim(), 10);
             return isNaN(count) ? 0 : count;
@@ -545,7 +545,7 @@ export class AutoPullService {
         if (errorStr.includes('timed out') || errorStr.includes('timeout')) {
             return {
                 errorCode: PullErrorCode.TIMEOUT_ERROR,
-                errorMessage: 'Pull operation timed out after 5 seconds',
+                errorMessage: `Pull operation timed out after ${this.settings.autoPullTimeoutMs / 1000} seconds`,
             };
         }
 
@@ -727,7 +727,7 @@ export class AutoPullService {
      * - Skips with NOT_FAST_FORWARD, DIVERGED_BRANCHES, DETACHED_HEAD, or NO_TRACKING_BRANCH reason
      * 
      * **Layer 4 - Pull Execution with Retry:**
-     * - Executes git pull --ff-only with 5-second timeout
+     * - Executes git pull --ff-only with configurable timeout (default 5 seconds, range 1-60 seconds)
      * - Captures before/after commit hashes to verify operation
      * - Calculates actual commits pulled
      * - Categorizes errors (network, auth, lock, timeout, unknown)

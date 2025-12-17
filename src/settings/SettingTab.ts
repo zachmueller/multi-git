@@ -60,6 +60,20 @@ export class MultiGitSettingTab extends PluginSettingTab {
                 })
             );
 
+        // Pull operation timeout setting
+        new Setting(containerEl)
+            .setName('Pull operation timeout')
+            .setDesc('Maximum time to wait for pull operations (1-60 seconds). Increase if you have slow network connections.')
+            .addSlider(slider => slider
+                .setLimits(1, 60, 1)
+                .setValue(this.plugin.settings.autoPullTimeoutMs / 1000)
+                .setDynamicTooltip()
+                .onChange(async (value) => {
+                    this.plugin.settings.autoPullTimeoutMs = value * 1000;
+                    await this.plugin.saveSettings();
+                })
+            );
+
         // Notification verbosity setting
         new Setting(containerEl)
             .setName('Auto-Pull Notifications')

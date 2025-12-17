@@ -155,6 +155,14 @@ export interface MultiGitSettings {
      * @default 'all'
      */
     autoPullNotificationVerbosity: 'all' | 'failures-only' | 'silent';
+
+    /**
+     * Maximum time to wait for pull operations in milliseconds
+     * Configurable timeout for git pull commands (range: 1000-60000ms / 1-60 seconds)
+     * Increase for slow network connections, decrease for faster failure detection
+     * @default 5000 (5 seconds)
+     */
+    autoPullTimeoutMs: number;
 }
 
 /**
@@ -177,4 +185,5 @@ export const DEFAULT_SETTINGS: MultiGitSettings = {
     autoPullEnabled: true, // Auto-pull enabled by default (safe fast-forward-only)
     autoPullPerRepository: {}, // No per-repository overrides by default
     autoPullNotificationVerbosity: 'all', // Show all notifications by default
+    autoPullTimeoutMs: 5000, // 5 seconds - maintains current behavior
 };
