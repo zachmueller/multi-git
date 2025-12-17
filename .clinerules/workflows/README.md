@@ -9,18 +9,18 @@ This directory contains 8 comprehensive workflows that implement GitHub's Spec K
 ## Workflow Structure
 
 ### Foundation Workflows (Start Here)
-1. **[constitution.cline](./constitution.cline)** - Project governance and principles
-2. **[specify.cline](./specify.cline)** - Feature specification creation from natural language
-3. **[clarify.cline](./clarify.cline)** - Specification clarification and ambiguity resolution
+1. **[constitution.md](./constitution.md)** - Project governance and principles
+2. **[specify.md](./specify.md)** - Feature specification creation from natural language
+3. **[clarify.md](./clarify.md)** - Specification clarification and ambiguity resolution
 
 ### Planning Workflows
-4. **[plan.cline](./plan.cline)** - Implementation planning and technical design  
-5. **[checklist.cline](./checklist.cline)** - Quality validation checklists generation
+4. **[plan.md](./plan.md)** - Implementation planning and technical design  
+5. **[checklist.md](./checklist.md)** - Quality validation checklists generation
 
 ### Execution Workflows
-6. **[tasks.cline](./tasks.cline)** - Task breakdown and implementation planning
-7. **[implement.cline](./implement.cline)** - Systematic implementation execution
-8. **[analyze.cline](./analyze.cline)** - Cross-artifact consistency analysis
+6. **[tasks.md](./tasks.md)** - Task breakdown and implementation planning
+7. **[implement.md](./implement.md)** - Systematic implementation execution
+8. **[analyze.md](./analyze.md)** - Cross-artifact consistency analysis
 
 ## Workflow Dependencies
 
