@@ -1,0 +1,444 @@
+import { Plugin, Notice, WorkspaceLeaf } from 'obsidian';
+import { MultiGitSettings, DEFAULT_SETTINGS, RepositoryConfig, RepositoryStatus } from './settings/data';
+import { RepositoryConfigService } from './services/RepositoryConfigService';
+import { GitCommandService } from './services/GitCommandService';
+import { FetchSchedulerService } from './services/FetchSchedulerService';
+import { NotificationService } from './services/NotificationService';
+import { CommitMessageService } from './services/CommitMessageService';
+import { FastForwardDetectionService } from './services/FastForwardDetectionService';
+import { AutoPullService } from './services/AutoPullService';
+import { MultiGitSettingTab } from './settings/SettingTab';
+import { RepositoryPickerModal } from './ui/RepositoryPickerModal';
+import { CommitMessageModal } from './ui/CommitMessageModal';
+import { StatusPanelView, VIEW_TYPE_STATUS_PANEL } from './ui/StatusPanelView';
+import { Logger } from './utils/logger';
+import { GitCommitError, GitPushError, FetchError, FetchErrorCode } from './utils/errors';
+
+/**
+ * Multi-Git Plugin for Obsidian
+ * Manages multiple git repositories from within Obsidian
+ */
+export default class MultiGitPlugin extends Plugin {
+	settings!: MultiGitSettings;
+	repositoryConfigService!: RepositoryConfigService;
+	gitCommandService!: GitCommandService;
+	fetchSchedulerService!: FetchSchedulerService;
+	notificationService!: NotificationService;
+	commitMessageService!: CommitMessageService;
+	fastForwardDetectionService!: FastForwardDetectionService;
+	autoPullService!: AutoPullService;
+	statusPanelView: StatusPanelView | null = null;
+
+	/**
+	 * Called when the plugin is loaded
+	 * Initializes settings, services, and UI components
+	 */
+	async onload() {
+		console.log('Loading Multi-Git plugin');
+
+		// Load settings from data.json
+		await this.loadSettings();
+
+		// Initialize logger with settings
+		Logger.initialize(this.settings);
+		Logger.debug('Plugin', 'Multi-Git plugin loading');
+
+		// Initialize services
+		this.gitCommandService = new GitCommandService(this.settings);
+		this.repositoryConfigService = new RepositoryConfigService(this, this.gitCommandService);
+		this.notificationService = new NotificationService(this.app, this.settings);
+		this.commitMessageService = new CommitMessageService();
+		this.fastForwardDetectionService = new FastForwardDetectionService(this.gitCommandService);
+		this.autoPullService = new AutoPullService(
+			this.fastForwardDetectionService,
+			this.gitCommandService,
+			this.notificationService,
+			this.repositoryConfigService,
+			this.settings
+		);
+		this.fetchSchedulerService = new FetchSchedulerService(
+			this.repositoryConfigService,
+			this.gitCommandService,
+			this.notificationService,
+			this.autoPullService,
+			// Callback for fetch completion - update status panel
+			(repoId: string) => {
+				this.notifyRepositoryChanged(repoId);
+			}
+		);
+
+		// Apply settings migration for backward compatibility
+		this.settings = this.repositoryConfigService.migrateSettings(this.settings);
+		await this.saveSettings();
+
+		// Register settings tab
+		this.addSettingTab(new MultiGitSettingTab(this.app, this));
+
+		// Register status panel view
+		this.registerStatusPanel();
+
+		// Start automated fetching for all enabled repositories
+		this.fetchSchedulerService.startAll();
+
+		// Optionally fetch on startup if enabled
+		if (this.settings.fetchOnStartup) {
+			// Delay initial fetch to avoid blocking plugin load
+			setTimeout(async () => {
+				await this.fetchSchedulerService.fetchAllNow();
+			}, 2000);
+		}
+
+		// Register commands
+		this.registerCommands();
+	}
+
+	/**
+	 * Register status panel view type and ribbon icon
+	 */
+	registerStatusPanel() {
+		Logger.debug('Plugin', 'Registering status panel view');
+
+		// Register the view type
+		this.registerView(
+			VIEW_TYPE_STATUS_PANEL,
+			(leaf: WorkspaceLeaf) => new StatusPanelView(leaf, this)
+		);
+
+		// Add ribbon icon to toggle panel
+		this.addRibbonIcon('git-branch', 'Multi-Git Status', async () => {
+			await this.activateStatusPanel();
+		});
+
+		Logger.debug('Plugin', 'Status panel view registered successfully');
+	}
+
+	/**
+	 * Activate (open) the status panel view
+	 * Opens panel in right sidebar by default
+	 */
+	async activateStatusPanel(): Promise<void> {
+		const { workspace } = this.app;
+
+		// Check if panel is already open
+		let leaf = workspace.getLeavesOfType(VIEW_TYPE_STATUS_PANEL)[0];
+
+		if (!leaf) {
+			// Panel not open, create it in right sidebar
+			Logger.debug('Plugin', 'Opening status panel in right sidebar');
+			const rightLeaf = workspace.getRightLeaf(false);
+			if (rightLeaf) {
+				await rightLeaf.setViewState({
+					type: VIEW_TYPE_STATUS_PANEL,
+					active: true,
+				});
+				leaf = rightLeaf;
+			}
+		}
+
+		// Reveal the panel (bring to front if already open)
+		if (leaf) {
+			workspace.revealLeaf(leaf);
+			Logger.debug('Plugin', 'Status panel activated');
+		}
+	}
+
+	/**
+	 * Deactivate (close) the status panel view
+	 */
+	async deactivateStatusPanel(): Promise<void> {
+		const { workspace } = this.app;
+		const leaves = workspace.getLeavesOfType(VIEW_TYPE_STATUS_PANEL);
+
+		for (const leaf of leaves) {
+			leaf.detach();
+		}
+
+		Logger.debug('Plugin', 'Status panel deactivated');
+	}
+
+	/**
+	 * Notify status panel of repository changes
+	 * Triggers refresh for specific repository or all repositories
+	 * @param repoId - Optional repository ID to refresh (refreshes all if not provided)
+	 */
+	notifyRepositoryChanged(repoId?: string): void {
+		const { workspace } = this.app;
+		const leaves = workspace.getLeavesOfType(VIEW_TYPE_STATUS_PANEL);
+
+		if (leaves.length === 0) {
+			// Panel not open, no need to notify
+			return;
+		}
+
+		// Get the view instance
+		const leaf = leaves[0];
+		const view = leaf.view;
+
+		// Verify view is actually a StatusPanelView instance with required methods
+		if (!(view instanceof StatusPanelView)) {
+			Logger.debug('Plugin', 'View is not a StatusPanelView instance, skipping notification');
+			return;
+		}
+
+		if (repoId) {
+			Logger.debug('Plugin', `Notifying status panel of changes to repository: ${repoId}`);
+			view.refreshRepository(repoId);
+		} else {
+			Logger.debug('Plugin', 'Notifying status panel of changes to all repositories');
+			view.refreshAll();
+		}
+	}
+
+	/**
+	 * Register plugin commands
+	 */
+	registerCommands() {
+		// Command: Commit and push changes
+		this.addCommand({
+			id: 'multi-git:commit-push',
+			name: 'Commit and push changes',
+			callback: () => this.handleCommitAndPush(),
+		});
+
+		// Command: Toggle status panel
+		this.addCommand({
+			id: 'multi-git:toggle-status-panel',
+			name: 'Toggle status panel',
+			callback: async () => {
+				const { workspace } = this.app;
+				const leaves = workspace.getLeavesOfType(VIEW_TYPE_STATUS_PANEL);
+
+				if (leaves.length > 0) {
+					// Panel is open, close it
+					await this.deactivateStatusPanel();
+				} else {
+					// Panel is closed, open it
+					await this.activateStatusPanel();
+				}
+			},
+		});
+
+		// Command: Refresh status panel
+		this.addCommand({
+			id: 'multi-git:refresh-status',
+			name: 'Refresh repository status',
+			callback: () => {
+				this.notifyRepositoryChanged();
+			},
+		});
+	}
+
+	/**
+	 * Handle the commit and push workflow
+	 * Orchestrates the entire process from repository selection to push
+	 */
+	async handleCommitAndPush() {
+		try {
+			Logger.debug('Command', 'Starting commit and push workflow');
+
+			// Get all enabled repositories
+			const repositories = this.repositoryConfigService.getEnabledRepositories();
+			if (repositories.length === 0) {
+				new Notice('No repositories configured. Add repositories in settings.');
+				Logger.debug('Command', 'No repositories configured');
+				return;
+			}
+
+			// Check status for each repository and filter those with changes
+			Logger.debug('Command', `Checking status for ${repositories.length} repositories`);
+			const reposWithChanges = await this.getRepositoriesWithChanges(repositories);
+
+			if (reposWithChanges.length === 0) {
+				new Notice('No uncommitted changes in any repository.');
+				Logger.debug('Command', 'No repositories with uncommitted changes');
+				return;
+			}
+
+			Logger.debug('Command', `Found ${reposWithChanges.length} repositories with changes`);
+
+			// Handle single repository case (skip picker)
+			if (reposWithChanges.length === 1) {
+				await this.proceedWithCommit(reposWithChanges[0]);
+				return;
+			}
+
+			// Handle multiple repositories case (show picker)
+			this.showRepositoryPicker(reposWithChanges);
+
+		} catch (error) {
+			Logger.error('Command', 'Failed to execute commit and push workflow', error);
+			this.handleWorkflowError(error);
+		}
+	}
+
+	/**
+	 * Get repositories that have uncommitted changes
+	 */
+	async getRepositoriesWithChanges(
+		repositories: RepositoryConfig[]
+	): Promise<RepositoryStatus[]> {
+		const results: RepositoryStatus[] = [];
+
+		for (const repo of repositories) {
+			try {
+				const status = await this.gitCommandService.getRepositoryStatus(
+					repo.path,
+					repo.id,
+					repo.name
+				);
+
+				if (status.hasUncommittedChanges) {
+					results.push(status);
+					const totalChanges = status.stagedFiles.length + status.unstagedFiles.length + status.untrackedFiles.length;
+					Logger.debug('Command', `Repository "${repo.name}" has ${totalChanges} changes`);
+				}
+			} catch (error) {
+				Logger.error('Command', `Failed to get status for repository "${repo.name}"`, error);
+				// Continue checking other repositories
+			}
+		}
+
+		return results;
+	}
+
+	/**
+	 * Show repository picker modal for user to select which repository to commit
+	 */
+	showRepositoryPicker(reposWithChanges: RepositoryStatus[]) {
+		const modal = new RepositoryPickerModal(
+			this.app,
+			reposWithChanges,
+			async (selected) => {
+				Logger.debug('Command', `User selected repository: ${selected.repositoryName}`);
+				await this.proceedWithCommit(selected);
+			}
+		);
+		modal.open();
+	}
+
+	/**
+	 * Proceed with commit workflow for the selected repository
+	 */
+	async proceedWithCommit(status: RepositoryStatus) {
+		try {
+			Logger.debug('Command', `Proceeding with commit for repository: ${status.repositoryName}`);
+
+			// Generate commit message suggestion
+			const suggestion = this.commitMessageService.generateSuggestion();
+			Logger.debug('Command', `Generated commit message suggestion: ${suggestion.summary}`);
+
+			// Show commit message modal
+			const modal = new CommitMessageModal(
+				this.app,
+				status,
+				suggestion.summary,
+				async (message: string) => {
+					await this.executeCommitAndPush(status.repositoryPath, status.repositoryName, message);
+				}
+			);
+			modal.open();
+
+		} catch (error) {
+			Logger.error('Command', `Failed to proceed with commit for "${status.repositoryName}"`, error);
+			this.handleWorkflowError(error, status.repositoryName);
+		}
+	}
+
+	/**
+	 * Execute the commit and push operation
+	 */
+	async executeCommitAndPush(repoPath: string, repoName: string, message: string) {
+		try {
+			Logger.debug('Command', `Executing commit and push for repository: ${repoName}`);
+			Logger.debug('Command', `Commit message: ${message}`);
+
+			// Find repository configuration for status panel update
+			const repo = this.repositoryConfigService.getEnabledRepositories()
+				.find(r => r.path === repoPath);
+
+			if (!repo) {
+				throw new Error(`Repository configuration not found for path: ${repoPath}`);
+			}
+
+			// Execute the commit and push workflow
+			await this.gitCommandService.commitAndPush(repoPath, repo.id, repo.name, message);
+
+			// Show success notification
+			new Notice(`Successfully committed and pushed changes to "${repoName}"`);
+			Logger.debug('Command', `Successfully committed and pushed to "${repoName}"`);
+
+			// Update status panel to reflect commit/push changes
+			if (repo) {
+				Logger.debug('Command', `Updating status panel for repository: ${repo.id}`);
+				this.notifyRepositoryChanged(repo.id);
+			}
+
+		} catch (error) {
+			Logger.error('Command', `Failed to commit and push to "${repoName}"`, error);
+			throw error; // Re-throw to be handled by the modal
+		}
+	}
+
+	/**
+	 * Handle errors during the workflow
+	 * Maps error types to user-friendly messages
+	 */
+	handleWorkflowError(error: unknown, repositoryName?: string) {
+		const repoContext = repositoryName ? ` for repository "${repositoryName}"` : '';
+
+		if (error instanceof FetchError) {
+			if (error.code === FetchErrorCode.AUTH_ERROR) {
+				new Notice(`Authentication failed${repoContext}. Please configure your git credentials.`);
+			} else if (error.code === FetchErrorCode.NETWORK_ERROR) {
+				new Notice(`Network error${repoContext}. Please check your internet connection.`);
+			} else {
+				new Notice(`Git error${repoContext}: ${error.message}`);
+			}
+		} else if (error instanceof GitCommitError) {
+			new Notice(`Commit failed${repoContext}: ${error.message}`);
+		} else if (error instanceof GitPushError) {
+			new Notice(`Push failed${repoContext}: ${error.message}`);
+		} else if (error instanceof Error) {
+			new Notice(`Error${repoContext}: ${error.message}`);
+		} else {
+			new Notice(`An unexpected error occurred${repoContext}.`);
+		}
+	}
+
+	/**
+	 * Called when the plugin is unloaded
+	 * Performs cleanup of resources
+	 */
+	onunload() {
+		console.log('Unloading Multi-Git plugin');
+		Logger.debug('Plugin', 'Multi-Git plugin unloading');
+
+		// Close status panel if open
+		this.deactivateStatusPanel();
+
+		// Stop all scheduled fetches
+		this.fetchSchedulerService.stopAll();
+
+		Logger.debug('Plugin', 'Multi-Git plugin unloaded successfully');
+	}
+
+	/**
+	 * Load plugin settings from data.json
+	 * Merges saved settings with defaults to handle new fields
+	 * Applies migration for backward compatibility
+	 */
+	async loadSettings() {
+		const savedData = await this.loadData();
+		this.settings = Object.assign({}, DEFAULT_SETTINGS, savedData);
+
+		// Apply migrations for backward compatibility
+		// This will be done after repositoryConfigService is initialized
+	}
+
+	/**
+	 * Save plugin settings to data.json
+	 */
+	async saveSettings() {
+		await this.saveData(this.settings);
+	}
+}

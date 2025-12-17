@@ -18,6 +18,22 @@
    - Input provided by the human that led to the changes
 
 ### Commit Message Format
+
+**When explicit instructions/workflow file is attached:**
+```
+[Cline] <Action>: <Brief summary>
+
+- <Specific change 1>
+- <Specific change 2>
+- <Context or rationale if helpful>
+
+---
+
+Workflow: {explicit_instruction_type}
+{human_input}
+```
+
+**When NO explicit instructions/workflow file is attached:**
 ```
 [Cline] <Action>: <Brief summary>
 
@@ -32,6 +48,10 @@
 
 **Important Requirements:**
 - **ALWAYS prepend** commit messages with `[Cline]` to indicate AI-generated commits
+- **When an explicit instruction/workflow file is attached:** Include `Workflow: {explicit_instruction_type}` line before human input
+  - Extract the workflow name from the `type` attribute of the `<explicit_instructions>` tag
+  - Example: `Workflow: version-bump.md`
+  - This identifies which workflow guided the AI's actions
 - **ALWAYS append** the human input that led to the commit after a `---` separator
   - If the human's prompt is short (~255 words or less), include the full raw prompt text
   - If the human's prompt is long, summarize it to approximately one paragraph in length
