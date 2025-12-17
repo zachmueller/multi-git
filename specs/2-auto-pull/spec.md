@@ -68,7 +68,8 @@ As an Obsidian user managing multiple git repositories, I want remote changes to
   - [ ] Pull only executes if fast-forward detection confirms safety
   - [ ] Local working directory files are updated to match remote state after pull
   - [ ] Pull operation does not interrupt active user editing or other git operations
-  - [ ] Pull completes within 5 seconds for repositories up to 1000 files
+  - [ ] Pull completes within configurable timeout (default 5 seconds) for repositories up to 1000 files
+  - [ ] Timeout duration is configurable per user in plugin settings
   - [ ] User receives notification confirming successful pull with commit count
   - [ ] Failed pulls retry automatically with exponential backoff (3 attempts: immediate, 10s, 30s delays)
   - [ ] After 3 failed attempts, user notified with clear error message and guidance
@@ -106,6 +107,7 @@ As an Obsidian user managing multiple git repositories, I want remote changes to
   - [ ] Global setting to enable/disable automatic pull (default: enabled)
   - [ ] Per-repository setting to enable/disable automatic pull
   - [ ] Setting to control notification verbosity (all pulls, failures only, silent)
+  - [ ] Setting to configure pull operation timeout (default 5 seconds, range 1-60 seconds)
   - [ ] Settings changes take effect immediately without plugin reload
   - [ ] Default behavior is safe (automatic pull enabled but only for fast-forward)
   - [ ] Clear documentation of settings with warnings about safety implications
@@ -129,6 +131,7 @@ As an Obsidian user managing multiple git repositories, I want remote changes to
 - **Acceptance Criteria:**
   - [ ] Fast-forward detection completes in under 500ms
   - [ ] Pull operations execute in background without blocking UI
+  - [ ] Pull timeout is enforced to prevent long-running operations (configurable, default 5 seconds)
   - [ ] Pull operations execute sequentially (one repository at a time) to prevent resource contention
   - [ ] No noticeable lag when editing files during background pulls
   - [ ] Memory usage increase less than 10MB during pull operations
@@ -181,6 +184,7 @@ As an Obsidian user managing multiple git repositories, I want remote changes to
 - Custom merge strategies or git hooks
 - Pull from multiple remotes simultaneously
 - Submodule updates (deferred to future iteration)
+- Advanced timeout configuration per repository (global setting applies to all repos)
 
 ## Design Considerations
 
@@ -207,6 +211,184 @@ The plugin uses a conservative "fail-safe" approach:
 - Existing RepositoryPickerModal pattern (SuggestModal) for any repository selection UI
 - Git 2.20.0+ with support for `--ff-only` flag
 - Custom PATH entries configured in settings (defaults: ~/.cargo/bin, ~/.local/bin, /opt/homebrew/bin, /usr/local/bin)
+
+## Migration from Fixed to Configurable Timeout
+
+### Current Implementation State
+
+The auto-pull feature is currently implemented with a **fixed 5-second timeout** hardcoded in multiple locations:
+
+**Affected Code Locations:**
+1. `src/services/AutoPullService.ts`:
+   - Line ~250: `executePull()` method uses `5000` (5-second timeout) when calling `runGitCommand()` for pull operations
+   - Line ~280: `getCurrentCommitHash()` method uses `5000` timeout for commit hash retrieval
+   - Line ~310: `calculateCommitsPulled()` method uses `5000` timeout for commit count calculation
+   - Comments reference "5-second timeout per specification"
+
+**Current Behavior:**
+- All pull operations timeout after exactly 5 seconds
+- Users with slow network connections may experience frequent timeouts
+- No way to adjust timeout without modifying source code
+
+### Required Changes
+
+#### 1. Settings Data Model (`src/settings/data.ts`)
+
+Add new setting to `MultiGitSettings` interface:
+
+```typescript
+/**
+ * Timeout for pull operations in milliseconds
+ * Controls how long to wait for git pull before timing out
+ * Range: 1000-60000 (1-60 seconds)
+ * @default 5000 (5 seconds)
+ */
+autoPullTimeoutMs: number;
+```
+
+Update `DEFAULT_SETTINGS`:
+
+```typescript
+autoPullTimeoutMs: 5000, // 5 seconds (existing default behavior)
+```
+
+#### 2. AutoPullService Implementation
+
+Update `AutoPullService` constructor to accept settings:
+- Already has `private settings: MultiGitSettings` - no constructor change needed
+
+Update `executePull()` method to use configurable timeout:
+
+**Current code:**
+```typescript
+await this.gitCommandService.runGitCommand(
+    ['pull', '--ff-only'],
+    repoPath,
+    'Pull changes',
+    5000  // Hardcoded timeout
+);
+```
+
+**Updated code:**
+```typescript
+await this.gitCommandService.runGitCommand(
+    ['pull', '--ff-only'],
+    repoPath,
+    'Pull changes',
+    this.settings.autoPullTimeoutMs  // Use configured timeout
+);
+```
+
+Update `getCurrentCommitHash()` method - change timeout from `5000` to `this.settings.autoPullTimeoutMs`
+
+Update `calculateCommitsPulled()` method - change timeout from `5000` to `this.settings.autoPullTimeoutMs`
+
+Update error message in `categorizePullError()`:
+
+**Current code:**
+```typescript
+errorMessage: 'Pull operation timed out after 5 seconds',
+```
+
+**Updated code:**
+```typescript
+errorMessage: `Pull operation timed out after ${this.settings.autoPullTimeoutMs / 1000} seconds`,
+```
+
+#### 3. Settings UI (`src/settings/SettingTab.ts`)
+
+Add new setting control in the auto-pull configuration section:
+
+```typescript
+new Setting(containerEl)
+    .setName('Pull operation timeout')
+    .setDesc('Maximum time to wait for pull operations (1-60 seconds). Increase if you have slow network connections.')
+    .addSlider(slider => slider
+        .setLimits(1, 60, 1)  // 1-60 seconds, step by 1
+        .setValue(this.plugin.settings.autoPullTimeoutMs / 1000)  // Convert ms to seconds for display
+        .setDynamicTooltip()
+        .onChange(async (value) => {
+            this.plugin.settings.autoPullTimeoutMs = value * 1000;  // Convert seconds to ms
+            await this.plugin.saveSettings();
+        })
+    );
+```
+
+#### 4. Documentation Comments
+
+Update JSDoc comments in `AutoPullService.ts`:
+
+**Current:**
+```typescript
+* - Pull execution: < 5 seconds (enforced timeout)
+```
+
+**Updated:**
+```typescript
+* - Pull execution: < configurable timeout (default 5 seconds, enforced)
+```
+
+**Current:**
+```typescript
+* Captures commit hash before and after pull to verify operation success
+* and calculate number of commits pulled. Uses 5-second timeout per
+* specification requirements.
+```
+
+**Updated:**
+```typescript
+* Captures commit hash before and after pull to verify operation success
+* and calculate number of commits pulled. Uses configurable timeout
+* (default 5 seconds, range 1-60 seconds) per specification requirements.
+```
+
+### Migration Considerations
+
+#### Backwards Compatibility
+- **Existing users:** Default value of 5000ms maintains current behavior
+- **No breaking changes:** Users don't need to reconfigure anything
+- **Settings migration:** Not required - new setting has sensible default
+
+#### Validation
+- **Range enforcement:** UI restricts to 1-60 seconds (1000-60000ms)
+- **Invalid values:** Settings schema should validate range
+- **Edge cases:** Minimum 1 second prevents unrealistic timeouts
+
+#### Testing Requirements
+- Test with default timeout (5000ms) - should match current behavior
+- Test with minimum timeout (1000ms) - should timeout faster
+- Test with maximum timeout (60000ms) - should allow longer operations
+- Test timeout error messages display correct duration
+- Test settings persistence across plugin reload
+- Test concurrent operations use same timeout setting
+
+#### Performance Impact
+- No performance overhead - single setting read per operation
+- Longer timeouts may delay error detection but improve success rate for slow connections
+- Shorter timeouts fail faster but may cause false failures on slow networks
+
+### Rollout Strategy
+
+**Phase 1: Implementation**
+1. Add setting to data model with default value
+2. Update AutoPullService to use setting
+3. Add UI control in settings tab
+4. Update documentation and comments
+
+**Phase 2: Testing**
+1. Unit tests for timeout behavior
+2. Integration tests with various timeout values
+3. Manual testing with slow network simulation
+
+**Phase 3: Documentation**
+1. Update user documentation explaining timeout setting
+2. Add troubleshooting guidance for timeout issues
+3. Document recommended values for different scenarios
+
+**Phase 4: Release**
+1. Include in changelog as enhancement
+2. Highlight in release notes for users with slow connections
+3. Monitor for feedback on default value appropriateness
 
 ### Risks & Mitigations
 
@@ -364,7 +546,8 @@ The plugin uses a conservative "fail-safe" approach:
 - Repository working directories are not being modified by external tools during pull
 - Most collaborative workflows involve sequential commits rather than parallel development causing frequent divergence
 - Default configuration (automatic pull enabled) is appropriate for majority of users
-- Five second pull operation time is acceptable for user experience
+- Default five second pull timeout is acceptable for most use cases, but users with slow connections may need longer timeouts
+- Users understand implications of timeout configuration (shorter = faster failure detection, longer = patience for slow networks)
 
 ## Out of Scope (This Iteration)
 
