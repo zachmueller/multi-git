@@ -7,14 +7,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Fixed
-- Auto-pull operations now correctly find credential helpers like git-remote-codecommit by using GitCommandService consistently throughout the codebase. This ensures the enhanced PATH configuration from FR-7 (Custom PATH Configuration) applies to all git operations, not just fetches. Fixes issue where AWS CodeCommit repositories and other services requiring credential helpers would fail with "git: 'remote-codecommit' is not a git command" error during pull operations.
-
 ### Planned
 - End-to-end integration testing in Obsidian
 - Error handling validation
 - Performance benchmarks
 - Complete API documentation with TypeDoc
+
+## [0.1.1] - 2025-12-17
+
+### Added
+- Version bump automation script for streamlined releases
+- GitHub Actions workflow for automated plugin releases
+- Comprehensive logging for pull operations to aid debugging
+
+### Fixed
+- Auto-pull operations now correctly find credential helpers like git-remote-codecommit by using GitCommandService consistently throughout the codebase
+- Enhanced PATH configuration from FR-7 (Custom PATH Configuration) now applies to all git operations, not just fetches
+- Resolved issue where AWS CodeCommit repositories and other services requiring credential helpers would fail with "git: 'remote-codecommit' is not a git command" error during pull operations
+
+### Changed
+- Improved error messaging for push failures after successful commits
+- Simplified commit message service to timestamp-only generation
+- Updated commit modal keyboard behavior for better user experience
 
 ## [0.1.0] - 2025-01-12
 
